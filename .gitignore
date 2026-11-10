@@ -1,0 +1,6 @@
+.env
+sessions.json
+claude_workdir/
+__pycache__/
+.venv/
+venv/

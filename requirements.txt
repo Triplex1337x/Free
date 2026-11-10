@@ -1,0 +1,4 @@
+python-telegram-bot>=21.0,<23
+python-dotenv>=1.0
+# Нужен только для режима CLAUDE_BACKEND=api
+anthropic>=1.0
