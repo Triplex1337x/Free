@@ -33,13 +33,20 @@
     "math-proof@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "figma@claude-plugins-official": true,
-    "canva@claude-plugins-official": true
+    "canva@claude-plugins-official": true,
+    "roblox-agent-skills@roblox-agent-skills": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
       "source": {
         "source": "github",
         "repo": "anthropics/claude-plugins-official"
+      }
+    },
+    "roblox-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "afrxo/roblox-agent-skills"
       }
     }
   }

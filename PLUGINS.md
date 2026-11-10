@@ -38,6 +38,17 @@
 | `claude-code-setup` | смотрит проект и советует, какие ещё хуки, навыки и плагины подключить |
 | `math-proof` | сложные задачи по математике с доказательством; `/math-proof:siege` штурмует задачу часами |
 
+**Roblox** (каталог [afrxo/roblox-agent-skills](https://github.com/afrxo/roblox-agent-skills), сообщество, MIT):
+
+| Навык | Зачем |
+|---|---|
+| `luau-expert` | современный Luau: строгие типы, модули, проверка данных от клиента |
+| `roblox-dev` | клиент и сервер, RemoteEvent, DataStore без потери данных, оптимизация, StreamingEnabled |
+| `roblox-toolchain` | Rojo, Wally, luau-lsp, автопроверки на GitHub |
+| `roblox-ui` | интерфейсы на Fusion с анимациями |
+
+Модели в плейс ставит встроенный MCP-сервер Roblox Studio (`generate_mesh`, `insert_from_creator_store`). Он включается в самой Studio: Assistant → Manage MCP Servers → Quick connect → Claude Code. Работает только на компьютере, где открыта Studio.
+
 **Figma и Canva** (нужен аккаунт, при первом использовании откроется вход):
 
 | Плагин | Зачем |
