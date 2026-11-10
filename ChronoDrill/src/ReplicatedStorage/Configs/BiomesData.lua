@@ -1,0 +1,130 @@
+-- BiomesData: 5 ярусов шахты (ТЗ 3) + визуальные палитры (ТЗ 9).
+-- HP = {верхний слой, нижний слой}: прочность растёт экспоненциально с глубиной (x30 за ярус).
+-- SellMult — множитель Репликатора продажи этого яруса (x1 … x2.5). Цены руды поделены на него,
+-- поэтому продажа в своём ярусе даёт столько же, сколько раньше; руда, отвезённая в ярус выше, дороже.
+-- Ore = {верх, низ}: цена одной единицы руды. Рюкзак наполняется нанесённым уроном:
+-- блок на 40 HP даёт 40 единиц руды, значит глубже — дороже и крепче.
+-- Kinds: типы блоков. Layers = {от, до} слоя (1..32), W = вес выпадения,
+-- Hp/Val = множители HP и цены руды для этого типа.
+local function rgb(r, g, b) return { r, g, b } end
+
+return {
+	{
+		Id = 1, Key = "Quarry", Name = "Карьер", Short = "Карьер",
+		MinDepth = 0, MaxDepth = 500, SellMult = 1,
+		HP = { 8, 240 }, Ore = { 1, 2.5 }, Yield = 1,
+		Theme = {
+			Ground = rgb(116, 196, 92), GroundDark = rgb(82, 150, 66),
+			Cliff = rgb(148, 104, 70), CliffDark = rgb(104, 72, 50),
+			Accent = rgb(255, 196, 46), Wall = rgb(70, 62, 60), Trim = rgb(214, 170, 104),
+			Leaves = rgb(88, 178, 84), Leaves2 = rgb(126, 206, 96), Trunk = rgb(122, 84, 56),
+			Rock = rgb(150, 150, 158), Crystal = rgb(255, 210, 80), Path = rgb(214, 190, 150),
+			Lamp = rgb(255, 214, 140), UI = rgb(110, 200, 80),
+		},
+		Atmosphere = { Density = 0.29, Offset = 0.25, Color = rgb(199, 226, 255), Decay = rgb(140, 170, 210), Glare = 0.2, Haze = 1.1 },
+		Grade = { Tint = rgb(255, 250, 240), Saturation = 0.30, Contrast = 0.04, Brightness = 0.04 },
+		ClockTime = 14.2,
+		Kinds = {
+			{ Name = "Дёрн", Material = "Grass", Color = rgb(120, 196, 76), Layers = { 1, 1 }, W = 1, Hp = 0.9, Val = 0.9 },
+			{ Name = "Земля", Material = "Ground", Color = rgb(150, 104, 68), Layers = { 2, 11 }, W = 6, Hp = 1, Val = 1 },
+			{ Name = "Глина", Material = "Mud", Color = rgb(196, 122, 76), Layers = { 5, 20 }, W = 3, Hp = 1.1, Val = 1.1 },
+			{ Name = "Песок", Material = "Sand", Color = rgb(224, 196, 128), Layers = { 2, 15 }, W = 2, Hp = 0.8, Val = 0.9 },
+			{ Name = "Камень", Material = "Slate", Color = rgb(136, 136, 146), Layers = { 13, 32 }, W = 6, Hp = 1.15, Val = 1.1 },
+			{ Name = "Медь", Material = "Pebble", Color = rgb(214, 128, 78), Layers = { 7, 32 }, W = 1, Hp = 1.25, Val = 1.6, Ore = true },
+			{ Name = "Уголь", Material = "Basalt", Color = rgb(58, 58, 66), Layers = { 10, 32 }, W = 1.2, Hp = 1.1, Val = 1.4, Ore = true },
+		},
+		VeinColor = rgb(255, 214, 72),
+	},
+	{
+		Id = 2, Key = "Fossil", Name = "Окаменелости", Short = "Окаменелости",
+		MinDepth = 500, MaxDepth = 1800, SellMult = 1.25,
+		HP = { 90, 2700 }, Ore = { 4.4, 11.2 }, Yield = 1,
+		Theme = {
+			Ground = rgb(232, 204, 148), GroundDark = rgb(204, 172, 116),
+			Cliff = rgb(196, 150, 96), CliffDark = rgb(150, 110, 70),
+			Accent = rgb(255, 150, 40), Wall = rgb(92, 72, 56), Trim = rgb(246, 236, 210),
+			Leaves = rgb(110, 170, 70), Leaves2 = rgb(150, 196, 88), Trunk = rgb(140, 100, 64),
+			Rock = rgb(206, 176, 130), Crystal = rgb(255, 160, 40), Path = rgb(246, 232, 196),
+			Lamp = rgb(255, 196, 120), UI = rgb(240, 160, 60),
+		},
+		Atmosphere = { Density = 0.31, Offset = 0.25, Color = rgb(255, 228, 190), Decay = rgb(220, 160, 110), Glare = 0.4, Haze = 1.1 },
+		Grade = { Tint = rgb(255, 244, 228), Saturation = 0.28, Contrast = 0.05, Brightness = 0.04 },
+		ClockTime = 16.2,
+		Kinds = {
+			{ Name = "Песчаник", Material = "Sandstone", Color = rgb(222, 184, 124), Layers = { 1, 15 }, W = 5, Hp = 1, Val = 1 },
+			{ Name = "Сланец", Material = "Slate", Color = rgb(140, 116, 96), Layers = { 10, 32 }, W = 5, Hp = 1.15, Val = 1.05 },
+			{ Name = "Кость", Material = "Limestone", Color = rgb(246, 238, 216), Layers = { 4, 32 }, W = 2, Hp = 1.1, Val = 1.3 },
+			{ Name = "Янтарь", Color = rgb(255, 160, 32), Layers = { 1, 32 }, W = 3, Hp = 1.05, Val = 1.4, Material = "Glass", Transparency = 0.12, Tag = "Amber", Ore = true },
+		},
+		VeinColor = rgb(255, 120, 30),
+	},
+	{
+		Id = 3, Key = "Glacier", Name = "Ледниковый Провал", Short = "Ледник",
+		MinDepth = 1800, MaxDepth = 4500, SellMult = 1.5,
+		HP = { 990, 30000 }, Ore = { 20, 50 }, Yield = 1,
+		Theme = {
+			Ground = rgb(240, 248, 255), GroundDark = rgb(204, 224, 246),
+			Cliff = rgb(150, 190, 230), CliffDark = rgb(96, 140, 196),
+			Accent = rgb(110, 220, 255), Wall = rgb(60, 78, 110), Trim = rgb(200, 236, 255),
+			Leaves = rgb(232, 244, 255), Leaves2 = rgb(70, 130, 110), Trunk = rgb(110, 84, 70),
+			Rock = rgb(170, 200, 230), Crystal = rgb(120, 220, 255), Path = rgb(210, 230, 248),
+			Lamp = rgb(170, 230, 255), UI = rgb(90, 190, 255),
+		},
+		Atmosphere = { Density = 0.32, Offset = 0.25, Color = rgb(214, 236, 255), Decay = rgb(150, 190, 240), Glare = 0.3, Haze = 1.1 },
+		Grade = { Tint = rgb(236, 246, 255), Saturation = 0.23, Contrast = 0.06, Brightness = 0.05 },
+		ClockTime = 10.5,
+		Kinds = {
+			{ Name = "Снег", Material = "Snow", Color = rgb(244, 250, 255), Layers = { 1, 7 }, W = 5, Hp = 0.9, Val = 0.9 },
+			{ Name = "Лёд", Color = rgb(150, 214, 250), Layers = { 1, 32 }, W = 4, Hp = 1, Val = 1.1, Material = "Glass", Transparency = 0.18 },
+			{ Name = "Мерзлота", Material = "Glacier", Color = rgb(112, 140, 176), Layers = { 7, 32 }, W = 5, Hp = 1.15, Val = 1 },
+			{ Name = "Глубинный лёд", Color = rgb(60, 110, 200), Layers = { 18, 32 }, W = 3, Hp = 1.25, Val = 1.4, Material = "Glass", Transparency = 0.1, Ore = true },
+		},
+		VeinColor = rgb(110, 240, 255),
+	},
+	{
+		Id = 4, Key = "Magma", Name = "Магматический Разлом", Short = "Магма",
+		MinDepth = 4500, MaxDepth = 9000, SellMult = 2,
+		HP = { 11000, 330000 }, Ore = { 82.5, 207.5 }, Yield = 1,
+		Theme = {
+			Ground = rgb(74, 66, 70), GroundDark = rgb(52, 46, 52),
+			Cliff = rgb(60, 50, 56), CliffDark = rgb(36, 30, 36),
+			Accent = rgb(255, 110, 30), Wall = rgb(30, 24, 28), Trim = rgb(255, 120, 40),
+			Leaves = rgb(255, 120, 40), Leaves2 = rgb(255, 180, 60), Trunk = rgb(40, 34, 38),
+			Rock = rgb(56, 50, 58), Crystal = rgb(255, 90, 30), Path = rgb(96, 84, 88),
+			Lamp = rgb(255, 140, 60), UI = rgb(255, 100, 50),
+		},
+		Atmosphere = { Density = 0.35, Offset = 0.25, Color = rgb(255, 150, 110), Decay = rgb(120, 50, 40), Glare = 0.8, Haze = 1.1 },
+		Grade = { Tint = rgb(255, 232, 214), Saturation = 0.33, Contrast = 0.10, Brightness = 0.00 },
+		ClockTime = 18.4,
+		Kinds = {
+			{ Name = "Пепел", Material = "Asphalt", Color = rgb(96, 88, 92), Layers = { 1, 10 }, W = 4, Hp = 0.9, Val = 0.9 },
+			{ Name = "Базальт", Material = "Basalt", Color = rgb(58, 52, 60), Layers = { 1, 32 }, W = 6, Hp = 1.05, Val = 1 },
+			{ Name = "Магмовый камень", Material = "CrackedLava", Color = rgb(170, 52, 32), Layers = { 6, 32 }, W = 3, Hp = 1.15, Val = 1.3, Ore = true },
+			{ Name = "Обсидиан", Color = rgb(40, 22, 56), Layers = { 15, 32 }, W = 2, Hp = 1.3, Val = 1.5, Material = "Glass", Transparency = 0.05, Ore = true },
+		},
+		VeinColor = rgb(255, 120, 20),
+	},
+	{
+		Id = 5, Key = "Abyss", Name = "Хроно-Бездна", Short = "Бездна",
+		MinDepth = 9000, MaxDepth = 15000, SellMult = 2.5,
+		HP = { 120000, 3600000 }, Ore = { 366, 920 }, Yield = 1,
+		Theme = {
+			Ground = rgb(70, 50, 120), GroundDark = rgb(48, 34, 90),
+			Cliff = rgb(44, 30, 80), CliffDark = rgb(26, 18, 52),
+			Accent = rgb(90, 240, 255), Wall = rgb(20, 14, 40), Trim = rgb(170, 110, 255),
+			Leaves = rgb(110, 240, 255), Leaves2 = rgb(200, 120, 255), Trunk = rgb(40, 30, 70),
+			Rock = rgb(60, 44, 110), Crystal = rgb(100, 240, 255), Path = rgb(96, 76, 150),
+			Lamp = rgb(140, 220, 255), UI = rgb(160, 100, 255),
+		},
+		Atmosphere = { Density = 0.33, Offset = 0.25, Color = rgb(150, 110, 255), Decay = rgb(40, 20, 90), Glare = 1, Haze = 1.1 },
+		Grade = { Tint = rgb(236, 226, 255), Saturation = 0.38, Contrast = 0.08, Brightness = 0.01 },
+		ClockTime = 21.5,
+		Kinds = {
+			{ Name = "Пустотный камень", Material = "Slate", Color = rgb(56, 40, 96), Layers = { 1, 32 }, W = 6, Hp = 1, Val = 1 },
+			{ Name = "Звёздный камень", Material = "Granite", Color = rgb(30, 26, 60), Layers = { 5, 32 }, W = 4, Hp = 1.1, Val = 1.1 },
+			{ Name = "Хроно-кристалл", Color = rgb(90, 230, 255), Layers = { 1, 32 }, W = 2, Hp = 1.2, Val = 1.5, Material = "Glass", Transparency = 0.15, Ore = true },
+			{ Name = "Разлом", Material = "CrackedLava", Color = rgb(200, 90, 255), Layers = { 13, 32 }, W = 2, Hp = 1.3, Val = 1.6, Ore = true },
+		},
+		VeinColor = rgb(120, 255, 240),
+	},
+}
