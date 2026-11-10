@@ -29,6 +29,10 @@
 
 ## Запуск
 
+**Самый быстрый способ без Rojo:** выполни `python3 tools/build_place.py`. Рядом появится `RiftBattlegrounds.rbxlx`, открой его двойным кликом в Roblox Studio и нажми Play.
+
+### Через Rojo (для разработки)
+
 1. Установи [Rokit](https://github.com/rojo-rbx/rokit) и выполни `rokit install` в этой папке. Rojo подтянется сам.
    Ещё нужен плагин Rojo для Studio: `rojo plugin install`.
 2. Открой Roblox Studio и создай пустой плейс (**Baseplate**).
@@ -109,6 +113,7 @@ assets/
   marketing/           иконка и тамбнейл
 tools/
   process_textures.py  нарезка листов Figma в игровые текстуры
+  build_place.py       сборка RiftBattlegrounds.rbxlx без Rojo
     Controllers/       ввод, HUD, гача, магазин, эффекты стихий
 ```
 
@@ -181,7 +186,7 @@ tools/
 
 ### Иконка и тамбнейл (`assets/marketing`)
 
-`icon_1024.png` и `thumbnail_1536x864.png` сделаны в Figma, исходники в файле Figma «Rift Battlegrounds — Icon & Thumbnails». Загрузка: Creator Dashboard → игра → **Places → Icon / Thumbnails**.
+`icon_1024.png` и `thumbnail_1536x864.png` сделаны в Figma (файл «Rift Battlegrounds — Icon & Thumbnails»). `thumbnail_titled_1920x1080.png` — главная обложка с названием, собрана в Canva поверх арта из Figma. Загрузка: Creator Dashboard → игра → **Places → Icon / Thumbnails**.
 
 ### Карта
 
