@@ -3,6 +3,7 @@
 -- hover: Scale 1.05 за 0.1 с (Quad), click: 0.95 + щелчок.
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 
 local UI = {}
 
@@ -132,6 +133,48 @@ function UI.Lighter(c, f)
 	return c:Lerp(Color3.new(1, 1, 1), f or 0.3)
 end
 
+-- «Леденцовый» градиент: светлый верх -> чистый цвет -> чуть темнее низ. Цвет задаётся самим градиентом,
+-- поэтому фон объекта должен быть белым (UIGradient умножается на фон).
+function UI.CandySeq(c)
+	return ColorSequence.new({
+		ColorSequenceKeypoint.new(0, UI.Lighter(c, 0.3)),
+		ColorSequenceKeypoint.new(0.5, c),
+		ColorSequenceKeypoint.new(1, UI.Darker(c, 0.12)),
+	})
+end
+function UI.Candy(inst, c, rot)
+	if inst:IsA("GuiObject") then
+		inst.BackgroundColor3 = Color3.new(1, 1, 1)
+	end
+	local g = Instance.new("UIGradient")
+	g.Color = UI.CandySeq(c)
+	g.Rotation = rot or 90
+	g.Parent = inst
+	return g
+end
+
+-- Мягкий глянец: белая полоса сверху, которая плавно растворяется книзу
+function UI.Gloss(parent, size, pos, alpha, z)
+	local f = UI.new("Frame", {
+		Name = "Gloss",
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		BackgroundTransparency = 0,
+		Size = size,
+		Position = pos,
+		ZIndex = z or parent.ZIndex,
+		Parent = parent,
+	})
+	UI.Corner(f, UDim.new(1, 0))
+	local g = Instance.new("UIGradient")
+	g.Rotation = 90
+	g.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, alpha or 0.45),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	g.Parent = f
+	return f
+end
+
 -- Текст с обводкой
 function UI.Text(parent, text, props)
 	local l = UI.new("TextLabel", {
@@ -249,17 +292,9 @@ function UI.Button(opts)
 	})
 	UI.Corner(face, radius)
 	local faceStroke = UI.Stroke(face, 3, edge(color), true)
-	UI.Gradient(face, Color3.new(1, 1, 1), Color3.fromRGB(206, 206, 218))
-	-- блик сверху
-	local shine = UI.new("Frame", {
-		Name = "Shine",
-		BackgroundColor3 = Color3.new(1, 1, 1),
-		BackgroundTransparency = 0.65,
-		Size = UDim2.new(1, -12, 0.3, 0),
-		Position = UDim2.new(0, 6, 0, 3),
-		Parent = face,
-	})
-	UI.Corner(shine, UDim.new(1, 0))
+	local faceGrad = UI.Candy(face, color)
+	-- мягкий глянец сверху
+	UI.Gloss(face, UDim2.new(1, -12, 0.42, 0), UDim2.new(0, 6, 0, 3), 0.38)
 	local label
 	local iconFrame
 	if opts.Glyph then
@@ -295,7 +330,7 @@ function UI.Button(opts)
 	UI.Bounce(face, holder, faceHolder)
 	local obj = { Holder = holder, Face = face, Label = label, Shadow = shadow, Activated = face.Activated, Color = color, Glyph = iconFrame }
 	local function paint(c)
-		face.BackgroundColor3 = c
+		faceGrad.Color = UI.CandySeq(c)
 		shadow.BackgroundColor3 = UI.Darker(c, 0.35)
 		faceStroke.Color = edge(c)
 		shadowStroke.Color = edge(c)
@@ -390,6 +425,39 @@ local WINDOW_ICONS = {
 	Npc = "Quest", Egg = "Egg", Daily = "Gift", Wheel = "Wheel", Stats = "Stats", Quests = "Quest", Donate = "Diamond",
 }
 UI.HeaderHeight = 62
+
+-- Фон за открытым окном: мир мягко размывается и чуть темнеет, интерфейс остаётся чётким.
+-- Окна считаются по множеству, поэтому два окна подряд не «мигают» размытием.
+UI.BackdropEnabled = true
+local openWindows = {}
+local backdropBlur, backdropGrade
+local function backdropTarget()
+	for w in pairs(openWindows) do
+		if w.Root and w.Root.Parent then
+			return true
+		end
+		openWindows[w] = nil
+	end
+	return false
+end
+function UI.SetBackdrop(win, open)
+	openWindows[win] = open or nil
+	local on = UI.BackdropEnabled and backdropTarget()
+	if not backdropBlur or not backdropBlur.Parent then
+		backdropBlur = Instance.new("BlurEffect")
+		backdropBlur.Name = "UIBackdropBlur"
+		backdropBlur.Size = 0
+		backdropBlur.Parent = Lighting
+	end
+	if not backdropGrade or not backdropGrade.Parent then
+		backdropGrade = Instance.new("ColorCorrectionEffect")
+		backdropGrade.Name = "UIBackdropGrade"
+		backdropGrade.Parent = Lighting
+	end
+	local info = TweenInfo.new(on and 0.25 or 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	TweenService:Create(backdropBlur, info, { Size = on and 14 or 0 }):Play()
+	TweenService:Create(backdropGrade, info, { Brightness = on and -0.06 or 0, Saturation = on and -0.12 or 0 }):Play()
+end
 function UI.Window(screen, opts)
 	local base = opts.Size or UDim2.fromOffset(720, 480)
 	local HEAD = UI.HeaderHeight
@@ -422,11 +490,17 @@ function UI.Window(screen, opts)
 	-- шапка
 	local header = UI.new("Frame", { Name = "Header", BackgroundColor3 = color, Size = UDim2.new(1, 0, 0, HEAD), ZIndex = 2, Parent = body })
 	UI.Corner(header, 26)
-	UI.Gradient(header, Color3.fromRGB(255, 255, 255), Color3.fromRGB(196, 196, 210))
-	UI.new("Frame", { BackgroundColor3 = color, Size = UDim2.new(1, 0, 0, 26), Position = UDim2.new(0, 0, 1, -26), ZIndex = 2, Parent = header })
+	local headTop, headBottom = UI.Lighter(color, 0.28), UI.Darker(color, 0.1)
+	UI.Gradient(header, headTop, headBottom)
+	header.BackgroundColor3 = Color3.new(1, 1, 1) -- цвет целиком в градиенте (даже у почти серых окон)
+	-- квадратный низ шапки (под скруглением) в тех же цветах градиента
+	local patch = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.new(1, 0, 0, 26), Position = UDim2.new(0, 0, 1, -26), ZIndex = 2, Parent = header })
+	local pg = Instance.new("UIGradient")
+	pg.Rotation = 90
+	pg.Color = ColorSequence.new(headTop:Lerp(headBottom, (HEAD - 26) / HEAD), headBottom)
+	pg.Parent = patch
 	UI.new("Frame", { Name = "HeaderLine", BackgroundColor3 = dark, Size = UDim2.new(1, 0, 0, 4), Position = UDim2.new(0, 0, 1, -2), ZIndex = 4, Parent = header })
-	local hshine = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.72, Size = UDim2.new(1, -48, 0, 14), Position = UDim2.fromOffset(24, 5), ZIndex = 3, Parent = header })
-	UI.Corner(hshine, UDim.new(1, 0))
+	UI.Gloss(header, UDim2.new(1, -48, 0, 22), UDim2.fromOffset(24, 4), 0.4, 3)
 	-- значок в белом кружке
 	local badge = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.fromOffset(52, 52), Position = UDim2.fromOffset(12, 5), ZIndex = 5, Parent = header })
 	UI.Corner(badge, UDim.new(1, 0))
@@ -454,8 +528,9 @@ function UI.Window(screen, opts)
 		end
 		win.IsOpen = true
 		root.Visible = true
-		scale.Scale = 0.6
-		TweenService:Create(scale, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+		scale.Scale = 0.78
+		TweenService:Create(scale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+		UI.SetBackdrop(win, true)
 		openedEvent:Fire()
 	end
 	function win.Hide()
@@ -463,7 +538,8 @@ function UI.Window(screen, opts)
 			return
 		end
 		win.IsOpen = false
-		local tw = TweenService:Create(scale, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0.6 })
+		UI.SetBackdrop(win, false)
+		local tw = TweenService:Create(scale, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0.7 })
 		tw:Play()
 		tw.Completed:Connect(function()
 			if not win.IsOpen then

@@ -378,6 +378,14 @@ end
 ---------------------------------------------------------------------------------------------
 local function applyLighting()
 	local hi, lo = quality == "High", quality == "Low"
+	-- размытие мира за открытыми окнами — только на средней и высокой графике
+	pcall(function()
+		local uiFolder = script.Parent.Parent:FindFirstChild("UI")
+		local kit = uiFolder and uiFolder:FindFirstChild("UIKit")
+		if kit then
+			require(kit).BackdropEnabled = not lo
+		end
+	end)
 	Lighting.GlobalShadows = not lo
 	Lighting.ShadowSoftness = hi and 0.22 or 0.35 -- мягкие тени
 	-- лёгкое размытие дальнего плана (только «Высокая»): картинка выглядит как в современных играх

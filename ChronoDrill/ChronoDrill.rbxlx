@@ -1,4 +1,4 @@
-<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4"><Meta name="ExplicitAutoJoints">true</Meta><External>null</External><External>nil</External><Item class="Workspace" referent="RBX0000000000000000000000000000004C"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool><float name="FallenPartsDestroyHeight">-500</float><float name="Gravity">196.2</float></Properties></Item><Item class="Lighting" referent="RBX0000000000000000000000000000004D"><Properties><string name="Name">Lighting</string><token name="Technology">4</token><float name="Brightness">2.4</float><float name="ClockTime">14.2</float><bool name="GlobalShadows">true</bool><float name="EnvironmentDiffuseScale">1</float><float name="EnvironmentSpecularScale">1</float></Properties></Item><Item class="ReplicatedStorage" referent="RBX0000000000000000000000000000004E"><Properties><string name="Name">ReplicatedStorage</string></Properties><Item class="Folder" referent="RBX0000000000000000000000000000000F"><Properties><string name="Name">Configs</string></Properties><Item class="ModuleScript" referent="RBX00000000000000000000000000000001"><Properties><string name="Name">BackpacksData</string><ProtectedString name="Source"><![CDATA[-- BackpacksData: рюкзаки. Вместимость — в единицах руды: рюкзак наполняется
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4"><Meta name="ExplicitAutoJoints">true</Meta><External>null</External><External>nil</External><Item class="Workspace" referent="RBX0000000000000000000000000000004D"><Properties><string name="Name">Workspace</string><bool name="StreamingEnabled">false</bool><float name="FallenPartsDestroyHeight">-500</float><float name="Gravity">196.2</float></Properties></Item><Item class="Lighting" referent="RBX0000000000000000000000000000004E"><Properties><string name="Name">Lighting</string><token name="Technology">4</token><float name="Brightness">2.4</float><float name="ClockTime">14.2</float><bool name="GlobalShadows">true</bool><float name="EnvironmentDiffuseScale">1</float><float name="EnvironmentSpecularScale">1</float></Properties></Item><Item class="ReplicatedStorage" referent="RBX0000000000000000000000000000004F"><Properties><string name="Name">ReplicatedStorage</string></Properties><Item class="Folder" referent="RBX00000000000000000000000000000010"><Properties><string name="Name">Configs</string></Properties><Item class="ModuleScript" referent="RBX00000000000000000000000000000001"><Properties><string name="Name">BackpacksData</string><ProtectedString name="Source"><![CDATA[-- BackpacksData: рюкзаки. Вместимость — в единицах руды: рюкзак наполняется
 -- на столько, сколько урона ты нанёс блокам (блок на 40 HP = 40 руды).
 -- Покупать можно только по порядку.
 local function c(r, g, b) return { r, g, b } end
@@ -638,7 +638,58 @@ return {
 	IdOf = idOf,
 	Effects = Effects,
 }
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000008"><Properties><string name="Name">PetLooks</string><ProtectedString name="Source"><![CDATA[-- PetLooks: внешний вид каждого питомца для процедурного PetBuilder.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000008"><Properties><string name="Name">IconAtlas</string><ProtectedString name="Source"><![CDATA[-- IconAtlas: раскладка атласа цветных иконок (Icons/ChronoDrill_Icons.png).
+-- Файл собирает tools/make_icons.py — раскладку руками не править.
+--
+-- Как включить: в Studio View -> Asset Manager -> Bulk Import -> Icons/ChronoDrill_Icons.png,
+-- затем ПКМ по картинке -> Copy Asset ID и впиши его в Id ниже (можно просто число):
+--   Id = "rbxassetid://1234567890",
+-- Пока Id пустой, игра рисует прежние векторные иконки (UI/Icons2D).
+-- Важно: нужен ID картинки (Image), а не декали (Decal) — подробности в README.
+return {
+	Id = "",
+	Cell = 146,
+	Columns = 7,
+	Icons = {
+		Coin = 0,
+		Shard = 1,
+		Paw = 2,
+		Chest = 3,
+		ShopBag = 4,
+		Stats = 5,
+		Gift = 6,
+		Wheel = 7,
+		Sprout = 8,
+		Hourglass = 9,
+		Globe = 10,
+		Quest = 11,
+		Pickaxe = 12,
+		Home = 13,
+		Clock = 14,
+		Star = 15,
+		Lock = 16,
+		Bolt = 17,
+		Clover = 18,
+		Drop = 19,
+		Flask = 20,
+		Backpack = 21,
+		Egg = 22,
+		Sword = 23,
+		Crown = 24,
+		Rocket = 25,
+		Gear = 26,
+		Note = 27,
+		Diamond = 28,
+		Bone = 29,
+		Snowflake = 30,
+		Flame = 31,
+		Saturn = 32,
+		Shield = 33,
+		Person = 34,
+		Flag = 35,
+	},
+}
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000009"><Properties><string name="Name">PetLooks</string><ProtectedString name="Source"><![CDATA[-- PetLooks: внешний вид каждого питомца для процедурного PetBuilder.
 -- A  = архетип (quad, blob, bird, bug, crab, fish, dino, dragon, golem, orb, serpent, wisp, bat)
 -- C  = основной цвет, C2 = акцентный цвет (живот, уши, когти), C3 = цвет деталей
 -- M  = материал корпуса (SmoothPlastic по умолчанию), M2 = материал акцентов
@@ -825,7 +876,7 @@ return {
 	TimeLord = { A = "quad", C = c(250, 246, 236), C2 = c(255, 210, 80), C3 = c(30, 26, 40), X = { "ears_pointy", "clock_face" }, E = "glow", EyeColor = c(255, 230, 120),
 		Mythic = { Wings = "angel", C1 = c(30, 26, 40), C2 = c(255, 210, 80), Halo = true, Crown = true, Glow = c(255, 210, 80), Orbit = true } },
 }
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000009"><Properties><string name="Name">PetsData</string><ProtectedString name="Source"><![CDATA[-- PetsData: единый реестр всех питомцев, собирается из EggsData и SeedsData.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000A"><Properties><string name="Name">PetsData</string><ProtectedString name="Source"><![CDATA[-- PetsData: единый реестр всех питомцев, собирается из EggsData и SeedsData.
 local EggsData = require(script.Parent.EggsData)
 local SeedsData = require(script.Parent.SeedsData)
 local RewardsData = require(script.Parent.RewardsData)
@@ -955,7 +1006,7 @@ return {
 		return Pets[id]
 	end,
 }
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000A"><Properties><string name="Name">QuestsData</string><ProtectedString name="Source"><![CDATA[-- QuestsData: сюжетные квесты Drill-Bot 3000 (ТЗ 7.2 А) и шаблоны динамических (ТЗ 7.2 Б).
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000B"><Properties><string name="Name">QuestsData</string><ProtectedString name="Source"><![CDATA[-- QuestsData: сюжетные квесты Drill-Bot 3000 (ТЗ 7.2 А) и шаблоны динамических (ТЗ 7.2 Б).
 -- Stat — ключ счётчика в data.Stats (или "SessionEggs" — счётчик за текущую сессию).
 -- Trips — монеты в «рейсах» (1 рейс = полный первый рюкзак открытого яруса), считаются при получении.
 local Story = {
@@ -1039,7 +1090,7 @@ local WeeklyBonus = {
 }
 
 return { Story = Story, Dynamic = Dynamic, Weekly = Weekly, WeeklyBonus = WeeklyBonus }
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000B"><Properties><string name="Name">RebirthData</string><ProtectedString name="Source"><![CDATA[-- RebirthData: перерождения и Хроно-Древо (ТЗ 8).
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000C"><Properties><string name="Name">RebirthData</string><ProtectedString name="Source"><![CDATA[-- RebirthData: перерождения и Хроно-Древо (ТЗ 8).
 return {
 	RequiredBiome = 4,              -- нужно открыть Магму (4 500 м)
 	BaseCoins = 2e10,               -- 20 млрд для 1-го ребёрса
@@ -1057,7 +1108,7 @@ return {
 		{ Id = "PetSlot", Name = "Слот питомца", Desc = "+1 слот экипировки", PerLevel = 1, Costs = { 8 }, Color = { 90, 220, 110 } },
 	},
 }
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000C"><Properties><string name="Name">RewardsData</string><ProtectedString name="Source"><![CDATA[-- RewardsData: ежедневные награды (7 дней) и колесо удачи (раз в 24 часа).
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000D"><Properties><string name="Name">RewardsData</string><ProtectedString name="Source"><![CDATA[-- RewardsData: ежедневные награды (7 дней) и колесо удачи (раз в 24 часа).
 -- Монеты масштабируются под открытый ярус: 1 "рейс" = первый рюкзак яруса, полный руды.
 local BiomesData = require(script.Parent.BiomesData)
 local EggsData = require(script.Parent.EggsData)
@@ -1149,7 +1200,7 @@ Rewards.Wheel = {
 }
 
 return Rewards
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000D"><Properties><string name="Name">SeedsData</string><ProtectedString name="Source"><![CDATA[-- SeedsData: Хроно-Семена (ТЗ 5). Chance = шанс за сломанный блок.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000E"><Properties><string name="Name">SeedsData</string><ProtectedString name="Source"><![CDATA[-- SeedsData: Хроно-Семена (ТЗ 5). Chance = шанс за сломанный блок.
 -- Питомец из семени: сила = PowerMult x самый редкий пет премиум-яйца яруса
 -- (плюс случайно 0..+20%), даёт оба бонуса и уникальную ауру.
 -- Янтарная почка для 2-го биома — добавлена, чтобы в каждом ярусе было своё семя.
@@ -1196,7 +1247,7 @@ for _, s in ipairs(Seeds) do
 end
 
 return { List = Seeds, ById = byId, ByBiome = byBiome, ByPet = byPet }
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000E"><Properties><string name="Name">SoundsData</string><ProtectedString name="Source"><![CDATA[-- SoundsData: все звуки и музыка игры.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000F"><Properties><string name="Name">SoundsData</string><ProtectedString name="Source"><![CDATA[-- SoundsData: все звуки и музыка игры.
 --
 -- КАК ПОСТАВИТЬ НАШИ ЗВУКИ (папка SFX в архиве, 19 звуков + 3 трека музыки):
 --   1) Studio → View → Asset Manager → кнопка «Bulk Import» → выбери все .ogg из папки SFX.
@@ -1234,7 +1285,7 @@ return {
 		Music_Deep = { Id = "" },
 	},
 }
-]]></ProtectedString></Properties></Item></Item><Item class="Folder" referent="RBX00000000000000000000000000000010"><Properties><string name="Name">CustomSounds</string></Properties></Item><Item class="Folder" referent="RBX00000000000000000000000000000019"><Properties><string name="Name">Shared</string></Properties><Item class="ModuleScript" referent="RBX00000000000000000000000000000011"><Properties><string name="Name">GearBuilder</string><ProtectedString name="Source"><![CDATA[-- GearBuilder: процедурные модели буров, рюкзаков и яиц.
+]]></ProtectedString></Properties></Item></Item><Item class="Folder" referent="RBX00000000000000000000000000000011"><Properties><string name="Name">CustomSounds</string></Properties></Item><Item class="Folder" referent="RBX0000000000000000000000000000001A"><Properties><string name="Name">Shared</string></Properties><Item class="ModuleScript" referent="RBX00000000000000000000000000000012"><Properties><string name="Name">GearBuilder</string><ProtectedString name="Source"><![CDATA[-- GearBuilder: процедурные модели буров, рюкзаков и яиц.
 -- Бур: рукоять в начале координат (ось Y), сверло смотрит в -Z.
 -- Сверло собрано отдельно (BitRoot + Weld "BitWeld"), клиент вращает его во время бурения.
 local MK = require(script.Parent.ModelKit)
@@ -1526,7 +1577,7 @@ function GearBuilder.Egg(def, scale)
 end
 
 return GearBuilder
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000012"><Properties><string name="Name">IconModels</string><ProtectedString name="Source"><![CDATA[-- IconModels: маленькие 3D-модели для иконок интерфейса (рендерятся во ViewportFrame).
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000013"><Properties><string name="Name">IconModels</string><ProtectedString name="Source"><![CDATA[-- IconModels: маленькие 3D-модели для иконок интерфейса (рендерятся во ViewportFrame).
 -- Каждая иконка смотрит в камеру по -Z, центр модели примерно в (0, 0, 0).
 local MK = require(script.Parent.ModelKit)
 
@@ -1828,7 +1879,7 @@ end
 table.sort(Icons.Names)
 
 return Icons
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000013"><Properties><string name="Name">ModelKit</string><ProtectedString name="Source"><![CDATA[-- ModelKit: строительные блоки для процедурных low-poly моделей.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000014"><Properties><string name="Name">ModelKit</string><ProtectedString name="Source"><![CDATA[-- ModelKit: строительные блоки для процедурных low-poly моделей.
 -- Всё собирается из примитивов Roblox (Part, WedgePart, CornerWedgePart, SpecialMesh Sphere),
 -- поэтому игре не нужны загруженные меши и текстуры.
 local ModelKit = {}
@@ -2181,7 +2232,7 @@ function ModelKit.Facet(parent, size, pos, color, rng, props)
 	return ModelKit.Part(parent, size, cf, color, props)
 end
 
-return ModelKit]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000014"><Properties><string name="Name">NPCBuilder</string><ProtectedString name="Source"><![CDATA[-- NPCBuilder: квестовый робот Drill-Bot 3000.
+return ModelKit]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000015"><Properties><string name="Name">NPCBuilder</string><ProtectedString name="Source"><![CDATA[-- NPCBuilder: квестовый робот Drill-Bot 3000.
 -- Модель стоит на y = 0, смотрит в -Z. Детали "Eye", "Head", "Antenna", "Arm" анимирует клиент.
 local MK = require(script.Parent.ModelKit)
 
@@ -2276,7 +2327,7 @@ function NPCBuilder.DrillBot()
 end
 
 return NPCBuilder
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000015"><Properties><string name="Name">Net</string><ProtectedString name="Source"><![CDATA[-- Net: создание и получение RemoteEvent/RemoteFunction в ReplicatedStorage.Remotes.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000016"><Properties><string name="Name">Net</string><ProtectedString name="Source"><![CDATA[-- Net: создание и получение RemoteEvent/RemoteFunction в ReplicatedStorage.Remotes.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -2347,7 +2398,7 @@ function Net.Get(name)
 end
 
 return Net
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000016"><Properties><string name="Name">PetBuilder</string><ProtectedString name="Source"><![CDATA[-- PetBuilder: процедурная сборка chibi-питомцев в стиле популярных симуляторов.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000017"><Properties><string name="Name">PetBuilder</string><ProtectedString name="Source"><![CDATA[-- PetBuilder: процедурная сборка chibi-питомцев в стиле популярных симуляторов.
 -- Каждый питомец = архетип (силуэт) + набор деталей из PetLooks.
 -- Модель смотрит в -Z, ноги на y = 0, Root (pivot) в (0, 1, 0).
 local Configs = script.Parent.Parent:WaitForChild("Configs")
@@ -3943,7 +3994,7 @@ function PetBuilder.ApplyTier(model, tier)
 end
 
 return PetBuilder
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000017"><Properties><string name="Name">Stats</string><ProtectedString name="Source"><![CDATA[-- Stats: все производные характеристики игрока. Используется и сервером, и клиентом,
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000018"><Properties><string name="Name">Stats</string><ProtectedString name="Source"><![CDATA[-- Stats: все производные характеристики игрока. Используется и сервером, и клиентом,
 -- чтобы цифры в интерфейсе всегда совпадали с серверными расчётами.
 local Configs = script.Parent.Parent:WaitForChild("Configs")
 local Balance = require(Configs.Balance)
@@ -4284,7 +4335,7 @@ function Stats.PetCount(data)
 end
 
 return Stats
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000018"><Properties><string name="Name">Util</string><ProtectedString name="Source"><![CDATA[-- Util: форматирование чисел, интерполяция, взвешенный выбор и прочие мелочи.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000019"><Properties><string name="Name">Util</string><ProtectedString name="Source"><![CDATA[-- Util: форматирование чисел, интерполяция, взвешенный выбор и прочие мелочи.
 local Util = {}
 
 local SUFFIXES = { "", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc" }
@@ -4433,7 +4484,7 @@ function Util.Count(t)
 end
 
 return Util
-]]></ProtectedString></Properties></Item></Item></Item><Item class="ServerScriptService" referent="RBX0000000000000000000000000000004F"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Folder" referent="RBX0000000000000000000000000000001F"><Properties><string name="Name">Core</string></Properties><Item class="ModuleScript" referent="RBX0000000000000000000000000000001A"><Properties><string name="Name">DataManager</string><ProtectedString name="Source"><![CDATA[-- DataManager: загрузка и сохранение профилей игроков.
+]]></ProtectedString></Properties></Item></Item></Item><Item class="ServerScriptService" referent="RBX00000000000000000000000000000050"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Folder" referent="RBX00000000000000000000000000000020"><Properties><string name="Name">Core</string></Properties><Item class="ModuleScript" referent="RBX0000000000000000000000000000001B"><Properties><string name="Name">DataManager</string><ProtectedString name="Source"><![CDATA[-- DataManager: загрузка и сохранение профилей игроков.
 -- Аналог ProfileService на встроенном DataStoreService: сессионная блокировка,
 -- автосейв, сохранение при выходе и при закрытии сервера, миграция новых полей.
 local DataStoreService = game:GetService("DataStoreService")
@@ -4663,7 +4714,7 @@ function DataManager.Init()
 end
 
 return DataManager
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000001B"><Properties><string name="Name">MineResetService</string><ProtectedString name="Source"><![CDATA[-- MineResetService: 20-минутный цикл вайпа шахт (ТЗ 6).
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000001C"><Properties><string name="Name">MineResetService</string><ProtectedString name="Source"><![CDATA[-- MineResetService: 20-минутный цикл вайпа шахт (ТЗ 6).
 -- Время следующего вайпа лежит в атрибуте workspace.MineResetAt (unix), клиент рисует таймер.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -4732,7 +4783,7 @@ function MineReset.Start(Mining, Travel, DataManager)
 end
 
 return MineReset
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000001C"><Properties><string name="Name">Notifier</string><ProtectedString name="Source"><![CDATA[-- Notifier: тосты, баннеры и всплывающие монеты для клиентов.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000001D"><Properties><string name="Name">Notifier</string><ProtectedString name="Source"><![CDATA[-- Notifier: тосты, баннеры и всплывающие монеты для клиентов.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Net = require(ReplicatedStorage.Shared.Net)
 
@@ -4761,7 +4812,7 @@ function Notifier.Coins(player, amount, where)
 end
 
 return Notifier
-]]></ProtectedString></Properties></Item><Item class="Script" referent="RBX0000000000000000000000000000001D"><Properties><string name="Name">PlayerInit</string><ProtectedString name="Source"><![CDATA[-- PlayerInit: точка входа сервера. Собирает ассеты и мир, запускает все сервисы,
+]]></ProtectedString></Properties></Item><Item class="Script" referent="RBX0000000000000000000000000000001E"><Properties><string name="Name">PlayerInit</string><ProtectedString name="Source"><![CDATA[-- PlayerInit: точка входа сервера. Собирает ассеты и мир, запускает все сервисы,
 -- загружает профили игроков и готовит персонажей.
 local Players = game:GetService("Players")
 local PhysicsService = game:GetService("PhysicsService")
@@ -4942,7 +4993,7 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 -- покупка геймпассов — в Managers/PassManager.lua
-]]></ProtectedString><bool name="Disabled">false</bool></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000001E"><Properties><string name="Name">StateSync</string><ProtectedString name="Source"><![CDATA[-- StateSync: отправляет клиенту снимок его данных + производные характеристики.
+]]></ProtectedString><bool name="Disabled">false</bool></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000001F"><Properties><string name="Name">StateSync</string><ProtectedString name="Source"><![CDATA[-- StateSync: отправляет клиенту снимок его данных + производные характеристики.
 -- Изменения помечаются Dirty и пачкой улетают не чаще 6 раз в секунду.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -5061,7 +5112,7 @@ function StateSync.Init()
 end
 
 return StateSync
-]]></ProtectedString></Properties></Item></Item><Item class="Folder" referent="RBX0000000000000000000000000000002F"><Properties><string name="Name">Managers</string></Properties><Item class="ModuleScript" referent="RBX00000000000000000000000000000020"><Properties><string name="Name">AdminCommands</string><ProtectedString name="Source"><![CDATA[-- AdminCommands: консоль разработчика. Доступ — в Studio, владельцу плейса, админам группы (ранг 254+)
+]]></ProtectedString></Properties></Item></Item><Item class="Folder" referent="RBX00000000000000000000000000000030"><Properties><string name="Name">Managers</string></Properties><Item class="ModuleScript" referent="RBX00000000000000000000000000000021"><Properties><string name="Name">AdminCommands</string><ProtectedString name="Source"><![CDATA[-- AdminCommands: консоль разработчика. Доступ — в Studio, владельцу плейса, админам группы (ранг 254+)
 -- и тем, чей UserId вписан в EXTRA_ADMINS. Открывается клавишей F2 (или кнопкой «Консоль» у админа).
 -- Те же команды работают и в чате: !coins 1e9  (или /coins 1e9)
 --
@@ -5622,7 +5673,7 @@ function Admin.Init(mining, travel, passes)
 end
 
 return Admin
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000021"><Properties><string name="Name">AssetForge</string><ProtectedString name="Source"><![CDATA[-- AssetForge: при старте сервера собирает все модели в ReplicatedStorage.Assets
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000022"><Properties><string name="Name">AssetForge</string><ProtectedString name="Source"><![CDATA[-- AssetForge: при старте сервера собирает все модели в ReplicatedStorage.Assets
 -- (Pets, Drills, Backpacks, Eggs, NPC). Клиенты клонируют их оттуда.
 -- Совет: запустите Play, скопируйте папку Assets, остановите игру и вставьте её —
 -- так модели можно будет доработать руками в Studio (AssetForge не перезапишет готовые).
@@ -5702,7 +5753,7 @@ function AssetForge.Build()
 end
 
 return AssetForge
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000022"><Properties><string name="Name">BoostManager</string><ProtectedString name="Source"><![CDATA[-- BoostManager: инвентарь бустов (ТЗ 7.1). Время активных бустов тикает, пока игрок онлайн.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000023"><Properties><string name="Name">BoostManager</string><ProtectedString name="Source"><![CDATA[-- BoostManager: инвентарь бустов (ТЗ 7.1). Время активных бустов тикает, пока игрок онлайн.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -5774,7 +5825,7 @@ function BoostManager.Init()
 end
 
 return BoostManager
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000023"><Properties><string name="Name">IncubatorManager</string><ProtectedString name="Source"><![CDATA[-- IncubatorManager: Био-камера (ТЗ 5.2). Время считается по os.time(), поэтому
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000024"><Properties><string name="Name">IncubatorManager</string><ProtectedString name="Source"><![CDATA[-- IncubatorManager: Био-камера (ТЗ 5.2). Время считается по os.time(), поэтому
 -- семена растут и в оффлайне: isReady = (os.time() - Planted) >= Duration - Cut.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -5900,7 +5951,7 @@ function Incubator.Init()
 end
 
 return Incubator
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000024"><Properties><string name="Name">LeaderboardService</string><ProtectedString name="Source"><![CDATA[-- LeaderboardService: глобальные таблицы лидеров на базе каждого яруса.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000025"><Properties><string name="Name">LeaderboardService</string><ProtectedString name="Source"><![CDATA[-- LeaderboardService: глобальные таблицы лидеров на базе каждого яруса.
 -- «Больше всего блоков», «Больше всего ребёрсов», «Больше всего яиц».
 -- Данные — OrderedDataStore (работает в опубликованной игре или в Studio с доступом к API);
 -- если хранилище недоступно, доски показывают игроков на сервере.
@@ -6129,7 +6180,7 @@ function LB.Init()
 end
 
 return LB
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000025"><Properties><string name="Name">MiningManager</string><ProtectedString name="Source"><![CDATA[-- MiningManager: шахты всех биомов, удары, руда, семена, самородки, глубина и шлюзы.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000026"><Properties><string name="Name">MiningManager</string><ProtectedString name="Source"><![CDATA[-- MiningManager: шахты всех биомов, удары, руда, семена, самородки, глубина и шлюзы.
 --
 -- Оптимизация (отличие от ТЗ 1.1): вместо 40 000 якорных деталей на биом мы держим
 -- в мире только "открытые" блоки — верхний слой и стенки уже вырытых ям. Скрытые блоки
@@ -6746,7 +6797,7 @@ function Mining.Init(travelModule)
 end
 
 return Mining
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000026"><Properties><string name="Name">PassManager</string><ProtectedString name="Source"><![CDATA[-- PassManager: геймпассы доната. Проверка владения при входе, покупка из меню «Донат»,
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000027"><Properties><string name="Name">PassManager</string><ProtectedString name="Source"><![CDATA[-- PassManager: геймпассы доната. Проверка владения при входе, покупка из меню «Донат»,
 -- выдача/снятие админом (F2 → Геймпассы), VIP-тег над головой.
 local Players = game:GetService("Players")
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -6893,7 +6944,7 @@ function Passes.Init()
 end
 
 return Passes
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000027"><Properties><string name="Name">PetManager</string><ProtectedString name="Source"><![CDATA[-- PetManager: открытие яиц (гача), экипировка, улучшение (★ → ★★ → ★★★ → Золотой → Радужный), удаление.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000028"><Properties><string name="Name">PetManager</string><ProtectedString name="Source"><![CDATA[-- PetManager: открытие яиц (гача), экипировка, улучшение (★ → ★★ → ★★★ → Золотой → Радужный), удаление.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -7256,7 +7307,7 @@ function PetManager.Init()
 end
 
 return PetManager
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000028"><Properties><string name="Name">QuestService</string><ProtectedString name="Source"><![CDATA[-- QuestService: сюжетные квесты Drill-Bot 3000, 3 динамических слота (всегда разные) и 4 недельных задания.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000029"><Properties><string name="Name">QuestService</string><ProtectedString name="Source"><![CDATA[-- QuestService: сюжетные квесты Drill-Bot 3000, 3 динамических слота (всегда разные) и 4 недельных задания.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -7717,7 +7768,7 @@ function QuestService.Init()
 end
 
 return QuestService
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000029"><Properties><string name="Name">RebirthManager</string><ProtectedString name="Source"><![CDATA[-- RebirthManager: перерождения и перки Хроно-Древа (ТЗ 8).
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000002A"><Properties><string name="Name">RebirthManager</string><ProtectedString name="Source"><![CDATA[-- RebirthManager: перерождения и перки Хроно-Древа (ТЗ 8).
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Configs = ReplicatedStorage:WaitForChild("Configs")
@@ -7804,7 +7855,7 @@ function Rebirth.Init()
 end
 
 return Rebirth
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000002A"><Properties><string name="Name">RewardsManager</string><ProtectedString name="Source"><![CDATA[-- RewardsManager: ежедневные награды (серия 7 дней) и колесо удачи раз в 24 часа.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000002B"><Properties><string name="Name">RewardsManager</string><ProtectedString name="Source"><![CDATA[-- RewardsManager: ежедневные награды (серия 7 дней) и колесо удачи раз в 24 часа.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Configs = ReplicatedStorage:WaitForChild("Configs")
@@ -7947,7 +7998,7 @@ function Rewards.Init()
 end
 
 return Rewards
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000002B"><Properties><string name="Name">ShopManager</string><ProtectedString name="Source"><![CDATA[-- ShopManager: продажа руды в репликаторе (ТЗ 2.5), покупка буров/рюкзаков,
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000002C"><Properties><string name="Name">ShopManager</string><ProtectedString name="Source"><![CDATA[-- ShopManager: продажа руды в репликаторе (ТЗ 2.5), покупка буров/рюкзаков,
 -- надевание моделей бура (в правую руку) и рюкзака (на спину).
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8182,7 +8233,7 @@ function Shop.Init()
 end
 
 return Shop
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000002C"><Properties><string name="Name">TravelManager</string><ProtectedString name="Source"><![CDATA[-- TravelManager: телепорт на базу (3 сек каста), перелёты между биомами, порталы,
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000002D"><Properties><string name="Name">TravelManager</string><ProtectedString name="Source"><![CDATA[-- TravelManager: телепорт на базу (3 сек каста), перелёты между биомами, порталы,
 -- выбор наименее загруженного дроп-пода (ТЗ 1.2).
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8357,7 +8408,7 @@ function Travel.Init()
 end
 
 return Travel
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000002D"><Properties><string name="Name">WorldBuilder</string><ProtectedString name="Source"><![CDATA[-- WorldBuilder: процедурно строит 5 летающих островов-биомов:
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000002E"><Properties><string name="Name">WorldBuilder</string><ProtectedString name="Source"><![CDATA[-- WorldBuilder: процедурно строит 5 летающих островов-биомов:
 -- шахта 160x160 со стенами и 10 дроп-подами, база с продажей, магазинами, яйцами,
 -- инкубатором, Хроно-Древом, порталами и NPC Drill-Bot 3000, плюс декор под тему биома.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -9739,7 +9790,7 @@ function WorldBuilder.MinesFolder(b)
 end
 
 return WorldBuilder
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000002E"><Properties><string name="Name">WorldScenery</string><ProtectedString name="Source"><![CDATA[-- WorldScenery: делает острова живыми — расширенная кромка острова с горными хребтами,
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000002F"><Properties><string name="Name">WorldScenery</string><ProtectedString name="Source"><![CDATA[-- WorldScenery: делает острова живыми — расширенная кромка острова с горными хребтами,
 -- леса, облака, водопады, пруды, вышки, ветряная мельница, бочки, вулкан, иглу, кольца бездны...
 -- Всё в low-poly стиле из примитивов. Папка "Scenery" на клиенте скрывается для неактивных
 -- ярусов (LightingController), поэтому на телефонах рисуется только текущий остров.
@@ -10673,7 +10724,7 @@ function Scenery.Build(b, folder, O, biome, Decor)
 end
 
 return Scenery
-]]></ProtectedString></Properties></Item></Item></Item><Item class="StarterPlayer" referent="RBX00000000000000000000000000000052"><Properties><string name="Name">StarterPlayer</string><float name="CharacterWalkSpeed">18</float><float name="CameraMaxZoomDistance">80</float></Properties><Item class="StarterPlayerScripts" referent="RBX00000000000000000000000000000050"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="LocalScript" referent="RBX00000000000000000000000000000030"><Properties><string name="Name">ClientMain</string><ProtectedString name="Source"><![CDATA[-- ClientMain: точка входа клиента.
+]]></ProtectedString></Properties></Item></Item></Item><Item class="StarterPlayer" referent="RBX00000000000000000000000000000053"><Properties><string name="Name">StarterPlayer</string><float name="CharacterWalkSpeed">18</float><float name="CameraMaxZoomDistance">80</float></Properties><Item class="StarterPlayerScripts" referent="RBX00000000000000000000000000000051"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="LocalScript" referent="RBX00000000000000000000000000000031"><Properties><string name="Name">ClientMain</string><ProtectedString name="Source"><![CDATA[-- ClientMain: точка входа клиента.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Controllers = script.Parent:WaitForChild("Controllers")
@@ -10706,7 +10757,7 @@ LightingController.Init()
 WorldFx.Init()
 Music.Init()
 Detail.Init()
-]]></ProtectedString><bool name="Disabled">false</bool></Properties></Item><Item class="Folder" referent="RBX0000000000000000000000000000003C"><Properties><string name="Name">Controllers</string></Properties><Item class="ModuleScript" referent="RBX00000000000000000000000000000031"><Properties><string name="Name">CharacterController</string><ProtectedString name="Source"><![CDATA[-- CharacterController: процедурная анимация бурильщика для всех персонажей.
+]]></ProtectedString><bool name="Disabled">false</bool></Properties></Item><Item class="Folder" referent="RBX0000000000000000000000000000003D"><Properties><string name="Name">Controllers</string></Properties><Item class="ModuleScript" referent="RBX00000000000000000000000000000032"><Properties><string name="Name">CharacterController</string><ProtectedString name="Source"><![CDATA[-- CharacterController: процедурная анимация бурильщика для всех персонажей.
 -- Рука с буром поднимается вперёд, при бурении — дрожь отдачи и быстрое вращение сверла.
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10802,7 +10853,7 @@ function CharacterController.Init(miningController)
 end
 
 return CharacterController
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000032"><Properties><string name="Name">ClientState</string><ProtectedString name="Source"><![CDATA[-- ClientState: последний снимок данных игрока с сервера + сигнал изменений.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000033"><Properties><string name="Name">ClientState</string><ProtectedString name="Source"><![CDATA[-- ClientState: последний снимок данных игрока с сервера + сигнал изменений.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Net"))
 
@@ -10863,7 +10914,7 @@ function ClientState.Wait()
 end
 
 return ClientState
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000033"><Properties><string name="Name">DetailController</string><ProtectedString name="Source"><![CDATA[-- DetailController: качество графики (Низкая / Средняя / Высокая) на клиенте.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000034"><Properties><string name="Name">DetailController</string><ProtectedString name="Source"><![CDATA[-- DetailController: качество графики (Низкая / Средняя / Высокая) на клиенте.
 --  • свет: тени, свечение, лучи солнца, облака, травинки Terrain;
 --  • слой мелких деталей вокруг острова (только у себя на клиенте): трава, цветы, грибы,
 --    камушки, кристаллы, кости, ледышки — по теме яруса;
@@ -11243,6 +11294,14 @@ end
 ---------------------------------------------------------------------------------------------
 local function applyLighting()
 	local hi, lo = quality == "High", quality == "Low"
+	-- размытие мира за открытыми окнами — только на средней и высокой графике
+	pcall(function()
+		local uiFolder = script.Parent.Parent:FindFirstChild("UI")
+		local kit = uiFolder and uiFolder:FindFirstChild("UIKit")
+		if kit then
+			require(kit).BackdropEnabled = not lo
+		end
+	end)
 	Lighting.GlobalShadows = not lo
 	Lighting.ShadowSoftness = hi and 0.22 or 0.35 -- мягкие тени
 	-- лёгкое размытие дальнего плана (только «Высокая»): картинка выглядит как в современных играх
@@ -11383,7 +11442,7 @@ function Detail.Init()
 end
 
 return Detail
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000034"><Properties><string name="Name">LightingController</string><ProtectedString name="Source"><![CDATA[-- LightingController: своя атмосфера и цветокоррекция на каждом ярусе (ТЗ 9.1),
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000035"><Properties><string name="Name">LightingController</string><ProtectedString name="Source"><![CDATA[-- LightingController: своя атмосфера и цветокоррекция на каждом ярусе (ТЗ 9.1),
 -- плавное затемнение по мере спуска в шахту.
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
@@ -11485,7 +11544,7 @@ function LightingController.Init()
 end
 
 return LightingController
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000035"><Properties><string name="Name">MiningController</string><ProtectedString name="Source"><![CDATA[-- MiningController: зажатие ЛКМ / экрана / R2 -> удары по блоку с частотой бура.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000036"><Properties><string name="Name">MiningController</string><ProtectedString name="Source"><![CDATA[-- MiningController: зажатие ЛКМ / экрана / R2 -> удары по блоку с частотой бура.
 -- Подсветка цели, полоска HP блока, предсказание эффектов на клиенте.
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -11768,7 +11827,7 @@ function Mining.Init()
 end
 
 return Mining
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000036"><Properties><string name="Name">MusicController</string><ProtectedString name="Source"><![CDATA[-- MusicController: фоновая музыка с плавными переходами.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000037"><Properties><string name="Name">MusicController</string><ProtectedString name="Source"><![CDATA[-- MusicController: фоновая музыка с плавными переходами.
 -- Треки берутся из ReplicatedStorage.CustomSounds (объекты Sound с именами Music_Hub, Music_Mine, Music_Deep...)
 -- или из SoundsData.Music (rbxassetid://...). Пока музыку не загрузили — просто тишина.
 -- Громкость — в Настройках.
@@ -11861,7 +11920,7 @@ function Music.Init()
 end
 
 return Music
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000037"><Properties><string name="Name">PetFollowController</string><ProtectedString name="Source"><![CDATA[-- PetFollowController: питомцы всех игроков (рендер на клиенте).
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000038"><Properties><string name="Name">PetFollowController</string><ProtectedString name="Source"><![CDATA[-- PetFollowController: питомцы всех игроков (рендер на клиенте).
 -- ТЗ 9.3: покачивание по синусоиде ±0.5 stud, крен на поворотах ±8°, AlignPosition (Responsiveness 25).
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -12119,7 +12178,7 @@ function Pets.DisplayModel(id, tier)
 end
 
 return Pets
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000038"><Properties><string name="Name">SettingsController</string><ProtectedString name="Source"><![CDATA[-- SettingsController: качество графики и громкость. Хранится на сервере (data.Settings),
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000039"><Properties><string name="Name">SettingsController</string><ProtectedString name="Source"><![CDATA[-- SettingsController: качество графики и громкость. Хранится на сервере (data.Settings),
 -- поэтому выбор сохраняется между входами и на всех устройствах игрока.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Net"))
@@ -12182,7 +12241,7 @@ function SettingsController.Init()
 end
 
 return SettingsController
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000039"><Properties><string name="Name">SoundController</string><ProtectedString name="Source"><![CDATA[-- SoundController: проигрывание звуков из SoundsData с вариацией высоты.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000003A"><Properties><string name="Name">SoundController</string><ProtectedString name="Source"><![CDATA[-- SoundController: проигрывание звуков из SoundsData с вариацией высоты.
 local SoundService = game:GetService("SoundService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundsData = require(ReplicatedStorage:WaitForChild("Configs"):WaitForChild("SoundsData"))
@@ -12274,7 +12333,7 @@ function SoundController.Init()
 end
 
 return SoundController
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000003A"><Properties><string name="Name">UIController</string><ProtectedString name="Source"><![CDATA[-- UIController: собирает все экраны (HUD, InventoryGui, EggOpeningGui, QuestTracker),
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000003B"><Properties><string name="Name">UIController</string><ProtectedString name="Source"><![CDATA[-- UIController: собирает все экраны (HUD, InventoryGui, EggOpeningGui, QuestTracker),
 -- масштабирует их под экран (ПК / телефон / консоль) и связывает с сервером.
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
@@ -12617,7 +12676,7 @@ function UIController.Init(PetFollow)
 end
 
 return UIController
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000003B"><Properties><string name="Name">WorldFxController</string><ProtectedString name="Source"><![CDATA[-- WorldFxController: "живой" мир на клиенте — вращение витрин, покачивание яиц,
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000003C"><Properties><string name="Name">WorldFxController</string><ProtectedString name="Source"><![CDATA[-- WorldFxController: "живой" мир на клиенте — вращение витрин, покачивание яиц,
 -- пульсация неона, орбиты циферблата, анимация Drill-Bot 3000, подписи порталов.
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
@@ -12852,7 +12911,7 @@ function Fx.Init()
 end
 
 return Fx
-]]></ProtectedString></Properties></Item></Item><Item class="Folder" referent="RBX00000000000000000000000000000049"><Properties><string name="Name">UI</string></Properties><Item class="ModuleScript" referent="RBX0000000000000000000000000000003D"><Properties><string name="Name">AdminConsole</string><ProtectedString name="Source"><![CDATA[-- AdminConsole: текстовая консоль разработчика (F3; основная панель — F2). Видна только админам (атрибут IsAdmin от сервера).
+]]></ProtectedString></Properties></Item></Item><Item class="Folder" referent="RBX0000000000000000000000000000004A"><Properties><string name="Name">UI</string></Properties><Item class="ModuleScript" referent="RBX0000000000000000000000000000003E"><Properties><string name="Name">AdminConsole</string><ProtectedString name="Source"><![CDATA[-- AdminConsole: текстовая консоль разработчика (F3; основная панель — F2). Видна только админам (атрибут IsAdmin от сервера).
 -- Ввод команды + Enter, стрелки ↑/↓ — история, Tab — дополнить имя команды.
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -13005,7 +13064,7 @@ function AdminConsole.Build(screen, ctx)
 end
 
 return AdminConsole
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000003E"><Properties><string name="Name">AdminPanel</string><ProtectedString name="Source"><![CDATA[-- AdminPanel: удобная панель разработчика (F2). Видна только админам (атрибут IsAdmin от сервера).
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000003F"><Properties><string name="Name">AdminPanel</string><ProtectedString name="Source"><![CDATA[-- AdminPanel: удобная панель разработчика (F2). Видна только админам (атрибут IsAdmin от сервера).
 -- Слева выбираешь игрока на сервере (или «Все»), справа — вкладки: ресурсы, питомцы,
 -- телепорт, геймпассы, события и консоль. Каждая кнопка отправляет на сервер обычную
 -- админ-команду (те же команды можно писать в чат: !coins 1m).
@@ -13534,7 +13593,7 @@ function AdminPanel.Build(screen, ctx)
 end
 
 return AdminPanel
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000003F"><Properties><string name="Name">EggOpening</string><ProtectedString name="Source"><![CDATA[-- EggOpening: анимация открытия яиц (ТЗ 9.3):
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000040"><Properties><string name="Name">EggOpening</string><ProtectedString name="Source"><![CDATA[-- EggOpening: анимация открытия яиц (ТЗ 9.3):
 -- фокус камеры на яйце -> 3 нарастающих раскачивания -> белая вспышка 0.2 с ->
 -- половинки скорлупы разлетаются -> питомец вылетает с овершутом (Back.Out).
 local TweenService = game:GetService("TweenService")
@@ -14170,7 +14229,7 @@ function EggOpening.Hatch(pet)
 end
 
 return EggOpening
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000040"><Properties><string name="Name">HUD</string><ProtectedString name="Source"><![CDATA[-- HUD 2.0 — раскладка как в популярных симуляторах:
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000041"><Properties><string name="Name">HUD</string><ProtectedString name="Source"><![CDATA[-- HUD 2.0 — раскладка как в популярных симуляторах:
 --   слева      — сетка цветных кнопок меню с белыми иконками (питомцы, предметы, магазин, задания...)
 --   слева по центру — столбик: рюкзак, монеты, осколки, характеристики
 --   сверху     — ярус + глубина + таймер вайпа в одной плашке
@@ -14813,14 +14872,37 @@ function HUD.Build(screen, ctx)
 end
 
 return HUD
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000041"><Properties><string name="Name">Icons2D</string><ProtectedString name="Source"><![CDATA[-- Icons2D: однотонные векторные иконки в стиле популярных симуляторов.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000042"><Properties><string name="Name">Icons2D</string><ProtectedString name="Source"><![CDATA[-- Icons2D: иконки интерфейса. Если загружен атлас цветных иконок (Configs/IconAtlas) — берутся оттуда,
+-- иначе — однотонные векторные иконки в стиле популярных симуляторов (ниже).
 -- Белый силуэт + толстая тёмная обводка + "наклеечная" тень снизу.
 -- Иконка собирается из фреймов (круги, капсулы, ромбы, кольца) в три слоя:
 --   1) тень  2) обводка (те же фигуры с внешним UIStroke)  3) заливка  4) тёмные детали.
 -- Перекрытие слоёв даёт единый контур вокруг всей фигуры, без линий внутри.
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Icons2D = {}
+
+-- Цветные иконки из атласа (Icons/ChronoDrill_Icons.png, раскладка — Configs/IconAtlas).
+-- Пока в IconAtlas.Id не вписан ID загруженной картинки, рисуются векторные иконки ниже.
+local Atlas
+do
+	local configs = ReplicatedStorage:FindFirstChild("Configs")
+	local mod = configs and configs:FindFirstChild("IconAtlas")
+	if mod then
+		local ok, res = pcall(require, mod)
+		if ok and type(res) == "table" and type(res.Id) == "string" and res.Id ~= "" and type(res.Icons) == "table" then
+			Atlas = res
+			if not string.find(Atlas.Id, "://") then
+				Atlas.Id = "rbxassetid://" .. Atlas.Id
+			end
+		end
+	end
+end
+-- Кнопочные значки (крестик, галочка, плюс, стрелка) остаются белыми векторными — так они читаются на любой кнопке
+local KEEP_VECTOR = { Close = true, Check = true, Plus = true, Arrow = true }
+-- Атласная иконка чуть крупнее «коробки» векторной: в ячейке атласа есть поля под обводку и тень
+local ATLAS_SCALE = 1.22
 
 local INK = Color3.fromRGB(28, 22, 44)
 local WHITE = Color3.fromRGB(255, 255, 255)
@@ -15098,11 +15180,48 @@ end
 
 -- Icons2D.New(parent, name, size, opts) -> Frame
 -- opts: Color (цвет заливки, по умолчанию белый), Ink (обводка), Shadow (true), ZIndex
+local function newAtlasIcon(parent, name, Spx, opts)
+	local idx = Atlas.Icons[name]
+	local cell = Atlas.Cell or 146
+	local cols = Atlas.Columns or 7
+	local holder = Instance.new("Frame")
+	holder.Name = "Icon_" .. name
+	holder.BackgroundTransparency = 1
+	holder.BorderSizePixel = 0
+	holder.Size = UDim2.fromOffset(Spx, Spx)
+	holder.ZIndex = opts.ZIndex or 3
+	local img = Instance.new("ImageLabel")
+	img.Name = "Image"
+	img.BackgroundTransparency = 1
+	img.BorderSizePixel = 0
+	img.AnchorPoint = Vector2.new(0.5, 0.5)
+	img.Position = UDim2.fromScale(0.5, 0.5)
+	img.Size = UDim2.fromScale(ATLAS_SCALE, ATLAS_SCALE)
+	img.Image = Atlas.Id
+	img.ImageRectOffset = Vector2.new((idx % cols) * cell, math.floor(idx / cols) * cell)
+	img.ImageRectSize = Vector2.new(cell, cell)
+	img.ScaleType = Enum.ScaleType.Fit
+	img.ZIndex = opts.ZIndex or 3
+	img.Parent = holder
+	local scale = Instance.new("UIScale")
+	scale.Parent = holder
+	holder.Parent = parent
+	return holder
+end
+
+function Icons2D.HasImage(name)
+	name = ALIAS[name] or name
+	return Atlas ~= nil and not KEEP_VECTOR[name] and Atlas.Icons[name] ~= nil
+end
+
 function Icons2D.New(parent, name, size, opts)
 	opts = opts or {}
 	name = ALIAS[name] or name
-	local def = Defs[name] or Defs.Star
 	local Spx = size or 48
+	if not opts.Procedural and Icons2D.HasImage(name) then
+		return newAtlasIcon(parent, name, Spx, opts)
+	end
+	local def = Defs[name] or Defs.Star
 	local fill = opts.Color or WHITE
 	local ink = opts.Ink or INK
 	local t = math.max(1.5, Spx * 0.06)
@@ -15150,6 +15269,12 @@ end
 
 -- Перекрасить заливку иконки (например, серый для закрытого)
 function Icons2D.SetColor(holder, color)
+	local img = holder:FindFirstChild("Image")
+	if img and img:IsA("ImageLabel") then
+		-- цветную картинку не перекрашиваем, а затемняем/тонируем (например, серый для закрытого)
+		img.ImageColor3 = color
+		return
+	end
 	local fl = holder:FindFirstChild("Fill")
 	if not fl then
 		return
@@ -15186,7 +15311,7 @@ function Icons2D.Wiggle(holder)
 end
 
 return Icons2D
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000042"><Properties><string name="Name">Icons3D</string><ProtectedString name="Source"><![CDATA[-- Icons3D: объёмные иконки — 3D-модель во ViewportFrame с мягким светом.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000043"><Properties><string name="Name">Icons3D</string><ProtectedString name="Source"><![CDATA[-- Icons3D: объёмные иконки — 3D-модель во ViewportFrame с мягким светом.
 -- При наведении иконка плавно поворачивается и подпрыгивает.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -15281,7 +15406,7 @@ RunService.RenderStepped:Connect(function(dt)
 end)
 
 return Icons3D
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000043"><Properties><string name="Name">Panels</string><ProtectedString name="Source"><![CDATA[-- Panels: окна интерфейса — питомцы, сумка, магазин, инкубатор, ребёрс, миры,
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000044"><Properties><string name="Name">Panels</string><ProtectedString name="Source"><![CDATA[-- Panels: окна интерфейса — питомцы, сумка, магазин, инкубатор, ребёрс, миры,
 -- диалог Drill-Bot 3000 и окно яйца с шансами.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -16215,7 +16340,7 @@ local function buildIncubator(screen, ctx)
 				clear(s.seedHolder)
 				if slot and slot.Seed then
 					local sd = SeedsData.ById[slot.Seed]
-					Icons2D.New(s.seedHolder, "Sprout", 70, { Color = c3(sd.Color) })
+					Icons2D.New(s.seedHolder, "Sprout", 70, { Color = c3(sd.Color), Procedural = true })
 				end
 			end
 			if i > maxSlots then
@@ -16977,7 +17102,7 @@ function Panels.Build(screen, ctx)
 end
 
 return Panels
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000044"><Properties><string name="Name">QuestPanel</string><ProtectedString name="Source"><![CDATA[-- QuestPanel: окно «Задания» (открывается кнопкой в меню).
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000045"><Properties><string name="Name">QuestPanel</string><ProtectedString name="Source"><![CDATA[-- QuestPanel: окно «Задания» (открывается кнопкой в меню).
 -- Вкладка «Задания»: сюжетный квест Drill-Bot 3000 и 3 динамических (всегда разные).
 -- Вкладка «Неделя»: 4 недельных задания и бонус за все — эксклюзивный Звёздный Грифон.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -17402,7 +17527,7 @@ function QuestPanel.Build(screen, ctx)
 end
 
 return QuestPanel
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000045"><Properties><string name="Name">RewardPanels</string><ProtectedString name="Source"><![CDATA[-- RewardPanels: ежедневные награды (7 дней), колесо удачи и статистика игрока.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000046"><Properties><string name="Name">RewardPanels</string><ProtectedString name="Source"><![CDATA[-- RewardPanels: ежедневные награды (7 дней), колесо удачи и статистика игрока.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -17910,7 +18035,7 @@ function RewardPanels.Build(screen, ctx, panels)
 end
 
 return RewardPanels
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000046"><Properties><string name="Name">SettingsPanel</string><ProtectedString name="Source"><![CDATA[-- SettingsPanel: окно «Настройки» (графика, музыка, звуки) и выбор графики при первом входе.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000047"><Properties><string name="Name">SettingsPanel</string><ProtectedString name="Source"><![CDATA[-- SettingsPanel: окно «Настройки» (графика, музыка, звуки) и выбор графики при первом входе.
 local UI = require(script.Parent.UIKit)
 local Icons2D = require(script.Parent.Icons2D)
 
@@ -18030,7 +18155,7 @@ function SettingsPanel.Chooser(screen, ctx, onDone)
 end
 
 return SettingsPanel
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000047"><Properties><string name="Name">TutorialGuide</string><ProtectedString name="Source"><![CDATA[-- TutorialGuide: короткое обучение для новичков.
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000048"><Properties><string name="Name">TutorialGuide</string><ProtectedString name="Source"><![CDATA[-- TutorialGuide: короткое обучение для новичков.
 -- Карточка с подсказкой под верхней плашкой + анимированные стрелки:
 --   • в интерфейсе — стрелка у нужной кнопки (рюкзак, «На базу», «Задания», «Питомцы»);
 --   • в мире — большая стрелка над целью (шахта, продажа, магазин, яйцо) и светящийся луч от игрока.
@@ -18434,11 +18559,12 @@ function TutorialGuide.Build(hud, ctx, panels)
 end
 
 return TutorialGuide
-]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000048"><Properties><string name="Name">UIKit</string><ProtectedString name="Source"><![CDATA[-- UIKit: мультяшный векторный UI (ТЗ 9.2).
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000049"><Properties><string name="Name">UIKit</string><ProtectedString name="Source"><![CDATA[-- UIKit: мультяшный векторный UI (ТЗ 9.2).
 -- Толстые тёмные рамки (UIStroke 3px), объёмные плашки с тенью вниз, FredokaOne,
 -- hover: Scale 1.05 за 0.1 с (Quad), click: 0.95 + щелчок.
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 
 local UI = {}
 
@@ -18568,6 +18694,48 @@ function UI.Lighter(c, f)
 	return c:Lerp(Color3.new(1, 1, 1), f or 0.3)
 end
 
+-- «Леденцовый» градиент: светлый верх -> чистый цвет -> чуть темнее низ. Цвет задаётся самим градиентом,
+-- поэтому фон объекта должен быть белым (UIGradient умножается на фон).
+function UI.CandySeq(c)
+	return ColorSequence.new({
+		ColorSequenceKeypoint.new(0, UI.Lighter(c, 0.3)),
+		ColorSequenceKeypoint.new(0.5, c),
+		ColorSequenceKeypoint.new(1, UI.Darker(c, 0.12)),
+	})
+end
+function UI.Candy(inst, c, rot)
+	if inst:IsA("GuiObject") then
+		inst.BackgroundColor3 = Color3.new(1, 1, 1)
+	end
+	local g = Instance.new("UIGradient")
+	g.Color = UI.CandySeq(c)
+	g.Rotation = rot or 90
+	g.Parent = inst
+	return g
+end
+
+-- Мягкий глянец: белая полоса сверху, которая плавно растворяется книзу
+function UI.Gloss(parent, size, pos, alpha, z)
+	local f = UI.new("Frame", {
+		Name = "Gloss",
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		BackgroundTransparency = 0,
+		Size = size,
+		Position = pos,
+		ZIndex = z or parent.ZIndex,
+		Parent = parent,
+	})
+	UI.Corner(f, UDim.new(1, 0))
+	local g = Instance.new("UIGradient")
+	g.Rotation = 90
+	g.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, alpha or 0.45),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	g.Parent = f
+	return f
+end
+
 -- Текст с обводкой
 function UI.Text(parent, text, props)
 	local l = UI.new("TextLabel", {
@@ -18685,17 +18853,9 @@ function UI.Button(opts)
 	})
 	UI.Corner(face, radius)
 	local faceStroke = UI.Stroke(face, 3, edge(color), true)
-	UI.Gradient(face, Color3.new(1, 1, 1), Color3.fromRGB(206, 206, 218))
-	-- блик сверху
-	local shine = UI.new("Frame", {
-		Name = "Shine",
-		BackgroundColor3 = Color3.new(1, 1, 1),
-		BackgroundTransparency = 0.65,
-		Size = UDim2.new(1, -12, 0.3, 0),
-		Position = UDim2.new(0, 6, 0, 3),
-		Parent = face,
-	})
-	UI.Corner(shine, UDim.new(1, 0))
+	local faceGrad = UI.Candy(face, color)
+	-- мягкий глянец сверху
+	UI.Gloss(face, UDim2.new(1, -12, 0.42, 0), UDim2.new(0, 6, 0, 3), 0.38)
 	local label
 	local iconFrame
 	if opts.Glyph then
@@ -18731,7 +18891,7 @@ function UI.Button(opts)
 	UI.Bounce(face, holder, faceHolder)
 	local obj = { Holder = holder, Face = face, Label = label, Shadow = shadow, Activated = face.Activated, Color = color, Glyph = iconFrame }
 	local function paint(c)
-		face.BackgroundColor3 = c
+		faceGrad.Color = UI.CandySeq(c)
 		shadow.BackgroundColor3 = UI.Darker(c, 0.35)
 		faceStroke.Color = edge(c)
 		shadowStroke.Color = edge(c)
@@ -18826,6 +18986,39 @@ local WINDOW_ICONS = {
 	Npc = "Quest", Egg = "Egg", Daily = "Gift", Wheel = "Wheel", Stats = "Stats", Quests = "Quest", Donate = "Diamond",
 }
 UI.HeaderHeight = 62
+
+-- Фон за открытым окном: мир мягко размывается и чуть темнеет, интерфейс остаётся чётким.
+-- Окна считаются по множеству, поэтому два окна подряд не «мигают» размытием.
+UI.BackdropEnabled = true
+local openWindows = {}
+local backdropBlur, backdropGrade
+local function backdropTarget()
+	for w in pairs(openWindows) do
+		if w.Root and w.Root.Parent then
+			return true
+		end
+		openWindows[w] = nil
+	end
+	return false
+end
+function UI.SetBackdrop(win, open)
+	openWindows[win] = open or nil
+	local on = UI.BackdropEnabled and backdropTarget()
+	if not backdropBlur or not backdropBlur.Parent then
+		backdropBlur = Instance.new("BlurEffect")
+		backdropBlur.Name = "UIBackdropBlur"
+		backdropBlur.Size = 0
+		backdropBlur.Parent = Lighting
+	end
+	if not backdropGrade or not backdropGrade.Parent then
+		backdropGrade = Instance.new("ColorCorrectionEffect")
+		backdropGrade.Name = "UIBackdropGrade"
+		backdropGrade.Parent = Lighting
+	end
+	local info = TweenInfo.new(on and 0.25 or 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	TweenService:Create(backdropBlur, info, { Size = on and 14 or 0 }):Play()
+	TweenService:Create(backdropGrade, info, { Brightness = on and -0.06 or 0, Saturation = on and -0.12 or 0 }):Play()
+end
 function UI.Window(screen, opts)
 	local base = opts.Size or UDim2.fromOffset(720, 480)
 	local HEAD = UI.HeaderHeight
@@ -18858,11 +19051,17 @@ function UI.Window(screen, opts)
 	-- шапка
 	local header = UI.new("Frame", { Name = "Header", BackgroundColor3 = color, Size = UDim2.new(1, 0, 0, HEAD), ZIndex = 2, Parent = body })
 	UI.Corner(header, 26)
-	UI.Gradient(header, Color3.fromRGB(255, 255, 255), Color3.fromRGB(196, 196, 210))
-	UI.new("Frame", { BackgroundColor3 = color, Size = UDim2.new(1, 0, 0, 26), Position = UDim2.new(0, 0, 1, -26), ZIndex = 2, Parent = header })
+	local headTop, headBottom = UI.Lighter(color, 0.28), UI.Darker(color, 0.1)
+	UI.Gradient(header, headTop, headBottom)
+	header.BackgroundColor3 = Color3.new(1, 1, 1) -- цвет целиком в градиенте (даже у почти серых окон)
+	-- квадратный низ шапки (под скруглением) в тех же цветах градиента
+	local patch = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.new(1, 0, 0, 26), Position = UDim2.new(0, 0, 1, -26), ZIndex = 2, Parent = header })
+	local pg = Instance.new("UIGradient")
+	pg.Rotation = 90
+	pg.Color = ColorSequence.new(headTop:Lerp(headBottom, (HEAD - 26) / HEAD), headBottom)
+	pg.Parent = patch
 	UI.new("Frame", { Name = "HeaderLine", BackgroundColor3 = dark, Size = UDim2.new(1, 0, 0, 4), Position = UDim2.new(0, 0, 1, -2), ZIndex = 4, Parent = header })
-	local hshine = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.72, Size = UDim2.new(1, -48, 0, 14), Position = UDim2.fromOffset(24, 5), ZIndex = 3, Parent = header })
-	UI.Corner(hshine, UDim.new(1, 0))
+	UI.Gloss(header, UDim2.new(1, -48, 0, 22), UDim2.fromOffset(24, 4), 0.4, 3)
 	-- значок в белом кружке
 	local badge = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.fromOffset(52, 52), Position = UDim2.fromOffset(12, 5), ZIndex = 5, Parent = header })
 	UI.Corner(badge, UDim.new(1, 0))
@@ -18890,8 +19089,9 @@ function UI.Window(screen, opts)
 		end
 		win.IsOpen = true
 		root.Visible = true
-		scale.Scale = 0.6
-		TweenService:Create(scale, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+		scale.Scale = 0.78
+		TweenService:Create(scale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+		UI.SetBackdrop(win, true)
 		openedEvent:Fire()
 	end
 	function win.Hide()
@@ -18899,7 +19099,8 @@ function UI.Window(screen, opts)
 			return
 		end
 		win.IsOpen = false
-		local tw = TweenService:Create(scale, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0.6 })
+		UI.SetBackdrop(win, false)
+		local tw = TweenService:Create(scale, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0.7 })
 		tw:Play()
 		tw.Completed:Connect(function()
 			if not win.IsOpen then
@@ -18999,7 +19200,7 @@ function UI.IsTouch()
 end
 
 return UI
-]]></ProtectedString></Properties></Item></Item><Item class="Folder" referent="RBX0000000000000000000000000000004B"><Properties><string name="Name">Visuals</string></Properties><Item class="ModuleScript" referent="RBX0000000000000000000000000000004A"><Properties><string name="Name">BlockBreakVFX</string><ProtectedString name="Source"><![CDATA[-- BlockBreakVFX: процедурные эффекты бурения (ТЗ 9.3).
+]]></ProtectedString></Properties></Item></Item><Item class="Folder" referent="RBX0000000000000000000000000000004C"><Properties><string name="Name">Visuals</string></Properties><Item class="ModuleScript" referent="RBX0000000000000000000000000000004B"><Properties><string name="Name">BlockBreakVFX</string><ProtectedString name="Source"><![CDATA[-- BlockBreakVFX: процедурные эффекты бурения (ТЗ 9.3).
 --  * Squash & Stretch блока: Y -15%, X/Z +10%, возврат за 0.08 с
 --  * 4-6 кубических low-poly осколков + облачко пыли
 --  * руда летит в рюкзак, всплывающие цифры урона
@@ -19297,4 +19498,4 @@ function VFX.DamageNumber(pos, text, crit)
 end
 
 return VFX
-]]></ProtectedString></Properties></Item></Item></Item><Item class="StarterCharacterScripts" referent="RBX00000000000000000000000000000051"><Properties><string name="Name">StarterCharacterScripts</string></Properties></Item></Item><Item class="StarterGui" referent="RBX00000000000000000000000000000053"><Properties><string name="Name">StarterGui</string><bool name="ResetPlayerGuiOnSpawn">false</bool></Properties></Item><Item class="SoundService" referent="RBX00000000000000000000000000000054"><Properties><string name="Name">SoundService</string></Properties></Item><Item class="Players" referent="RBX00000000000000000000000000000055"><Properties><string name="Name">Players</string></Properties></Item></roblox>
+]]></ProtectedString></Properties></Item></Item></Item><Item class="StarterCharacterScripts" referent="RBX00000000000000000000000000000052"><Properties><string name="Name">StarterCharacterScripts</string></Properties></Item></Item><Item class="StarterGui" referent="RBX00000000000000000000000000000054"><Properties><string name="Name">StarterGui</string><bool name="ResetPlayerGuiOnSpawn">false</bool></Properties></Item><Item class="SoundService" referent="RBX00000000000000000000000000000055"><Properties><string name="Name">SoundService</string></Properties></Item><Item class="Players" referent="RBX00000000000000000000000000000056"><Properties><string name="Name">Players</string></Properties></Item></roblox>
