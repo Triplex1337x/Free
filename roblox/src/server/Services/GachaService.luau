@@ -125,6 +125,7 @@ function GachaService:Equip(player: Player, styleId)
 	player:SetAttribute("Awakening", 0) -- no swapping to a stronger ult with a full bar
 	self.Services.DataService:Sync(player)
 	self.Services.ProgressionService:RefreshOverhead(player)
+	self.Services.CombatService:ApplyStyleAttributes(player)
 	return { Ok = true }
 end
 

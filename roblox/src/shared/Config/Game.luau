@@ -85,8 +85,8 @@ Game.DailyRewards = {
 Game.DailyCooldownHours = 20
 Game.DailyStreakResetHours = 48
 
--- Animation asset ids. 0 = none. Upload your own animations in Studio and
--- paste the ids here; the client plays them on every character.
+-- Optional uploaded animation asset ids. 0 = use the built-in procedural
+-- animations (client/Animation/Clips). Paste an id to override a move.
 Game.Animations = {
 	M1 = { 0, 0, 0, 0 },
 	Q = 0,

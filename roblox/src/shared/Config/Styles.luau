@@ -6,6 +6,9 @@
 --   AoE        sphere around the caster, optionally pushed forward (Radius, Offset)
 --   Projectile travelling orb, optional explosion (Speed, MaxDistance, Size, Explode)
 --
+-- Element drives the visual effect set (Fire, Water, Wind, Earth, Lightning,
+-- Void, Light).
+--
 -- Shared fields: Damage (per hit), Hits (multi-hit count), HitInterval,
 -- Stun, Knockback (negative = pull toward the caster/centre), Windup,
 -- Cooldown (not used for the ultimate, which costs a full Awakening bar),
@@ -18,6 +21,7 @@ Styles.Order = { "Ember", "Tide", "Gale", "Bastion", "Storm", "Hollow", "Dawn" }
 Styles.List = {
 	Ember = {
 		Name = "Ember Fist",
+		Element = "Fire",
 		Rarity = "Common",
 		Color = Color3.fromRGB(255, 112, 40),
 		Description = "Hot-blooded brawler. Fast close-range bursts of flame.",
@@ -31,6 +35,7 @@ Styles.List = {
 
 	Tide = {
 		Name = "Tide Blade",
+		Element = "Water",
 		Rarity = "Common",
 		Color = Color3.fromRGB(60, 170, 255),
 		Description = "Flowing swordplay. Controls space with water.",
@@ -44,6 +49,7 @@ Styles.List = {
 
 	Gale = {
 		Name = "Gale Step",
+		Element = "Wind",
 		Rarity = "Rare",
 		Color = Color3.fromRGB(140, 255, 190),
 		Description = "Untouchable speed. Hit, vanish, hit again.",
@@ -57,6 +63,7 @@ Styles.List = {
 
 	Bastion = {
 		Name = "Iron Bastion",
+		Element = "Earth",
 		Rarity = "Rare",
 		Color = Color3.fromRGB(190, 140, 90),
 		Description = "Earth-shaping tank. Slow, heavy, crushing.",
@@ -70,6 +77,7 @@ Styles.List = {
 
 	Storm = {
 		Name = "Storm Lance",
+		Element = "Lightning",
 		Rarity = "Epic",
 		Color = Color3.fromRGB(255, 230, 70),
 		Description = "Lightning duelist. Long range, instant punishes.",
@@ -83,6 +91,7 @@ Styles.List = {
 
 	Hollow = {
 		Name = "Hollow Hand",
+		Element = "Void",
 		Rarity = "Legendary",
 		Color = Color3.fromRGB(150, 70, 255),
 		Description = "Void manipulator. Pulls enemies in and erases them.",
@@ -96,6 +105,7 @@ Styles.List = {
 
 	Dawn = {
 		Name = "Dawn Sovereign",
+		Element = "Light",
 		Rarity = "Mythic",
 		Color = Color3.fromRGB(255, 245, 200),
 		Description = "Wields a captured sunrise. The rarest Art in the Rift.",

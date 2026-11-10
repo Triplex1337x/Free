@@ -256,11 +256,11 @@ function CombatService:Damage(attackerPlayer: Player?, attacker: Model?, target:
 			if opts.GuardBreak then
 				self:SetBlocking(target, false)
 				self:Stun(target, Block.GuardBreakStun)
-				fx("GuardBreak", { Pos = targetRoot.Position })
+				fx("GuardBreak", { Pos = targetRoot.Position, Target = target })
 			elseif attacker and os.clock() - (blockStart[target] or 0) <= Block.PerfectWindow then
 				-- Perfect block: no damage, attacker is stunned.
 				self:Stun(attacker, Block.PerfectStun)
-				fx("Hit", { Pos = targetRoot.Position, Parried = true })
+				fx("Hit", { Pos = targetRoot.Position, Parried = true, Target = target, Attacker = attacker })
 				return false
 			else
 				blocked = true
@@ -311,7 +311,7 @@ function CombatService:Damage(attackerPlayer: Player?, attacker: Model?, target:
 		end
 	end
 
-	fx("Hit", { Pos = targetRoot.Position, Damage = damage, Blocked = blocked, Color = opts.Color })
+	fx("Hit", { Pos = targetRoot.Position, Damage = damage, Blocked = blocked, Color = opts.Color, Target = target, Attacker = attacker })
 	return true
 end
 
@@ -355,7 +355,7 @@ function Kinds.Melee(self, player, character, root, ability, aim, color)
 		return
 	end
 	local range, width = ability.Range or 8, ability.Width or 6
-	fx("Melee", { CFrame = CFrame.lookAt(root.Position, root.Position + aim), Range = range, Width = width, Color = color })
+	fx("Melee", { Character = character, CFrame = CFrame.lookAt(root.Position, root.Position + aim), Range = range, Width = width, Color = color })
 	self:MultiHit(player, character, ability, color, function()
 		local cf = CFrame.lookAt(root.Position, root.Position + aim) * CFrame.new(0, 0, -range / 2)
 		return self:QueryBox(cf, Vector3.new(width, 7, range), character)
@@ -382,7 +382,7 @@ function Kinds.Dash(self, player, character, root, ability, aim, color)
 	local targets = self:QueryBox(CFrame.lookAt(mid, mid + aim), Vector3.new(7, 7, distance + 4), character)
 
 	root.CFrame = CFrame.lookAt(dest, dest + aim)
-	fx("Dash", { From = origin, To = dest, Color = color })
+	fx("Dash", { Character = character, From = origin, To = dest, Color = color })
 
 	self:MultiHit(player, character, ability, color, function()
 		local alive = {}
@@ -404,7 +404,7 @@ function Kinds.AoE(self, player, character, root, ability, aim, color)
 	end
 	local center = root.Position + aim * (ability.Offset or 0)
 	local radius = ability.Radius or 12
-	fx("Burst", { Pos = center, Radius = radius, Color = color, Hits = ability.Hits or 1, Interval = ability.HitInterval or 0.15 })
+	fx("Burst", { Character = character, Pos = center, Radius = radius, Color = color, Hits = ability.Hits or 1, Interval = ability.HitInterval or 0.15 })
 	self:MultiHit(player, character, ability, color, function()
 		return self:QueryRadius(center, radius, character)
 	end, function()
@@ -434,6 +434,7 @@ function Kinds.Projectile(self, player, character, root, ability, aim, color)
 	ball.CanTouch = false
 	ball.CastShadow = false
 	ball.Position = pos
+	ball:SetAttribute("Element", character:GetAttribute("Element"))
 	local light = Instance.new("PointLight")
 	light.Color = color
 	light.Range = size * 4
@@ -481,7 +482,7 @@ function Kinds.Projectile(self, player, character, root, ability, aim, color)
 			local model = result and characterFromPart(result.Instance)
 			targets = if model and aliveHumanoid(model) then { model } else {}
 		end
-		fx("Burst", { Pos = hitPos, Radius = ability.Explode or size * 2, Color = color, Hits = 1 })
+		fx("Burst", { Character = character, Pos = hitPos, Radius = ability.Explode or size * 2, Color = color, Hits = 1, Small = not ability.Explode })
 		local knockOrigin = if ability.Explode then hitPos else hitPos - aim * 6
 		task.spawn(self.MultiHit, self, player, character, ability, color, function()
 			return targets
@@ -598,9 +599,9 @@ function CombatService:HandleAbility(player: Player, payload)
 	local windup = ability.Windup or 0
 	s.BusyUntil = t + windup + 0.15 + ((ability.Hits or 1) - 1) * (ability.HitInterval or 0.15)
 
-	fx("Cast", { Character = character, Key = key, Name = ability.Name, Color = style.Color, Windup = windup })
+	fx("Cast", { Character = character, Key = key, Kind = ability.Kind, Name = ability.Name, Color = style.Color, Windup = windup })
 	if key == "G" then
-		fx("Ultimate", { Character = character, Name = ability.Name, Color = style.Color, Caster = player.DisplayName })
+		fx("Ultimate", { Character = character, Name = ability.Name, Color = style.Color, Caster = player.DisplayName, Windup = windup })
 	end
 
 	local run = Kinds[ability.Kind]
@@ -697,12 +698,23 @@ function CombatService:OnPlayerDied(player: Player, character: Model)
 	end)
 end
 
+-- Clients read these to pick animations and the element's visual effects.
+function CombatService:ApplyStyleAttributes(player: Player)
+	local character = player.Character
+	local style = self:GetStyle(player)
+	if character and style then
+		character:SetAttribute("Element", style.Element)
+		character:SetAttribute("StyleColor", style.Color)
+	end
+end
+
 function CombatService:OnCharacterAdded(player: Player, character: Model)
 	local s = getState(player)
 	s.BusyUntil = 0
 	s.Combo = 0
 	player:SetAttribute("Awakening", player:GetAttribute("Awakening") or 0)
 
+	self:ApplyStyleAttributes(player)
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	humanoid.BreakJointsOnDeath = false
 	humanoid.Died:Connect(function()

@@ -102,6 +102,8 @@ function DummyService:SpawnBoss(cf: CFrame)
 	humanoid.BreakJointsOnDeath = false
 	model:SetAttribute("BaseSpeed", BOSS.Speed)
 	model:SetAttribute("IsBoss", true)
+	model:SetAttribute("Element", "Void")
+	model:SetAttribute("StyleColor", BOSS.Color)
 
 	local glow = Instance.new("Highlight")
 	glow.FillColor = BOSS.Color
@@ -163,13 +165,13 @@ function DummyService:SpawnBoss(cf: CFrame)
 			humanoid:MoveTo(target.Position)
 			if best <= BOSS.AttackRange and os.clock() - lastAttack >= BOSS.AttackCooldown then
 				lastAttack = os.clock()
-				Remotes.Fx:FireAllClients("Cast", { Character = model, Key = "R", Color = BOSS.Color, Windup = BOSS.AttackWindup })
+				Remotes.Fx:FireAllClients("Cast", { Character = model, Key = "R", Kind = "AoE", Color = BOSS.Color, Windup = BOSS.AttackWindup })
 				humanoid.WalkSpeed = 2
 				task.wait(BOSS.AttackWindup)
 				if not alive then
 					break
 				end
-				Remotes.Fx:FireAllClients("Burst", { Pos = root.Position, Radius = BOSS.SlamRadius, Color = BOSS.Color, Hits = 1 })
+				Remotes.Fx:FireAllClients("Burst", { Character = model, Pos = root.Position, Radius = BOSS.SlamRadius, Color = BOSS.Color, Hits = 1 })
 				for _, victim in Combat:QueryRadius(root.Position, BOSS.SlamRadius, model) do
 					if Players:GetPlayerFromCharacter(victim) then
 						Combat:Damage(nil, model, victim, BOSS.Damage, { Stun = 0.6, Knockback = 60, Color = BOSS.Color })
