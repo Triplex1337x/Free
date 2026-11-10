@@ -1,8 +1,10 @@
--- Visual effect primitives, built only from Roblox built-ins: neon parts,
--- ParticleEmitters with engine textures, trails, lights and post effects.
+-- Visual effect primitives: neon parts, ParticleEmitters, trails, beams,
+-- decals, lights and post effects. Uses the custom textures from
+-- Config/Textures when uploaded, Roblox built-in textures otherwise.
 -- Everything is client-side, so it costs no network traffic.
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
@@ -14,6 +16,8 @@ local folder = Instance.new("Folder")
 folder.Name = "ClientFx"
 folder.Parent = workspace
 Vfx.Folder = folder
+
+local Textures = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("Textures"))
 
 local TEX = {
 	Spark = "rbxasset://textures/particles/sparkles_main.dds",
@@ -158,6 +162,57 @@ local PRESETS = {
 		SpreadAngle = Vector2.new(180, 180),
 	},
 }
+
+-- Presets that only make sense with our custom textures.
+local OPTIONAL = { Flash = true, Impact = true }
+PRESETS.Flash = {
+	LightEmission = 1,
+	Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 7), NumberSequenceKeypoint.new(1, 2) }),
+	Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) }),
+	Lifetime = NumberRange.new(0.12, 0.16),
+	Speed = NumberRange.new(0, 0),
+	Rotation = NumberRange.new(0, 45),
+}
+PRESETS.Impact = {
+	LightEmission = 1,
+	Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 3), NumberSequenceKeypoint.new(1, 9) }),
+	Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) }),
+	Lifetime = NumberRange.new(0.14, 0.2),
+	Speed = NumberRange.new(0, 0),
+	Rotation = NumberRange.new(0, 360),
+}
+
+-- Swap in the uploaded textures (Config/Textures) where available.
+do
+	local streak = Textures.Get("SparkStreak")
+	if streak then
+		PRESETS.Sparks.Texture = streak
+		PRESETS.Sparks.Orientation = Enum.ParticleOrientation.VelocityParallel
+		PRESETS.Sparks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.6), NumberSequenceKeypoint.new(1, 0) })
+	end
+	local flame = Textures.Get("FlameFlipbook")
+	if flame then
+		local p = PRESETS.Flame
+		p.Texture = flame
+		p.FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4
+		p.FlipbookMode = Enum.ParticleFlipbookMode.OneShot
+		p.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 3), NumberSequenceKeypoint.new(1, 1.5) })
+		p.Rotation = NumberRange.new(-10, 10)
+		p.RotSpeed = NumberRange.new(0, 0)
+	end
+	local smoke = Textures.Get("SmokePuff")
+	if smoke then
+		PRESETS.Smoke.Texture = smoke
+		PRESETS.Mist.Texture = smoke
+	end
+	local star = Textures.Get("FlashStar")
+	if star then
+		PRESETS.Glitter.Texture = star
+		PRESETS.Flash.Texture = star
+	end
+	PRESETS.Impact.Texture = Textures.Get("ImpactBurst")
+end
+
 Vfx.Presets = PRESETS
 
 local function configure(emitter: ParticleEmitter, preset, color: Color3?)
@@ -171,7 +226,7 @@ end
 
 function Vfx.Emit(pos: Vector3, presetName: string, count: number, color: Color3?)
 	local preset = PRESETS[presetName]
-	if not preset then
+	if not preset or (OPTIONAL[presetName] and not preset.Texture) then
 		return
 	end
 	local holder = Vfx.Part({ Transparency = 1, Size = Vector3.one * 0.2, Position = pos })
@@ -298,6 +353,85 @@ function Vfx.Lightning(from: Vector3, to: Vector3, color: Color3, width: number?
 		end)
 	end
 	Vfx.Light((from + to) / 2, color, 20, 4, time)
+
+	local strip = Textures.Get("LightningStrip")
+	if strip then
+		local holder = Vfx.Part({ Transparency = 1, Size = Vector3.one * 0.2, Position = from })
+		local a0 = Instance.new("Attachment")
+		a0.WorldPosition = from
+		a0.Parent = holder
+		local a1 = Instance.new("Attachment")
+		a1.WorldPosition = to
+		a1.Parent = holder
+		local beam = Instance.new("Beam")
+		beam.Attachment0, beam.Attachment1 = a0, a1
+		beam.Texture = strip
+		beam.TextureMode = Enum.TextureMode.Stretch
+		beam.TextureLength = 1
+		beam.Width0, beam.Width1 = width * 6, width * 6
+		beam.LightEmission = 1
+		beam.FaceCamera = true
+		beam.Color = ColorSequence.new(color)
+		beam.Parent = holder
+		Vfx.Tween(beam, time, { Width0 = 0, Width1 = 0 })
+		Debris:AddItem(holder, time + 0.05)
+	end
+end
+
+-- Flat textured decal on the ground (cracks, shockwave rings).
+function Vfx.GroundDecal(pos: Vector3, textureName: string, size: number, color: Color3, hold: number, fade: number, grow: number?)
+	local texture = Textures.Get(textureName)
+	if not texture then
+		return false
+	end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { workspace:FindFirstChild("Arena") or workspace.Terrain }
+	local hit = workspace:Raycast(pos + Vector3.new(0, 3, 0), Vector3.new(0, -30, 0), params)
+	local y = if hit then hit.Position.Y + 0.06 else pos.Y - 2.9
+	local plate = Vfx.Part({
+		Size = Vector3.new(size, 0.05, size),
+		CFrame = CFrame.new(pos.X, y, pos.Z) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0),
+		Transparency = 1,
+	})
+	local decal = Instance.new("Decal")
+	decal.Face = Enum.NormalId.Top
+	decal.Texture = texture
+	decal.Color3 = color
+	decal.Parent = plate
+	if grow then
+		Vfx.Tween(plate, 0.25, { Size = Vector3.new(size * grow, 0.05, size * grow) }, Enum.EasingStyle.Expo)
+	end
+	task.delay(hold, function()
+		Vfx.Tween(decal, fade, { Transparency = 1 })
+	end)
+	Debris:AddItem(plate, hold + fade + 0.05)
+	return true
+end
+
+-- Spinning energy orb sprite used for charge-ups. Returns a cleanup function.
+function Vfx.ChargeOrb(target: BasePart, color: Color3, duration: number)
+	local texture = Textures.Get("EnergyOrb")
+	if not texture then
+		return nil
+	end
+	local gui = Instance.new("BillboardGui")
+	gui.Size = UDim2.fromScale(10, 10)
+	gui.LightInfluence = 0
+	gui.AlwaysOnTop = false
+	gui.Adornee = target
+	gui.Parent = folder
+	local image = Instance.new("ImageLabel")
+	image.BackgroundTransparency = 1
+	image.Size = UDim2.fromScale(1, 1)
+	image.Image = texture
+	image.ImageColor3 = color
+	image.ImageTransparency = 0.6
+	image.Parent = gui
+	Vfx.Tween(gui, duration, { Size = UDim2.fromScale(3, 3) }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+	Vfx.Tween(image, duration, { ImageTransparency = 0, Rotation = 540 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+	Debris:AddItem(gui, duration + 0.05)
+	return gui
 end
 
 -- Rock / droplet chunks with simple ballistic motion and a ground bounce.

@@ -4,6 +4,9 @@
 -- will use it instead of generating one.
 
 local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Textures = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("Textures"))
 
 local MapService = {}
 
@@ -166,7 +169,7 @@ local function buildDecor(folder: Folder)
 	-- Drifting petals over the arena.
 	local sky = part({ Name = "PetalEmitter", Size = Vector3.new(ARENA_RADIUS * 2, 1, ARENA_RADIUS * 2), CFrame = CFrame.new(0, 70, 0), Transparency = 1, CanCollide = false, CanQuery = false, Parent = decor })
 	local petals = Instance.new("ParticleEmitter")
-	petals.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	petals.Texture = Textures.Get("Petal") or "rbxasset://textures/particles/sparkles_main.dds"
 	petals.Color = ColorSequence.new(Color3.fromRGB(255, 170, 200), Color3.fromRGB(255, 225, 240))
 	petals.LightEmission = 0.3
 	petals.Size = NumberSequence.new(0.5, 0.35)

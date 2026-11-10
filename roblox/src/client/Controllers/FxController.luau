@@ -395,6 +395,10 @@ function Handlers.Hit(d)
 	end
 
 	Vfx.Emit(d.Pos, "Sparks", if d.Blocked or d.Parried then 8 else 14, color)
+	Vfx.Emit(d.Pos, "Flash", 1, color)
+	if not d.Blocked then
+		Vfx.Emit(d.Pos, "Impact", 1, color)
+	end
 	Vfx.Ball(d.Pos, 1, if big then 7 else 4, WHITE, 0.12, 0.1)
 	Vfx.Ring(CFrame.new(d.Pos) * CFrame.Angles(rng:NextNumber(-0.6, 0.6), 0, rng:NextNumber(-0.6, 0.6)), 0.5, if big then 6 else 3.5, color, 0.2, 0.25, 16)
 	Vfx.Light(d.Pos, color, 14, 3, 0.2)
@@ -460,6 +464,7 @@ function Handlers.Cast(d)
 		end)
 		Vfx.Tween(orb, windup, { Size = Vector3.one * 2.5, Transparency = 0.25 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 		Vfx.Emit(root.Position, "Glitter", 12, d.Color)
+		Vfx.ChargeOrb(root, d.Color, windup)
 		task.delay(windup, function()
 			follow:Disconnect()
 			orb:Destroy()
@@ -508,6 +513,13 @@ function Handlers.Burst(d)
 			Vfx.Light(d.Pos, d.Color, d.Radius * 2.5, 5, 0.4)
 			if i == 1 or i == hits then
 				layer(element, "Burst", d)
+			end
+			if i == 1 then
+				Vfx.GroundDecal(d.Pos, "ShockwaveRing", d.Radius * 0.6, d.Color, 0.05, 0.4, 3.2)
+				if not d.Small and (d.Radius >= 14 or element == "Earth") then
+					Vfx.GroundDecal(d.Pos, "GroundCrack", d.Radius * 1.6, Color3.fromRGB(30, 22, 18), 2.5, 1.2)
+					Vfx.GroundDecal(d.Pos, "GroundCrack", d.Radius * 1.6, d.Color, 0.3, 0.8)
+				end
 			end
 			local strength = math.clamp(d.Radius / 25, 0.15, 0.9)
 			Vfx.Shake(strength, 0.25, d.Pos)
