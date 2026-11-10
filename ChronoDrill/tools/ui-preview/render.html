@@ -12,6 +12,7 @@ html, body { margin: 0; padding: 0; }
 .vp { position: absolute; inset: 12%; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(255,255,255,.55), rgba(255,255,255,.12) 60%, rgba(255,255,255,0) 70%); }
 </style></head>
 <body><div id="stage"></div>
+<script src="/*THREEJS*/"></script>
 <script>
 const TREE = /*TREE*/null;
 const W = /*W*/1280, H = /*H*/720;
@@ -58,6 +59,57 @@ function maskCss(g) {
 }
 
 const post = [];
+let VPR = null;
+function drawVP(cv) {
+  const o = JSON.parse(cv.dataset.vp);
+  const w = Math.max(2, cv.clientWidth), h = Math.max(2, cv.clientHeight);
+  if (!VPR) { VPR = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); VPR.outputEncoding = THREE.sRGBEncoding; VPR.toneMapping = THREE.ACESFilmicToneMapping; }
+  VPR.setSize(w * 2, h * 2, false);
+  const scene = new THREE.Scene();
+  scene.add(new THREE.HemisphereLight(0xe6ecff, 0x6a5a8a, 0.95));
+  const sun = new THREE.DirectionalLight(0xfff6e8, 1.1); sun.position.set(-4, 10, -6); scene.add(sun);
+  for (const p of o.parts) for (const m of buildMesh3(p)) scene.add(m);
+  const c = o.cam;
+  const cam = new THREE.PerspectiveCamera(o.fov, w / h, 0.05, 500);
+  cam.matrixAutoUpdate = false;
+  cam.matrix.set(c[3],c[4],c[5],c[0], c[6],c[7],c[8],c[1], c[9],c[10],c[11],c[2], 0,0,0,1);
+  cam.matrixWorld.copy(cam.matrix); cam.matrixWorldInverse.copy(cam.matrix).invert();
+  VPR.render(scene, cam);
+  const ctx = cv.getContext("2d"); cv.width = w * 2; cv.height = h * 2; ctx.drawImage(VPR.domElement, 0, 0);
+}
+const _BOX = () => new THREE.BoxGeometry(1,1,1), _SPH = () => new THREE.SphereGeometry(0.5, 24, 16);
+let G3 = null;
+function geos() {
+  if (G3) return G3;
+  const cyl = new THREE.CylinderGeometry(0.5,0.5,1,20); cyl.rotateZ(Math.PI/2);
+  const wedge = new THREE.BufferGeometry();
+  wedge.setAttribute('position', new THREE.Float32BufferAttribute([-0.5,-0.5,-0.5, 0.5,-0.5,-0.5, 0.5,-0.5,0.5, -0.5,-0.5,0.5, -0.5,0.5,0.5, 0.5,0.5,0.5],3));
+  wedge.setIndex([0,2,1, 0,3,2, 3,4,5, 3,5,2, 0,1,5, 0,5,4, 0,4,3, 1,2,5]);
+  const wn = wedge.toNonIndexed(); wn.computeVertexNormals();
+  G3 = { box: _BOX(), sph: _SPH(), cyl, wedge: wn };
+  return G3;
+}
+function buildMesh3(p) {
+  const g = geos();
+  let geo = g.box, sx = p.s[0], sy = p.s[1], sz = p.s[2];
+  if (p.mesh && p.mesh.type === 'Sphere') { geo = g.sph; sx*=p.mesh.scale[0]; sy*=p.mesh.scale[1]; sz*=p.mesh.scale[2]; }
+  else if (p.shape === 'Ball') { geo = g.sph; const m = Math.min(sx,sy,sz); sx=sy=sz=m; }
+  else if (p.shape === 'Cylinder') { geo = g.cyl; const d = Math.min(sy,sz); sy=sz=d; }
+  else if (p.c === 'WedgePart' || p.c === 'CornerWedgePart') geo = g.wedge;
+  const col = new THREE.Color(p.col[0],p.col[1],p.col[2]).convertSRGBToLinear();
+  const t = p.t || 0;
+  let mat;
+  if (p.mat === 'Neon') mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.9 });
+  else if (p.mat === 'Metal') mat = new THREE.MeshStandardMaterial({ color: col, metalness: .7, roughness: .3 });
+  else mat = new THREE.MeshStandardMaterial({ color: col, roughness: .55 });
+  if (t > 0) { mat.transparent = true; mat.opacity = Math.max(0, 1 - t); }
+  if (t >= 0.999) mat.visible = false;
+  const mesh = new THREE.Mesh(geo, mat);
+  const c = p.cf;
+  mesh.matrixAutoUpdate = false;
+  mesh.matrix.set(c[3],c[4],c[5],c[0], c[6],c[7],c[8],c[1], c[9],c[10],c[11],c[2], 0,0,0,1).multiply(new THREE.Matrix4().makeScale(sx,sy,sz));
+  return [mesh];
+}
 function build(n, parentEl, parentNode, layout) {
   if (n.ClassName === "ScreenGui" || n.ClassName === "Folder" || n.ClassName === "PlayerGui") {
     if (n.ClassName === "ScreenGui" && n.Enabled === false) return;
@@ -130,7 +182,10 @@ function build(n, parentEl, parentNode, layout) {
     if (ic && (ic[0] < 0.99 || ic[1] < 0.99 || ic[2] < 0.99)) im.style.filter = `brightness(${(ic[0] + ic[1] + ic[2]) / 3})`;
     d.appendChild(im);
   }
-  if (n.ClassName === "ViewportFrame") { const v = document.createElement("div"); v.className = "vp"; d.appendChild(v); }
+  if (n.ClassName === "ViewportFrame") {
+    if (n._vp && n._vp.length && window.THREE) { const v = document.createElement("canvas"); v.className = "vp3"; v.style.position = "absolute"; v.style.inset = "0"; v.style.width = "100%"; v.style.height = "100%"; v.dataset.vp = JSON.stringify({ parts: n._vp, cam: n._cam, fov: n._fov }); d.appendChild(v); }
+    else { const v = document.createElement("div"); v.className = "vp"; d.appendChild(v); }
+  }
   if (isText && n.Text) {
     const t = document.createElement("div"); t.className = "txt";
     const [fam, w] = fontFor(n);
@@ -241,6 +296,7 @@ document.fonts.ready.then(() => {
     }
     span.style.fontSize = Math.floor(lo) + "px";
   });
+  document.querySelectorAll("canvas.vp3").forEach((cv) => { try { drawVP(cv); } catch (e) { console.log("[emu] vp error " + e.message); } });
   window.__done = true;
 });
 </script></body></html>

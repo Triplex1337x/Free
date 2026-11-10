@@ -152,24 +152,53 @@ local function pill(parent, glyph, color, size, pos, order)
 end
 
 -- карточка питомца: градиент цвета редкости, модель, тёмная полоска со статами снизу
+-- Карточка питомца: светлая карточка, сверху «витрина» в цвет редкости с мягким светом за питомцем,
+-- снизу тёмная стеклянная полоска характеристик. Мифики/«Огромные»/шайни — переливающаяся рамка.
+local CARD_MODES = {
+	rainbow = { ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 120, 160)), ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 210, 100)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(120, 230, 150)), ColorSequenceKeypoint.new(0.75, Color3.fromRGB(110, 190, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 130, 255)),
+	}), Color3.fromRGB(255, 190, 220), Color3.fromRGB(170, 200, 255) },
+	huge = { ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 220, 90)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 96, 220)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(140, 110, 255)),
+	}), Color3.fromRGB(255, 170, 235), Color3.fromRGB(190, 90, 230) },
+	shiny = { ColorSequence.new(Color3.fromRGB(140, 240, 255), Color3.fromRGB(255, 160, 235)), Color3.fromRGB(200, 250, 255), Color3.fromRGB(255, 190, 240) },
+}
 local function petCard(parent, size, col, order, mode)
 	local holder = UI.new("Frame", { BackgroundTransparency = 1, Size = size, LayoutOrder = order or 0, Parent = parent })
-	local shadow = UI.new("Frame", { BackgroundColor3 = UI.Darker(col, 0.45), BackgroundTransparency = 0.25, Size = UDim2.fromScale(1, 1), Position = UDim2.fromOffset(0, 4), Parent = holder })
+	local shadow = UI.new("Frame", { BackgroundColor3 = Color3.fromRGB(14, 10, 32), BackgroundTransparency = 0.72, Size = UDim2.fromScale(1, 1), Position = UDim2.fromOffset(0, 5), Parent = holder })
 	UI.Corner(shadow, 18)
-	local face = UI.new("Frame", { BackgroundColor3 = col, Size = UDim2.fromScale(1, 1), Parent = holder })
+	local face = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.fromScale(1, 1), Parent = holder })
 	UI.Corner(face, 18)
-	local stroke = UI.Stroke(face, 3, UI.Edge(col), true)
-	if mode == "rainbow" then
-		UI.Gradient(face, Color3.fromRGB(255, 170, 210), Color3.fromRGB(150, 200, 255), 35)
-	elseif mode == "shiny" then
-		UI.Gradient(face, Color3.fromRGB(190, 250, 255), Color3.fromRGB(255, 190, 240), 35)
-	else
-		UI.Gradient(face, UI.Lighter(col, 0.6), col)
+	UI.Gradient(face, Color3.fromRGB(255, 255, 255), UI.Lighter(col, 0.8))
+	face.BackgroundColor3 = Color3.new(1, 1, 1)
+	local stroke = UI.Stroke(face, 3, UI.Darker(col, 0.2), true)
+	local m = CARD_MODES[mode or ""]
+	-- витрина цвета редкости
+	local show = UI.new("Frame", { Name = "Showcase", BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.new(1, -8, 1, -58), Position = UDim2.fromOffset(4, 4), ZIndex = 0, Parent = face })
+	UI.Corner(show, 15)
+	local sg = UI.Gradient(show, m and m[2] or UI.Lighter(col, 0.5), m and m[3] or col, m and 35 or 90)
+	show.BackgroundColor3 = Color3.new(1, 1, 1)
+	sg.Enabled = true
+	local w = size.X.Offset
+	local spot = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.5, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.fromOffset(w * 0.66, w * 0.66), ZIndex = 0, Parent = show })
+	UI.Corner(spot, UDim.new(1, 0))
+	local halo = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.8, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.fromOffset(w * 0.9, w * 0.9), ZIndex = 0, Parent = show })
+	UI.Corner(halo, UDim.new(1, 0))
+	UI.Gloss(show, UDim2.new(1, -14, 0, 18), UDim2.fromOffset(7, 3), 0.55, 0)
+	-- полоска характеристик
+	local strip = UI.new("Frame", { Size = UDim2.new(1, -10, 0, 46), Position = UDim2.new(0, 5, 1, -51), ZIndex = 3, Parent = face })
+	UI.Glass(strip, 12, 0.04)
+	if m then
+		stroke.Color = Color3.new(1, 1, 1)
+		stroke.Thickness = 3.5
+		local rg = Instance.new("UIGradient")
+		rg.Color = m[1]
+		rg.Rotation = 45
+		rg.Parent = stroke
 	end
-	local shine = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.7, Size = UDim2.new(1, -16, 0, 10), Position = UDim2.fromOffset(8, 4), ZIndex = 2, Parent = face })
-	UI.Corner(shine, UDim.new(1, 0))
-	local strip = UI.new("Frame", { BackgroundColor3 = UI.Darker(col, 0.55), BackgroundTransparency = 0.1, Size = UDim2.new(1, -10, 0, 46), Position = UDim2.new(0, 5, 1, -51), ZIndex = 3, Parent = face })
-	UI.Corner(strip, 12)
 	return holder, face, strip, stroke
 end
 
@@ -538,7 +567,9 @@ local function buildPets(screen, ctx)
 			cardRefs = {}
 			for i, s in ipairs(list) do
 				local col = cardColor(s)
-				local holder, face, strip, stroke = petCard(scroll, UDim2.fromOffset(112, 146), col, i, (s.tier == 5 and "rainbow") or (s.tier == 6 and "shiny") or nil)
+				local pdef = PetsData.ById[s.id]
+				local mode = (s.tier == 5 and "rainbow") or (s.tier == 6 and "shiny") or (pdef and pdef.Rarity == "Huge" and "huge") or (pdef and pdef.Rarity == "Mythic" and "rainbow") or nil
+				local holder, face, strip, stroke = petCard(scroll, UDim2.fromOffset(112, 146), col, i, mode)
 				UI.Viewport(face, ctx.PetModel(s.id, s.tier), UDim2.new(1, -8, 0, 84), UDim2.fromOffset(4, 8))
 				local l1 = statLine(strip, "Pickaxe", DMG_COLOR, UDim2.fromOffset(6, 3), UDim2.new(1, -10, 0, 19), 4)
 				l1.Text = fmtMult(s.dmg)
@@ -1465,7 +1496,7 @@ local function buildEgg(screen, ctx)
 		for i, e in ipairs(egg.Pets) do
 			local def = PetsData.ById[e[1]]
 			local col = rarityColor(def.Rarity)
-			local holder, face, strip, stroke = petCard(grid, UDim2.fromOffset(108, 148), col, i, def.Rarity == "Mythic" and "rainbow" or nil)
+			local holder, face, strip, stroke = petCard(grid, UDim2.fromOffset(108, 148), col, i, (def.Rarity == "Huge" and "huge") or (def.Rarity == "Mythic" and "rainbow") or nil)
 			local model = ctx.PetModel(e[1], false)
 			if not index[e[1]] then
 				EggOpening.Silhouette(model)
@@ -1483,7 +1514,7 @@ local function buildEgg(screen, ctx)
 			l1.Text = string.format("%.2f", 1 + db)
 			local l2 = statLine(strip, "Coin", SELL_COLOR, UDim2.new(0.5, 0, 0, 25), UDim2.new(0.5, -4, 0, 17), 4)
 			l2.Text = string.format("%.2f", 1 + sb)
-			chipText(face, def.Rarity == "Mythic" and "МИФ" or (PetsData.Rarity[def.Rarity] and PetsData.Rarity[def.Rarity].Name or ""), UI.Darker(col, 0.45), UDim2.fromOffset(72, 18), UDim2.fromOffset(6, 6), 6)
+			chipText(face, (def.Rarity == "Mythic" and "МИФ") or (def.Rarity == "Huge" and "ОГРОМНЫЙ") or (PetsData.Rarity[def.Rarity] and PetsData.Rarity[def.Rarity].Name or ""), UI.Darker(col, 0.45), UDim2.fromOffset(72, 18), UDim2.fromOffset(6, 6), 6)
 			-- метка автоудаления
 			local del = UI.new("Frame", { BackgroundColor3 = UI.Colors.Red, BackgroundTransparency = 0.35, Size = UDim2.fromScale(1, 1), ZIndex = 7, Visible = false, Parent = face })
 			UI.Corner(del, 18)

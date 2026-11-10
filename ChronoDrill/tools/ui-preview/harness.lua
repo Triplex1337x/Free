@@ -57,6 +57,12 @@ function H.profile()
 			d.Index[p.Id] = true
 		end
 	end
+	for _, extra in ipairs({ { "HugeChronoDragon", 0 }, { "DemonCat", 0 }, { "HugeCloudCat", 0 }, { "Fox", 6 } }) do
+		n = n + 1
+		local pdef = PetsData.ById[extra[1]]
+		d.Pets["p" .. n] = { Id = extra[1], E = n == 15, B = pdef and pdef.P or 5, T = extra[2], L = 12, X = 0 }
+		d.Index[extra[1]] = true
+	end
 	d.NextPetUid = n + 1
 	d.Passes = { VIP = true }
 	d.Ore = { Count = 85, Value = 4200 }
@@ -76,7 +82,13 @@ function H.ctx()
 	ctx.Sound = { Play = function() end }
 	ctx.Settings = require(H.CF.SettingsController)
 	ctx.PlayerGui = H.lp.PlayerGui
-	ctx.PetModel = function() local m = Instance.new("Model") return m end
+	ctx.PetModel = function(id, tier)
+		local PB = require(RS.Shared.PetBuilder)
+		local ok, m = pcall(PB.Build, id)
+		if not ok then print("PetModel error", m) return Instance.new("Model") end
+		if tier and tier > 0 and PB.ApplyTier then pcall(PB.ApplyTier, m, tier) end
+		return m
+	end
 	ctx.Toast = function() end
 	ctx.PlayEgg = function() end
 	ctx.ShowHatch = function() end

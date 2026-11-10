@@ -16,6 +16,7 @@ local Notifier = require(Core.Notifier)
 local Shop = require(script.Parent.ShopManager)
 local Travel = require(script.Parent.TravelManager)
 local PetManager = require(script.Parent.PetManager)
+local RewardsData = require(Configs.RewardsData)
 
 local Rebirth = {}
 
@@ -28,6 +29,7 @@ local function doRebirth(player)
 		return { ok = false, msg = "Нужно: открыть Магму (4 500 м) и " .. Util.Format(Stats.RebirthCost(data)) .. " монет" }
 	end
 	local shards = Stats.RebirthShards(data)
+	local biomeBefore = data.UnlockedBiome or 1
 	-- сброс (ТЗ 8.2)
 	data.Coins = 0
 	data.Drill = DrillsData.Starter
@@ -43,6 +45,14 @@ local function doRebirth(player)
 	data.Shards = data.Shards + shards
 	Notifier.Alert(player, "Rebirth", { Rebirths = data.Rebirths, Shards = shards })
 	Notifier.Toast(player, "Перерождение #" .. data.Rebirths .. "! +" .. shards .. " Хроно-Осколков, продажа x" .. string.format("%.2f", Stats.RebirthMult(data)), "unlock", "Unlock")
+	-- «Огромные» эксклюзивы за перерождения (сила считается по ярусу, открытому до сброса)
+	for petId, sp in pairs(RewardsData.SpecialPets) do
+		if sp.RebirthAt and data.Rebirths == sp.RebirthAt then
+			PetManager.AddPet(data, petId, RewardsData.SpecialMult(petId, biomeBefore))
+			Notifier.Toast(player, "Награда за перерождение: " .. sp.Name .. "!", "unlock", "Reveal")
+			Notifier.ToastAll(player.DisplayName .. " получил " .. sp.Name .. "!", "unlock")
+		end
+	end
 	if data.Rebirths == RebirthData.IncubatorSlotAt then
 		Notifier.Toast(player, "Открыт 2-й слот инкубатора!", "good")
 	end

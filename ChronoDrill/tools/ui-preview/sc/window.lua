@@ -14,4 +14,15 @@ ctx.OpenPanel = function(n) if panels[n] then panels[n].Open() end end
 local which = os.getenv and os.getenv("SC_WINDOW") or "Pets"
 panels[which].Open()
 R.run(0.6)
+local clickN = tonumber(os.getenv("SC_CLICK") or "")
+if clickN then
+	local n = 0
+	for _, d in ipairs(panels[which].Root:GetDescendants()) do
+		if d.ClassName == "TextButton" and d.ZIndex == 9 and d.Text == "" then
+			n = n + 1
+			if n == clickN then d.Activated:Fire() break end
+		end
+	end
+	R.run(0.4)
+end
 H.out()

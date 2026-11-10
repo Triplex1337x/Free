@@ -31,6 +31,23 @@ Rewards.SpecialPets = {
 		RefIndex = 5, RefMult = 1.15, DmgF = 0.5, SellF = 1.5,
 		Aura = { Kind = "Speed", Value = 0.08, Text = "+8% к скорости бега" },
 	},
+	-- «Огромные» эксклюзивы: награды за перерождения (выдаёт RebirthManager)
+	HugeChronoDragon = {
+		Name = "Огромный Хроно-Дракон",
+		Source = "1-е перерождение",
+		RebirthAt = 1,
+		Rarity = "Huge",
+		RefIndex = 6, RefMult = 2.4,
+		Aura = { Kind = "Both", Value = 0.25, Text = "25% урона по соседу и +12% скорости" },
+	},
+	HugeRainbowUnicorn = {
+		Name = "Огромный Радужный Единорог",
+		Source = "5-е перерождение",
+		RebirthAt = 5,
+		Rarity = "Huge",
+		RefIndex = 6, RefMult = 3,
+		Aura = { Kind = "Both", Value = 0.3, Text = "30% урона по соседу и +15% скорости" },
+	},
 }
 
 -- премиум-яйцо яруса

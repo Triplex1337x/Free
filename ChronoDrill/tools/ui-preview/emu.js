@@ -53,10 +53,11 @@ const PAGE = fs.readFileSync(path.join(__dirname, "render.html"), "utf8");
     .replace("/*W*/1280", W).replace("/*H*/720", H)
     .replace("/*BG*/\"\"", JSON.stringify(bg ? "file://" + path.resolve(bg) : ""))
     .replace("/*ICONS*/\"\"", JSON.stringify("file://" + ICONS))
+    .replace("/*THREEJS*/", "file://" + (process.env.THREE_JS || path.join(path.dirname(require.resolve("three")), "three.min.js")))
     .replace("/*FONTS*/", fs.readFileSync(path.join(__dirname, "fonts", "local.css"), "utf8").replace(/url\(([^)]+)\)/g, (m, f) => `url(file://${path.join(__dirname, "fonts", f)})`));
   const tmp = path.join(require("os").tmpdir(), "ui-preview-last.html");
   fs.writeFileSync(tmp, html);
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
   const page = await browser.newPage({ viewport: { width: +W, height: +H }, deviceScaleFactor: 1 });
   page.on("console", (m) => { if (m.type() === "error" || m.text().startsWith("[emu]")) console.log("page:", m.text()); });
   await page.goto("file://" + tmp);

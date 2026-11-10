@@ -140,6 +140,8 @@ local function openEgg(player, eggId, count)
 		if shiny then
 			data.Stats.Shinies = (data.Stats.Shinies or 0) + 1
 			Notifier.ToastAll("✦ " .. player.DisplayName .. " выбил ШАЙНИ " .. (def and def.Name or id) .. "! ✦", "unlock")
+		elseif def and def.Rarity == "Huge" then
+			Notifier.ToastAll("★ " .. player.DisplayName .. " выбил ОГРОМНОГО питомца: " .. def.Name .. " (1 из " .. Util.Format(math.floor(100 / math.max(def.Chance, 1e-6) + 0.5)) .. ")! ★", "unlock")
 		elseif def and (def.Rarity == "Legendary" or def.Rarity == "Mythic") then
 			Notifier.ToastAll(player.DisplayName .. " выбил " .. def.Name .. " (" .. string.format("%.1f", def.Chance) .. "%)!", "unlock")
 		end

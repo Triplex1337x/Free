@@ -11,6 +11,7 @@ local Rarities = {
 	{ Key = "Legendary", Name = "Легендарный", Color = { 255, 190, 40 }, Min = 0 },
 	{ Key = "Mythic", Name = "Мифический", Color = { 255, 70, 120 }, Min = math.huge },
 	{ Key = "Secret", Name = "Хроно", Color = { 90, 240, 255 }, Min = -1 },
+	{ Key = "Huge", Name = "Огромный", Color = { 255, 96, 220 }, Min = -2 },
 }
 local RarityIndex = {}
 for i, r in ipairs(Rarities) do
@@ -21,6 +22,9 @@ end
 local function rarityFor(chance, flag)
 	if flag == "Mythic" then
 		return RarityIndex.Mythic
+	end
+	if flag == "Huge" then
+		return RarityIndex.Huge
 	end
 	for _, r in ipairs(Rarities) do
 		if chance >= r.Min then
@@ -45,7 +49,7 @@ local Pets = {}
 for e, egg in ipairs(EggsData.List) do
 	local n = 0
 	for _, entry in ipairs(egg.Pets) do
-		if entry[5] ~= "Mythic" then
+		if entry[5] ~= "Mythic" and entry[5] ~= "Huge" then
 			n = n + 1
 		end
 	end
@@ -54,10 +58,13 @@ for e, egg in ipairs(EggsData.List) do
 	for order, entry in ipairs(egg.Pets) do
 		local id = entry[1]
 		local mythic = entry[5] == "Mythic"
+		local huge = entry[5] == "Huge"
 		local rarity = rarityFor(entry[3], entry[5])
 		local p = pmin * EGG_SPAN ^ ((math.min(order, n) - 1) / math.max(1, n - 1))
 		if mythic then
 			p = pmin * EGG_SPAN * Balance.MythicMult
+		elseif huge then
+			p = pmin * EGG_SPAN * Balance.MythicMult * (Balance.HugeMult or 1.8)
 		end
 		local df, sf
 		if order >= n then
@@ -114,7 +121,7 @@ for id, sp in pairs(RewardsData.SpecialPets) do
 		Special = sp.Source,
 		Biome = 1,
 		Order = 98,
-		Rarity = "Secret",
+		Rarity = sp.Rarity or "Secret",
 		Aura = sp.Aura,
 	}
 end

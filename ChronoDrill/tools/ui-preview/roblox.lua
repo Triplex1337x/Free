@@ -127,48 +127,160 @@ Vector3.xAxis = Vector3.new(1, 0, 0)
 Vector3.yAxis = Vector3.new(0, 1, 0)
 Vector3.zAxis = Vector3.new(0, 0, 1)
 
--- CFrame (position only + opaque rotation)
-local CF = class("CFrame")
+-- CFrame: position + 3x3 rotation matrix (row-major r[1..9])
+local CF = { __type = "CFrame" }
 CFrame = {}
-local function cf(p) return setmetatable({ Position = p or Vector3.new() }, CF) end
-CFrame.new = function(x, y, z)
-	if type(x) == "table" then return cf(x) end
-	return cf(Vector3.new(x, y, z))
+local function mk(px, py, pz, r)
+	return setmetatable({ x = px, y = py, z = pz, r = r }, CF)
 end
-CFrame.lookAt = function(p) return cf(p) end
-CFrame.Angles = function() return cf() end
+local ID = { 1, 0, 0, 0, 1, 0, 0, 0, 1 }
+local function mmul(a, b)
+	return {
+		a[1] * b[1] + a[2] * b[4] + a[3] * b[7], a[1] * b[2] + a[2] * b[5] + a[3] * b[8], a[1] * b[3] + a[2] * b[6] + a[3] * b[9],
+		a[4] * b[1] + a[5] * b[4] + a[6] * b[7], a[4] * b[2] + a[5] * b[5] + a[6] * b[8], a[4] * b[3] + a[5] * b[6] + a[6] * b[9],
+		a[7] * b[1] + a[8] * b[4] + a[9] * b[7], a[7] * b[2] + a[8] * b[5] + a[9] * b[8], a[7] * b[3] + a[8] * b[6] + a[9] * b[9],
+	}
+end
+local function mvec(r, x, y, z)
+	return r[1] * x + r[2] * y + r[3] * z, r[4] * x + r[5] * y + r[6] * z, r[7] * x + r[8] * y + r[9] * z
+end
+local function tr(r) return { r[1], r[4], r[7], r[2], r[5], r[8], r[3], r[6], r[9] } end
+local function rx(a) local c, s = math.cos(a), math.sin(a) return { 1, 0, 0, 0, c, -s, 0, s, c } end
+local function ry(a) local c, s = math.cos(a), math.sin(a) return { c, 0, s, 0, 1, 0, -s, 0, c } end
+local function rz(a) local c, s = math.cos(a), math.sin(a) return { c, -s, 0, s, c, 0, 0, 0, 1 } end
+local function lookRot(dx, dy, dz, ux, uy, uz)
+	-- z axis points backwards (away from target)
+	local zl = math.sqrt(dx * dx + dy * dy + dz * dz)
+	if zl < 1e-9 then return ID end
+	local zx, zy, zz = -dx / zl, -dy / zl, -dz / zl
+	ux, uy, uz = ux or 0, uy or 1, uz or 0
+	local xx, xy, xz = uy * zz - uz * zy, uz * zx - ux * zz, ux * zy - uy * zx
+	local xl = math.sqrt(xx * xx + xy * xy + xz * xz)
+	if xl < 1e-6 then
+		-- looking straight up/down: pick another up
+		ux, uy, uz = 0, 0, 1
+		xx, xy, xz = uy * zz - uz * zy, uz * zx - ux * zz, ux * zy - uy * zx
+		xl = math.sqrt(xx * xx + xy * xy + xz * xz)
+	end
+	xx, xy, xz = xx / xl, xy / xl, xz / xl
+	local yx, yy, yz = zy * xz - zz * xy, zz * xx - zx * xz, zx * xy - zy * xx
+	return { xx, yx, zx, xy, yy, zy, xz, yz, zz }
+end
+CFrame.new = function(a, b, c, ...)
+	if a == nil then return mk(0, 0, 0, ID) end
+	if type(a) == "table" then
+		if b then
+			return mk(a.X, a.Y, a.Z, lookRot(b.X - a.X, b.Y - a.Y, b.Z - a.Z))
+		end
+		return mk(a.X, a.Y, a.Z, ID)
+	end
+	local rest = { ... }
+	if #rest == 9 then return mk(a, b, c, rest) end
+	if #rest == 4 then
+		local qx, qy, qz, qw = rest[1], rest[2], rest[3], rest[4]
+		return mk(a, b, c, {
+			1 - 2 * (qy * qy + qz * qz), 2 * (qx * qy - qz * qw), 2 * (qx * qz + qy * qw),
+			2 * (qx * qy + qz * qw), 1 - 2 * (qx * qx + qz * qz), 2 * (qy * qz - qx * qw),
+			2 * (qx * qz - qy * qw), 2 * (qy * qz + qx * qw), 1 - 2 * (qx * qx + qy * qy) })
+	end
+	return mk(a, b or 0, c or 0, ID)
+end
+CFrame.lookAt = function(at, target, up)
+	return mk(at.X, at.Y, at.Z, lookRot(target.X - at.X, target.Y - at.Y, target.Z - at.Z, up and up.X, up and up.Y, up and up.Z))
+end
+CFrame.Angles = function(a, b, c) return mk(0, 0, 0, mmul(mmul(rx(a or 0), ry(b or 0)), rz(c or 0))) end
 CFrame.fromEulerAnglesXYZ = CFrame.Angles
-CFrame.fromEulerAnglesYXZ = CFrame.Angles
-CFrame.fromOrientation = CFrame.Angles
-CFrame.fromAxisAngle = CFrame.Angles
-CFrame.identity = cf()
+CFrame.fromEulerAnglesYXZ = function(a, b, c) return mk(0, 0, 0, mmul(mmul(ry(b or 0), rx(a or 0)), rz(c or 0))) end
+CFrame.fromOrientation = CFrame.fromEulerAnglesYXZ
+CFrame.fromAxisAngle = function(v, t)
+	local m = math.sqrt(v.X ^ 2 + v.Y ^ 2 + v.Z ^ 2)
+	local x, y, z = v.X / m, v.Y / m, v.Z / m
+	local c, s = math.cos(t), math.sin(t)
+	local C = 1 - c
+	return mk(0, 0, 0, { c + x * x * C, x * y * C - z * s, x * z * C + y * s, y * x * C + z * s, c + y * y * C, y * z * C - x * s, z * x * C - y * s, z * y * C + x * s, c + z * z * C })
+end
+CFrame.fromMatrix = function(p, vx, vy, vz)
+	vz = vz or vx:Cross(vy).Unit
+	return mk(p.X, p.Y, p.Z, { vx.X, vy.X, vz.X, vx.Y, vy.Y, vz.Y, vx.Z, vy.Z, vz.Z })
+end
+CFrame.identity = mk(0, 0, 0, ID)
 CF.__mul = function(a, b)
-	if getmetatable(b) == V3 then return a.Position + b end
-	return cf(a.Position + b.Position)
+	if getmetatable(b) == V3 then
+		local x, y, z = mvec(a.r, b.X, b.Y, b.Z)
+		return Vector3.new(x + a.x, y + a.y, z + a.z)
+	end
+	local x, y, z = mvec(a.r, b.x, b.y, b.z)
+	return mk(x + a.x, y + a.y, z + a.z, mmul(a.r, b.r))
 end
-CF.__add = function(a, b) return cf(a.Position + b) end
-CF.__sub = function(a, b) return cf(a.Position - b) end
+CF.__add = function(a, v) return mk(a.x + v.X, a.y + v.Y, a.z + v.Z, a.r) end
+CF.__sub = function(a, v) return mk(a.x - v.X, a.y - v.Y, a.z - v.Z, a.r) end
+CF.__eq = function(a, b) return a.x == b.x and a.y == b.y and a.z == b.z end
+local cfm = {}
 CF.__index = function(t, k)
-	if k == "p" then return t.Position end
-	if k == "X" then return t.Position.X end
-	if k == "Y" then return t.Position.Y end
-	if k == "Z" then return t.Position.Z end
-	if k == "LookVector" then return Vector3.new(0, 0, -1) end
-	if k == "RightVector" then return Vector3.new(1, 0, 0) end
-	if k == "UpVector" then return Vector3.new(0, 1, 0) end
-	if k == "Rotation" then return cf() end
-	return CF[k]
+	if cfm[k] then return cfm[k] end
+	local r = t.r
+	if k == "Position" or k == "p" then return Vector3.new(t.x, t.y, t.z) end
+	if k == "X" then return t.x elseif k == "Y" then return t.y elseif k == "Z" then return t.z end
+	if k == "LookVector" then return Vector3.new(-r[3], -r[6], -r[9]) end
+	if k == "RightVector" or k == "XVector" then return Vector3.new(r[1], r[4], r[7]) end
+	if k == "UpVector" or k == "YVector" then return Vector3.new(r[2], r[5], r[8]) end
+	if k == "ZVector" then return Vector3.new(r[3], r[6], r[9]) end
+	if k == "Rotation" then return mk(0, 0, 0, r) end
+	return nil
 end
-function CF:Inverse() return cf(-self.Position) end
-function CF:Lerp(b, a) return cf(self.Position:Lerp(b.Position, a)) end
-function CF:ToWorldSpace(b) return self * b end
-function CF:ToObjectSpace(b) return cf(b.Position - self.Position) end
-function CF:PointToWorldSpace(v) return self.Position + v end
-function CF:PointToObjectSpace(v) return v - self.Position end
-function CF:VectorToWorldSpace(v) return v end
-function CF:ToEulerAnglesXYZ() return 0, 0, 0 end
-function CF:ToOrientation() return 0, 0, 0 end
-function CF:GetComponents() local p = self.Position return p.X, p.Y, p.Z, 1, 0, 0, 0, 1, 0, 0, 0, 1 end
+function cfm.Inverse(a)
+	local it = tr(a.r)
+	local x, y, z = mvec(it, -a.x, -a.y, -a.z)
+	return mk(x, y, z, it)
+end
+local function toQuat(r)
+	local t = r[1] + r[5] + r[9]
+	local w, x, y, z
+	if t > 0 then
+		local s = math.sqrt(t + 1) * 2
+		w, x, y, z = s / 4, (r[8] - r[6]) / s, (r[3] - r[7]) / s, (r[4] - r[2]) / s
+	elseif r[1] > r[5] and r[1] > r[9] then
+		local s = math.sqrt(1 + r[1] - r[5] - r[9]) * 2
+		w, x, y, z = (r[8] - r[6]) / s, s / 4, (r[2] + r[4]) / s, (r[3] + r[7]) / s
+	elseif r[5] > r[9] then
+		local s = math.sqrt(1 + r[5] - r[1] - r[9]) * 2
+		w, x, y, z = (r[3] - r[7]) / s, (r[2] + r[4]) / s, s / 4, (r[6] + r[8]) / s
+	else
+		local s = math.sqrt(1 + r[9] - r[1] - r[5]) * 2
+		w, x, y, z = (r[4] - r[2]) / s, (r[3] + r[7]) / s, (r[6] + r[8]) / s, s / 4
+	end
+	return x, y, z, w
+end
+function cfm.Lerp(a, b, t)
+	local ax, ay, az, aw = toQuat(a.r)
+	local bx, by, bz, bw = toQuat(b.r)
+	local d = ax * bx + ay * by + az * bz + aw * bw
+	if d < 0 then bx, by, bz, bw, d = -bx, -by, -bz, -bw, -d end
+	local qx, qy, qz, qw = ax + (bx - ax) * t, ay + (by - ay) * t, az + (bz - az) * t, aw + (bw - aw) * t
+	local m = math.sqrt(qx * qx + qy * qy + qz * qz + qw * qw)
+	local c = CFrame.new(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, qx / m, qy / m, qz / m, qw / m)
+	return c
+end
+function cfm.ToWorldSpace(a, b) return a * b end
+function cfm.ToObjectSpace(a, b) return a:Inverse() * b end
+function cfm.PointToWorldSpace(a, v) return a * v end
+function cfm.PointToObjectSpace(a, v) return a:Inverse() * v end
+function cfm.VectorToWorldSpace(a, v) local x, y, z = mvec(a.r, v.X, v.Y, v.Z) return Vector3.new(x, y, z) end
+function cfm.VectorToObjectSpace(a, v) local x, y, z = mvec(tr(a.r), v.X, v.Y, v.Z) return Vector3.new(x, y, z) end
+function cfm.ToEulerAnglesXYZ(a)
+	local r = a.r
+	return math.atan(-r[6], r[9]), math.asin(math.max(-1, math.min(1, r[3]))), math.atan(-r[2], r[1])
+end
+function cfm.ToEulerAnglesYXZ(a)
+	local r = a.r
+	return math.asin(math.max(-1, math.min(1, -r[6]))), math.atan(r[3], r[9]), math.atan(r[4], r[5])
+end
+cfm.ToOrientation = cfm.ToEulerAnglesYXZ
+function cfm.ToAxisAngle(a) local x, y, z, w = toQuat(a.r) local s = math.sqrt(1 - w * w) if s < 1e-6 then return Vector3.new(1, 0, 0), 0 end return Vector3.new(x / s, y / s, z / s), 2 * math.acos(w) end
+function cfm.GetComponents(a) local r = a.r return a.x, a.y, a.z, r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9] end
+cfm.components = cfm.GetComponents
+function cfm.Orthonormalize(a) return a end
+R.CFMT = CF
 
 -- Color3
 local C3 = class("Color3")
@@ -446,6 +558,13 @@ InstMT.__index = function(self, k)
 	end
 	local d = rawget(self, "_defaults")
 	if d and d[k] ~= nil then return d[k] end
+	if ISA.BasePart[raw.ClassName] then
+		if k == "CFrame" then return CFrame.new() end
+		if k == "Position" then local c = raw.CFrame return c and c.Position or Vector3.new() end
+		if k == "Orientation" then local c = raw.CFrame or CFrame.new() local x, y, z = c:ToOrientation() return Vector3.new(math.deg(x), math.deg(y), math.deg(z)) end
+		if k == "Rotation" then return Vector3.new() end
+		if k == "Mass" then local sz = self.Size return sz.X * sz.Y * sz.Z end
+	end
 	if k == "AbsoluteSize" then return Vector2.new(1280, 720) end
 	if k == "AbsolutePosition" then return Vector2.new(0, 0) end
 	if k == "AbsoluteRotation" then return 0 end
@@ -483,6 +602,17 @@ InstMT.__newindex = function(self, k, v)
 		self.AncestryChanged:Fire(self, v)
 		return
 	end
+	if ISA.BasePart[raw.ClassName] then
+		if k == "Position" then
+			local c = raw.CFrame or CFrame.new()
+			raw.CFrame = CFrame.new(v) * c.Rotation
+			return
+		elseif k == "Orientation" then
+			local c = raw.CFrame or CFrame.new()
+			raw.CFrame = CFrame.new(c.Position) * CFrame.fromOrientation(math.rad(v.X), math.rad(v.Y), math.rad(v.Z))
+			return
+		end
+	end
 	if k == "Name" and raw.Parent then
 		local named = rawget(raw.Parent, "_named")
 		if named[raw.Name] == self then named[raw.Name] = nil end
@@ -519,6 +649,20 @@ function R.newInstance(class, name)
 	if class == "ScreenGui" then defaults.Enabled = true defaults.DisplayOrder = 0 end
 	if class == "Sound" then defaults.Volume = 0.5 defaults.IsPlaying = false defaults.TimeLength = 1 defaults.PlaybackSpeed = 1 end
 	if class == "Humanoid" then defaults.Health = 100 defaults.MaxHealth = 100 defaults.WalkSpeed = 16 end
+	if ISA.BasePart[class] then
+		defaults.Size = Vector3.new(4, 1, 2)
+		defaults.Color = Color3.fromRGB(163, 162, 165)
+		defaults.Transparency = 0
+		defaults.Reflectance = 0
+		defaults.Material = Enum.Material.Plastic
+		defaults.Shape = Enum.PartType.Block
+		defaults.Anchored = false
+		defaults.CastShadow = true
+		defaults.AssemblyLinearVelocity = Vector3.new()
+		defaults.AssemblyAngularVelocity = Vector3.new()
+		defaults.Velocity = Vector3.new()
+	end
+	if class == "SpecialMesh" then defaults.Scale = Vector3.new(1, 1, 1) defaults.Offset = Vector3.new() end
 	if class == "Camera" then defaults.CFrame = CFrame.new() defaults.FieldOfView = 70 defaults.ViewportSize = Vector2.new(1280, 720) end
 	local self = setmetatable({ _p = { Name = name or class, ClassName = class }, _kids = {}, _named = {}, _attrs = {}, _attrsig = {}, _propsig = {}, _defaults = defaults, _serial = serial }, InstMT)
 	table.insert(R.instances, self)
@@ -598,14 +742,57 @@ function methods.GetAttributeChangedSignal(self, k)
 	return s[k]
 end
 function methods.GetFullName(self) local n = self.Name local p = self.Parent while p and p.Name ~= "game" do n = p.Name .. "." .. n p = p.Parent end return n end
-function methods.GetBoundingBox(self) return CFrame.new(), Vector3.new(4, 4, 4) end
-function methods.GetExtentsSize() return Vector3.new(4, 4, 4) end
-function methods.GetPivot() return CFrame.new() end
-function methods.PivotTo() end
-function methods.SetPrimaryPartCFrame() end
-function methods.GetPrimaryPartCFrame() return CFrame.new() end
-function methods.ScaleTo() end
-function methods.GetScale() return 1 end
+local function parts(self)
+	local out = {}
+	if isa(self, "BasePart") then table.insert(out, self) end
+	for _, d in ipairs(self:GetDescendants()) do if isa(d, "BasePart") then table.insert(out, d) end end
+	return out
+end
+function methods.GetBoundingBox(self)
+	local mn, mx
+	for _, p in ipairs(parts(self)) do
+		local c, sz = p.CFrame, p.Size
+		for _, sx in ipairs({ -1, 1 }) do for _, sy in ipairs({ -1, 1 }) do for _, sz2 in ipairs({ -1, 1 }) do
+			local w = c * Vector3.new(sx * sz.X / 2, sy * sz.Y / 2, sz2 * sz.Z / 2)
+			if not mn then mn, mx = w, w else
+				mn = Vector3.new(math.min(mn.X, w.X), math.min(mn.Y, w.Y), math.min(mn.Z, w.Z))
+				mx = Vector3.new(math.max(mx.X, w.X), math.max(mx.Y, w.Y), math.max(mx.Z, w.Z))
+			end
+		end end end
+	end
+	if not mn then return CFrame.new(), Vector3.new() end
+	return CFrame.new((mn + mx) / 2), mx - mn
+end
+function methods.GetExtentsSize(self) local _, s = self:GetBoundingBox() return s end
+function methods.GetPivot(self)
+	if isa(self, "BasePart") then return self.CFrame end
+	local pp = rawget(self, "_p").PrimaryPart
+	if pp then return pp.CFrame end
+	local wp = rawget(self, "_p").WorldPivot
+	if wp then return wp end
+	local c = self:GetBoundingBox()
+	return c
+end
+function methods.PivotTo(self, target)
+	local pivot = self:GetPivot()
+	local delta = target * pivot:Inverse()
+	for _, p in ipairs(parts(self)) do p.CFrame = delta * p.CFrame end
+	if not isa(self, "BasePart") and not rawget(self, "_p").PrimaryPart then rawget(self, "_p").WorldPivot = target end
+end
+function methods.SetPrimaryPartCFrame(self, cf) self:PivotTo(cf) end
+function methods.GetPrimaryPartCFrame(self) return self:GetPivot() end
+function methods.GetScale(self) return rawget(self, "_scale") or 1 end
+function methods.ScaleTo(self, s)
+	local k = s / self:GetScale()
+	rawset(self, "_scale", s)
+	local pivot = self:GetPivot()
+	for _, p in ipairs(parts(self)) do
+		local rel = pivot:Inverse() * p.CFrame
+		p.CFrame = pivot * (CFrame.new(rel.Position * k) * rel.Rotation)
+		p.Size = p.Size * k
+	end
+end
+function methods.TranslateBy(self, v) self:PivotTo(self:GetPivot() + v) end
 function methods.Play(self) rawget(self, "_p").IsPlaying = true end
 function methods.Stop(self) rawget(self, "_p").IsPlaying = false end
 function methods.Pause() end
@@ -873,9 +1060,32 @@ function R.serialize(inst)
 	end
 	local kids = {}
 	for _, c in ipairs(rawget(inst, "_kids")) do table.insert(kids, R.serialize(c)) end
+	if rawget(inst, "_p").ClassName == "ViewportFrame" then
+		local cam = inst.CurrentCamera
+		if cam and cam.CFrame then
+			table.insert(parts, '"_vp":' .. R.serialize3d(inst))
+			table.insert(parts, rawformat('"_cam":[%s],"_fov":%.3f', table.concat({ (function(...) local t = {} for i, v in ipairs({ ... }) do t[i] = rawformat("%.5f", v) end return table.unpack(t) end)(cam.CFrame:GetComponents()) }, ","), cam.FieldOfView or 70))
+		end
+	end
 	table.insert(parts, '"_id":' .. rawget(inst, "_serial"))
 	table.insert(parts, '"Children":[' .. table.concat(kids, ",") .. "]")
 	return "{" .. table.concat(parts, ",") .. "}"
+end
+function R.serialize3d(model)
+	local out = {}
+	for _, p in ipairs(parts(model)) do
+		local c, sz, col = p.CFrame, p.Size, p.Color
+		local mesh = p:FindFirstChildOfClass("SpecialMesh")
+		local light = p:FindFirstChildOfClass("PointLight")
+		local mat = p.Material
+		table.insert(out, rawformat('{"c":"%s","shape":"%s","s":[%.4f,%.4f,%.4f],"cf":[%s],"col":[%.4f,%.4f,%.4f],"mat":"%s","t":%.3f,"mesh":%s,"light":%s}',
+			p.ClassName, p.Shape and p.Shape.Name or "Block", sz.X, sz.Y, sz.Z,
+			table.concat({ (function(...) local t = {} for i, v in ipairs({ ... }) do t[i] = rawformat("%.5f", v) end return table.unpack(t) end)(c:GetComponents()) }, ","),
+			col.R, col.G, col.B, mat and mat.Name or "Plastic", p.Transparency or 0,
+			mesh and rawformat('{"type":"%s","scale":[%.4f,%.4f,%.4f]}', mesh.MeshType and mesh.MeshType.Name or "Brick", mesh.Scale.X, mesh.Scale.Y, mesh.Scale.Z) or "null",
+			light and rawformat('{"col":[%.3f,%.3f,%.3f],"range":%.2f,"b":%.2f}', light.Color.R, light.Color.G, light.Color.B, light.Range or 8, light.Brightness or 1) or "null"))
+	end
+	return "[" .. table.concat(out, ",") .. "]"
 end
 R.InstMT = InstMT
 return R

@@ -149,13 +149,16 @@ local function watch(player)
 end
 
 -- раскладка вокруг игрока: дуга позади
-local function slotOffset(i, n)
+-- k — масштаб питомца: крупные (мифики x2, «Огромные» x3) идут дальше от игрока, чтобы не заслонять его
+local function slotOffset(i, n, k)
+	k = math.max(1, k or 1)
+	local extra = (k - 1) * 2.2
 	if n == 1 then
-		return Vector3.new(2.6, 0, 3.5)
+		return Vector3.new(2.6 + extra * 0.6, 0, 3.5 + extra)
 	end
 	local spread = math.rad(150)
 	local a = -spread / 2 + spread * (i - 1) / (n - 1)
-	local r = 4.4
+	local r = 4.4 + extra
 	return Vector3.new(math.sin(a) * r, 0, math.cos(a) * r * 0.85 + 1)
 end
 
@@ -181,7 +184,7 @@ local function update(dt)
 				if not p.model.Parent then
 					p.model.Parent = folder
 				end
-				local off = slotOffset(i, #e.pets)
+				local off = slotOffset(i, #e.pets, p.ground)
 				local base = root.CFrame * CFrame.new(off)
 				local pos = base.Position
 				local groundY

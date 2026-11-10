@@ -1,6 +1,7 @@
 -- EggsData: 10 яиц и шансы питомцев.
 -- Pets = { {Id, Русское имя, шанс %, (не используется), "Mythic" — мифик}, ... }
 -- В каждом ярусе 3 яйца, в каждом яйце есть очень редкий мифик (0.03–0.1%).
+-- "Huge" — «Огромный» питомец (0.01%, 1 из 10 000): только в третьем яйце каждого яруса, в 3 раза больше обычных.
 -- Сила питомца считается в PetsData: зависит от номера яйца и редкости.
 local function rgb(r, g, b) return { r, g, b } end
 
@@ -34,13 +35,14 @@ local Eggs = {
 		Id = "Fluffy", Name = "Пушистое яйцо", Biome = 1, Price = 40000, Slot = 3,
 		Look = { Base = rgb(255, 236, 244), Accent = rgb(255, 150, 190), Band = rgb(255, 200, 90), Pattern = "spots" },
 		Pets = {
-			{ "Bunny", "Зайка", 34.0, 0 },
+			{ "Bunny", "Зайка", 33.99, 0 },
 			{ "Kitty", "Котёнок", 27.0, 0 },
 			{ "Puppy", "Щенок", 20.0, 0 },
 			{ "RedPanda", "Красная панда", 11.0, 0 },
 			{ "Fox", "Лисёнок", 6.0, 0 },
 			{ "Panda", "Панда", 1.9, 0 },
 			{ "DemonCat", "Кот-Демон", 0.1, 0, "Mythic" },
+			{ "HugeCloudCat", "Огромный Облачный Кот", 0.01, 0, "Huge" },
 		},
 	},
 	{
@@ -74,13 +76,14 @@ local Eggs = {
 		Id = "Safari", Name = "Яйцо саванны", Biome = 2, Price = 12000000, Slot = 3,
 		Look = { Base = rgb(236, 196, 110), Accent = rgb(120, 170, 70), Band = rgb(150, 96, 50), Pattern = "spots" },
 		Pets = {
-			{ "LionCub", "Львёнок", 33.04, 0 },
+			{ "LionCub", "Львёнок", 33.03, 0 },
 			{ "Zebra", "Зебра", 26.0, 0 },
 			{ "Hippo", "Бегемотик", 19.0, 0 },
 			{ "Giraffe", "Жирафик", 12.0, 0 },
 			{ "Rhino", "Носорог", 7.0, 0 },
 			{ "Elephant", "Слонёнок", 2.9, 0 },
 			{ "SunLion", "Король Солнца", 0.06, 0, "Mythic" },
+			{ "HugeAmberDragon", "Огромный Янтарный Дракон", 0.01, 0, "Huge" },
 		},
 	},
 	{
@@ -114,13 +117,14 @@ local Eggs = {
 		Id = "Aurora", Name = "Яйцо Северного сияния", Biome = 3, Price = 1200000000, Slot = 3,
 		Look = { Base = rgb(40, 60, 120), Accent = rgb(90, 255, 200), Band = rgb(200, 120, 255), Pattern = "stars", Neon = true },
 		Pets = {
-			{ "ArcticFox", "Песец", 33.05, 0 },
+			{ "ArcticFox", "Песец", 33.04, 0 },
 			{ "SnowOwl", "Полярная сова", 26.0, 0 },
 			{ "Seal", "Тюлень", 19.0, 0 },
 			{ "Reindeer", "Северный олень", 12.0, 0 },
 			{ "PolarBear", "Белый медведь", 7.0, 0 },
 			{ "AuroraWolf", "Волк сияния", 2.9, 0 },
 			{ "AuroraStag", "Олень Авроры", 0.05, 0, "Mythic" },
+			{ "HugeFrostWolf", "Огромный Ледяной Волк", 0.01, 0, "Huge" },
 		},
 	},
 	{
@@ -155,13 +159,14 @@ local Eggs = {
 		Id = "Dragon", Name = "Драконье яйцо", Biome = 4, Price = 1.5e11, Slot = 3,
 		Look = { Base = rgb(150, 30, 40), Accent = rgb(255, 180, 40), Band = rgb(40, 20, 30), Pattern = "flames", Neon = true },
 		Pets = {
-			{ "EmberPup", "Угольный щенок", 32.06, 0 },
+			{ "EmberPup", "Угольный щенок", 32.05, 0 },
 			{ "DrakeHatchling", "Дракончик", 25.0, 0 },
 			{ "LavaTurtle", "Лавовая черепаха", 19.0, 0 },
 			{ "FireFox", "Огненный лис", 13.0, 0 },
 			{ "MagmaDragon", "Магма-дракон", 8.0, 0 },
 			{ "ChaosDragon", "Дракон Хаоса", 2.9, 0 },
 			{ "DragonEmperor", "Император Драконов", 0.04, 0, "Mythic" },
+			{ "HugeLavaPhoenix", "Огромный Лавовый Феникс", 0.01, 0, "Huge" },
 		},
 	},
 	{
@@ -198,13 +203,14 @@ local Eggs = {
 		Id = "Cosmos", Name = "Космическое яйцо", Biome = 5, Price = 2e13, Slot = 3,
 		Look = { Base = rgb(30, 20, 70), Accent = rgb(255, 120, 220), Band = rgb(110, 240, 255), Pattern = "stars", Neon = true },
 		Pets = {
-			{ "StarBunny", "Звёздный зайка", 32.07, 0 },
+			{ "StarBunny", "Звёздный зайка", 32.06, 0 },
 			{ "CometCat", "Кот-комета", 25.0, 0 },
 			{ "NebulaPup", "Небула-щенок", 19.0, 0 },
 			{ "GalaxyOwl", "Галакти-сова", 13.0, 0 },
 			{ "MoonDragon", "Лунный дракон", 8.0, 0 },
 			{ "CosmicFox", "Космо-лис", 2.9, 0 },
 			{ "CosmicAngel", "Космический Ангел", 0.03, 0, "Mythic" },
+			{ "HugeStarWhale", "Огромный Звёздный Кит", 0.01, 0, "Huge" },
 		},
 	},
 }

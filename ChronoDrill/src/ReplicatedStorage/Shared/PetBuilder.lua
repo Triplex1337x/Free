@@ -19,7 +19,8 @@ local IVORY = Color3.fromRGB(250, 242, 222)
 local PINK = Color3.fromRGB(255, 150, 170)
 local GOLD = Color3.fromRGB(255, 205, 60)
 
-local RARITY_SCALE = { Common = 1, Uncommon = 1.05, Rare = 1.1, Epic = 1.16, Legendary = 1.24, Mythic = 1.5, Secret = 1.3 }
+-- Размер по редкости: мифики и эксклюзивы примерно в 2 раза больше обычных, «Огромные» — в 3 раза
+local RARITY_SCALE = { Common = 1, Uncommon = 1.05, Rare = 1.1, Epic = 1.16, Legendary = 1.3, Mythic = 2.2, Secret = 2, Huge = 3 }
 
 ---------------------------------------------------------------------------------------------
 -- Контекст сборки
@@ -537,7 +538,8 @@ local function buildEyes(look, a)
 	end
 	local ex = w * 0.22
 	local ey = (a.eyeY or 0.1) * a.hs.Y * 2
-	local glow = style == "glow" or (look.Mythic ~= nil)
+	-- у «Огромных» всегда живые аниме-глаза с цветной радужкой (так милее), у мификов — светящиеся
+	local glow = (style == "glow" or (look.Mythic ~= nil)) and not look.Huge
 	local iris = look.Iris and MK.C(look.Iris) or (look.EyeColor and MK.C(look.EyeColor)) or IRIS[(ctx.hash % #IRIS) + 1]
 	for _, sx in ipairs({ -1, 1 }) do
 		local pos = faceAt(a, sx * ex, ey, 0.02)
@@ -1298,6 +1300,63 @@ WINGS.flame = function(a, m, s, root)
 	end
 end
 
+-- королевские крылья: три слоя перьев — длинные светлые, золотые и короткие с неоновым кантом
+WINGS.royal = function(a, m, s, root)
+	local c1, c2, c3 = mc(m.C1, WHITE), mc(m.C2, GOLD), mc(m.Glow, ctx.C2)
+	for k = 0, 5 do
+		blade(root, s, 3.5 - k * 0.32, 0.74, -14, 80 - k * 17, c1)
+	end
+	for k = 0, 4 do
+		blade(root + V3(0, -0.08, -0.1), s, 2.6 - k * 0.26, 0.62, -14, 72 - k * 18, c2, { Material = "Metal" })
+	end
+	for k = 0, 3 do
+		blade(root + V3(0, -0.14, -0.2), s, 1.6 - k * 0.16, 0.5, -14, 66 - k * 21, c3, { Material = "Neon", Transparency = 0.1 })
+	end
+	E(V3(0.75, 0.75, 0.55), root, c2, { Material = "Metal" })
+end
+local RAINBOW7 = {
+	Color3.fromRGB(255, 92, 120), Color3.fromRGB(255, 160, 60), Color3.fromRGB(255, 228, 90), Color3.fromRGB(110, 226, 120),
+	Color3.fromRGB(90, 196, 255), Color3.fromRGB(140, 120, 255), Color3.fromRGB(226, 120, 255),
+}
+-- радужные крылья: веер из перьев всех цветов и тонкие светящиеся «жилки»
+WINGS.rainbow = function(a, m, s, root)
+	for k = 0, 6 do
+		local col = RAINBOW7[k + 1]
+		blade(root, s, 3.4 - k * 0.2, 0.7, -14, 84 - k * 15, col)
+		blade(root + V3(0, 0, -0.06), s, 2.3 - k * 0.12, 0.2, -14, 84 - k * 15, col:Lerp(WHITE, 0.45), { Material = "Neon", Transparency = 0.15 })
+	end
+	E(V3(0.7, 0.7, 0.5), root, WHITE)
+end
+-- крылья феникса: огненный веер в три слоя (красный -> оранжевый -> жёлтый), кончики светятся
+WINGS.phoenix = function(a, m, s, root)
+	local cols = { Color3.fromRGB(230, 50, 30), Color3.fromRGB(255, 130, 30), Color3.fromRGB(255, 220, 80) }
+	for layer = 0, 2 do
+		for k = 0, 5 - layer do
+			local len = 3.1 - layer * 0.7 - k * 0.2
+			blade(root + V3(0, -layer * 0.12, -layer * 0.1), s, len, 0.68 - layer * 0.08, -12, 82 - k * 17 - layer * 3, cols[layer + 1], layer == 2 and { Material = "Neon", Transparency = 0.05 } or nil)
+		end
+	end
+	for k = 0, 3 do
+		local cf = CF(root) * ANG(0, rad(s * -12), rad(s * (82 - k * 17))) * CF(s * (2.95 - k * 0.2), 0, 0)
+		E(V3(0.5, 0.36, 0.2), cf, Color3.fromRGB(255, 240, 150), { Material = "Neon" })
+	end
+end
+-- галактические крылья: тёмная перепонка, звёзды и светящаяся кромка
+WINGS.galaxy = function(a, m, s, root)
+	local dark, edge = mc(m.C1, Color3.fromRGB(30, 24, 80)), mc(m.Glow, Color3.fromRGB(120, 220, 255))
+	local mem = CF(root) * ANG(rad(-8), rad(s * -18), rad(s * 24)) * CF(s * 2.0, 0.4, 0.05)
+	E(V3(4.0, 2.6, 0.14), mem, dark)
+	E(V3(3.3, 1.9, 0.16), mem * CF(s * 0.1, -0.05, -0.02), dark:Lerp(Color3.fromRGB(150, 80, 220), 0.45))
+	for k = 0, 2 do
+		local tip = (mem * CF(s * (2.0 - k * 0.25), 1.3 - k * 1.1, 0)).Position
+		Cyl(root, tip, 0.16 - k * 0.03, edge, { Material = "Neon" })
+	end
+	for i = 1, 7 do
+		local x, y = ((ctx.hash * i) % 7) / 7 - 0.5, ((ctx.hash * i * 3) % 5) / 5 - 0.5
+		E(V3(0.16, 0.16, 0.2), mem * CF(s * x * 2.6, y * 1.6, -0.06), (i % 3 == 0) and edge or WHITE, { Material = "Neon" })
+	end
+end
+
 local HORNS = {}
 -- изогнутые рога из цепочки цилиндров
 HORNS.curved = function(a, m, s)
@@ -1404,6 +1463,116 @@ local function mythicFx(look, a)
 	end
 end
 
+---------------------------------------------------------------------------------------------
+-- «Огромные» питомцы: аура-пьедестал, облако, бант, мантия, радужная грива и хвост,
+-- ледяная корона, самоцвет на груди, звёзды-спутники. Всё из примитивов Roblox.
+---------------------------------------------------------------------------------------------
+local function star4(pos, size, color, tilt)
+	local cf = CF(pos) * (tilt or ANG(0, 0, 0))
+	B(V3(size, size * 0.22, size * 0.22), cf, color, { Material = "Neon" })
+	B(V3(size * 0.22, size, size * 0.22), cf, color, { Material = "Neon" })
+	E(V3(size * 0.45, size * 0.45, size * 0.3), cf, WHITE, { Material = "Neon" })
+end
+
+local function hugeFx(look, a)
+	local h = look.Huge
+	local m = look.Mythic or {}
+	local glow = mc(h.Aura, mc(m.Glow, ctx.C2))
+	local zc = a.bodyC.Z
+	local R = math.max(a.bodyS.X, a.bodyS.Z) * 1.45
+	-- облако под лапами
+	if h.Cloud then
+		for i = 0, 7 do
+			local ang = i / 8 * math.pi * 2
+			E(V3(1.25, 0.75, 1.25), V3(math.cos(ang) * R * 0.75, 0.2, zc + math.sin(ang) * R * 0.75), WHITE)
+		end
+		E(V3(R * 1.6, 0.6, R * 1.6), V3(0, 0.18, zc), Color3.fromRGB(240, 246, 255))
+	end
+	-- аура-пьедестал: кольцо светящихся бусин и мягкий диск
+	local n = 30
+	for i = 0, n - 1 do
+		local ang = i / n * math.pi * 2
+		local col = h.Rainbow and RAINBOW7[i % #RAINBOW7 + 1] or glow
+		E(V3(0.36, 0.12, 0.36), V3(math.cos(ang) * R, 0.06, zc + math.sin(ang) * R), col, { Material = "Neon", NoShadow = true })
+	end
+	local disc = MK.Disc(ctx.model, 0.05, R * 2, V3(0, 0.03, zc), glow)
+	finish(disc, "Fixed", { Material = "Neon", Transparency = 0.8, NoShadow = true })
+	-- звёзды-спутники
+	if h.Stars then
+		for i = 0, 3 do
+			local ang = i / 4 * math.pi * 2 + 0.6
+			local p = a.bodyC + V3(math.cos(ang) * (R + 0.2), 0.6 + (i % 2) * 0.9, math.sin(ang) * (R + 0.2))
+			star4(p, 0.45, (i % 2 == 0) and glow or Color3.fromRGB(255, 226, 120), ANG(0, ang, rad(20)))
+		end
+	end
+	-- бант на макушке
+	if h.Bow then
+		local bc = mc(h.Bow, Color3.fromRGB(255, 120, 180))
+		local base = a.top + V3(a.hs.X * 0.45, 0.1, -0.2)
+		for _, sx in ipairs({ -1, 1 }) do
+			E(V3(0.75, 0.55, 0.3), CF(base + V3(sx * 0.42, 0.05, 0)) * ANG(0, 0, rad(sx * -20)), bc)
+			E(V3(0.3, 0.25, 0.32), CF(base + V3(sx * 0.42, 0.05, -0.02)), bc:Lerp(INK, 0.25))
+		end
+		E(V3(0.32, 0.32, 0.34), base, bc:Lerp(WHITE, 0.2))
+	end
+	-- королевская мантия за спиной и золотой воротник
+	if h.Cape then
+		local cc = mc(h.Cape, Color3.fromRGB(120, 40, 160))
+		local back = a.bodyC + V3(0, -0.05, a.bodyS.Z + 0.12)
+		E(V3(a.bodyS.X * 2.15, a.bodyS.Y * 1.9, 0.22), CF(back) * ANG(rad(10), 0, 0), cc)
+		E(V3(a.bodyS.X * 2.0, a.bodyS.Y * 1.7, 0.24), CF(back + V3(0, 0, 0.03)) * ANG(rad(10), 0, 0), cc:Lerp(INK, 0.3))
+		for i = 0, 8 do
+			local t = i / 8 - 0.5
+			E(V3(0.3, 0.3, 0.3), a.bodyC + V3(t * a.bodyS.X * 2.0, a.bodyS.Y * 0.95, a.bodyS.Z * 0.75 - math.abs(t) * 0.4), (i % 2 == 0) and GOLD or WHITE, { Material = (i % 2 == 0) and "Metal" or "SmoothPlastic" })
+		end
+	end
+	-- радужная грива по макушке и затылку
+	if h.Mane then
+		for i = 0, 6 do
+			local col = RAINBOW7[i + 1]
+			E(V3(0.62, 0.8, 0.5), a.top + V3(0, 0.12 - i * 0.07, -0.55 + i * 0.32), col)
+		end
+	end
+	-- пушистый радужный хвост
+	if h.RainbowTail then
+		local t0 = a.tail
+		for i = 0, 6 do
+			local col = RAINBOW7[i + 1]
+			E(V3(0.95 - i * 0.07, 0.9 - i * 0.06, 0.8 - i * 0.05), t0 + V3(0, 0.22 * i + 0.1, 0.35 + 0.26 * i), col)
+		end
+	end
+	-- фонтанчик кита: столбик капель и брызги
+	if h.Spout then
+		local sc = mc(h.Spout, Color3.fromRGB(140, 220, 255))
+		local base = a.top + V3(0, 0, 0.1)
+		for i = 0, 2 do
+			E(V3(0.4 - i * 0.06, 0.55, 0.4 - i * 0.06), base + V3(0, 0.3 + i * 0.45, 0), sc, { Material = "Glass", Transparency = 0.15 })
+		end
+		for i = 0, 5 do
+			local ang = i / 6 * math.pi * 2
+			E(V3(0.3, 0.38, 0.3), base + V3(math.cos(ang) * 0.6, 1.35 - (i % 2) * 0.15, math.sin(ang) * 0.6), (i % 2 == 0) and sc or WHITE, { Material = (i % 2 == 0) and "Glass" or "Neon", Transparency = 0.1 })
+		end
+	end
+	-- ледяная корона
+	if h.IceCrown then
+		for i = 0, 5 do
+			local ang = i / 6 * math.pi * 2
+			local p = a.top + V3(math.cos(ang) * a.hs.X * 0.55, -0.05, math.sin(ang) * a.hs.Z * 0.55)
+			crystal(p, (i % 2 == 0) and 1.0 or 0.65, ANG(rad(math.cos(ang) * -12), 0, rad(math.sin(ang) * 12)), mc(h.CrownColor, Color3.fromRGB(170, 230, 255)))
+		end
+	end
+	-- самоцвет на груди в золотой оправе
+	if h.Gem then
+		local g = a.hc + V3(0, -a.hs.Y * 0.62, -a.hs.Z - 0.08)
+		B(V3(0.62, 0.62, 0.16), CF(g) * ANG(0, 0, rad(45)), GOLD, { Material = "Metal" })
+		B(V3(0.42, 0.42, 0.22), CF(g + V3(0, 0, -0.04)) * ANG(0, 0, rad(45)), mc(h.Gem, glow), { Material = "Neon" })
+	end
+	MK.Light(ctx.root, glow, 18, 3)
+	local e = MK.Sparkles(ctx.root, { 255, 255, 255 }, 18, 0.6)
+	e.Color = ColorSequence.new(glow, WHITE)
+	e.Name = "HugeAura"
+end
+
 function PetBuilder.Build(id)
 	local look = PetLooks[id]
 	local def = PetsData.ById[id]
@@ -1461,6 +1630,9 @@ function PetBuilder.Build(id)
 	if look.Mythic then
 		mythicFx(look, a)
 	end
+	if look.Huge then
+		hugeFx(look, a)
+	end
 
 	local fly = look.Fly
 	if fly == nil then
@@ -1476,6 +1648,7 @@ function PetBuilder.Build(id)
 	model:SetAttribute("Fly", fly)
 	model:SetAttribute("Scale", scale)
 	model:SetAttribute("Rarity", rarity)
+	model:SetAttribute("Huge", look.Huge ~= nil)
 	if scale ~= 1 then
 		model:ScaleTo(scale)
 	end

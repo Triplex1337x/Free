@@ -1,0 +1,137 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+/*FONTS*/
+html,body{margin:0;background:#1b1736;font-family:'Nunito',sans-serif}
+#grid{display:grid;gap:10px;padding:10px}
+.cell{position:relative;border-radius:18px;overflow:hidden;background:radial-gradient(circle at 50% 40%,#5a6cc4,#2a2560 75%)}
+.cell canvas{display:block}
+.lbl{position:absolute;left:0;right:0;bottom:8px;text-align:center;color:#fff;font-weight:900;font-size:20px;-webkit-text-stroke:4px #1b1430;paint-order:stroke fill}
+.sub{position:absolute;left:0;right:0;top:8px;text-align:center;color:#ffe07a;font-weight:800;font-size:14px;-webkit-text-stroke:3px #1b1430;paint-order:stroke fill}
+</style></head><body><div id="grid"></div>
+<script src="/*THREE*/"></script>
+<script>
+const DATA = /*DATA*/null;
+const MODE = /*MODE*/"grid";
+const CW = /*CW*/360, CH = /*CH*/360, COLS = /*COLS*/4;
+const grid = document.getElementById('grid');
+grid.style.gridTemplateColumns = `repeat(${COLS}, ${CW}px)`;
+
+function wedgeGeo(){
+  // Roblox WedgePart: bottom + back(+Z) faces full, slope from front-bottom to back-top
+  const g = new THREE.BufferGeometry();
+  const v = [
+    -0.5,-0.5,-0.5,  0.5,-0.5,-0.5,  0.5,-0.5,0.5,  -0.5,-0.5,0.5, // bottom 0-3
+    -0.5,0.5,0.5,   0.5,0.5,0.5 // top back 4-5
+  ];
+  const idx = [0,2,1, 0,3,2,  3,4,5, 3,5,2,  0,1,5, 0,5,4,  0,4,3,  1,2,5];
+  g.setAttribute('position', new THREE.Float32BufferAttribute(v,3));
+  g.setIndex(idx); g.computeVertexNormals();
+  return g.toNonIndexed ? (()=>{const n=g.toNonIndexed();n.computeVertexNormals();return n;})() : g;
+}
+function cornerGeo(){
+  const g = new THREE.BufferGeometry();
+  const v=[-0.5,-0.5,-0.5, 0.5,-0.5,-0.5, 0.5,-0.5,0.5, -0.5,-0.5,0.5, 0.5,0.5,-0.5];
+  const idx=[0,2,1,0,3,2, 0,1,4, 1,2,4, 2,3,4, 3,0,4];
+  g.setAttribute('position', new THREE.Float32BufferAttribute(v,3)); g.setIndex(idx);
+  const n=g.toNonIndexed(); n.computeVertexNormals(); return n;
+}
+const WEDGE = wedgeGeo(), CORNER = cornerGeo();
+const BOX = new THREE.BoxGeometry(1,1,1);
+const SPH = new THREE.SphereGeometry(0.5, 32, 20);
+const CYL = new THREE.CylinderGeometry(0.5,0.5,1,28); CYL.rotateZ(Math.PI/2);
+
+function material(p){
+  const col = new THREE.Color(p.col[0],p.col[1],p.col[2]).convertSRGBToLinear();
+  const t = p.t || 0;
+  let m;
+  if (p.mat === 'Neon') m = new THREE.MeshStandardMaterial({color: col, emissive: col, emissiveIntensity: 0.9, roughness: .4});
+  else if (p.mat === 'Glass') m = new THREE.MeshPhysicalMaterial({color: col, roughness: .05, metalness: 0, transmission: 0, clearcoat: 1, transparent: true, opacity: Math.max(0.35, 1 - t - 0.25)});
+  else if (p.mat === 'Metal' || p.mat === 'DiamondPlate' || p.mat === 'Foil') m = new THREE.MeshStandardMaterial({color: col, metalness: .75, roughness: .3});
+  else if (p.mat === 'ForceField') m = new THREE.MeshStandardMaterial({color: col, emissive: col, emissiveIntensity: .6, transparent: true, opacity: .35});
+  else m = new THREE.MeshStandardMaterial({color: col, roughness: .55, metalness: 0});
+  if (t > 0 && p.mat !== 'Glass') { m.transparent = true; m.opacity = 1 - t; }
+  if (t >= 0.999) m.visible = false;
+  return m;
+}
+function buildMesh(p){
+  let geo = BOX, sx = p.s[0], sy = p.s[1], sz = p.s[2];
+  if (p.mesh && p.mesh.type === 'Sphere') { geo = SPH; sx*=p.mesh.scale[0]; sy*=p.mesh.scale[1]; sz*=p.mesh.scale[2]; }
+  else if (p.shape === 'Ball') { geo = SPH; const m = Math.min(sx,sy,sz); sx=sy=sz=m; }
+  else if (p.shape === 'Cylinder') { geo = CYL; const d = Math.min(sy,sz); sy=sz=d; }
+  else if (p.c === 'WedgePart') geo = WEDGE;
+  else if (p.c === 'CornerWedgePart') geo = CORNER;
+  const mesh = new THREE.Mesh(geo, material(p));
+  const c = p.cf;
+  const m4 = new THREE.Matrix4().set(c[3],c[4],c[5],c[0], c[6],c[7],c[8],c[1], c[9],c[10],c[11],c[2], 0,0,0,1);
+  m4.multiply(new THREE.Matrix4().makeScale(sx,sy,sz));
+  mesh.matrixAutoUpdate = false; mesh.matrix.copy(m4);
+  mesh.castShadow = (p.t||0) < 0.5; mesh.receiveShadow = true;
+  const group = [mesh];
+  if (p.mat === 'Neon' && (p.t||0) < 0.9) {
+    const halo = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color: new THREE.Color(p.col[0],p.col[1],p.col[2]).convertSRGBToLinear(), transparent: true, opacity: .18, blending: THREE.AdditiveBlending, depthWrite: false}));
+    halo.matrixAutoUpdate = false; halo.matrix.copy(m4).multiply(new THREE.Matrix4().makeScale(1.35,1.35,1.35));
+    group.push(halo);
+  }
+  return group;
+}
+function bboxOf(parts){
+  const b = new THREE.Box3();
+  for (const p of parts) { if ((p.t||0) >= .999) continue; const c=p.cf; const r=Math.max(p.s[0],p.s[1],p.s[2])/2; b.expandByPoint(new THREE.Vector3(c[0]-r*0.6,c[1]-r*0.6,c[2]-r*0.6)); b.expandByPoint(new THREE.Vector3(c[0]+r*0.6,c[1]+r*0.6,c[2]+r*0.6)); }
+  return b;
+}
+function scene3(){
+  const scene = new THREE.Scene();
+  scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x50406a, 0.85));
+  const sun = new THREE.DirectionalLight(0xfff4e0, 1.25);
+  sun.castShadow = true; sun.shadow.mapSize.set(2048,2048); sun.shadow.radius = 4;
+  scene.add(sun); scene.add(sun.target);
+  const fill = new THREE.DirectionalLight(0xb8c8ff, 0.35); fill.position.set(8, 3, 10); scene.add(fill);
+  return {scene, sun};
+}
+function renderCell(items, w, h, label, sub){
+  const cell = document.createElement('div'); cell.className = 'cell'; cell.style.width = w+'px'; cell.style.height = h+'px';
+  const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true});
+  renderer.setSize(w, h); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+  cell.appendChild(renderer.domElement);
+  const {scene, sun} = scene3();
+  const all = new THREE.Box3();
+  let lights = 0;
+  for (const it of items) {
+    const g = new THREE.Group();
+    for (const p of it.parts) {
+      for (const m of buildMesh(p)) g.add(m);
+      if (p.light && lights < 6) { lights++; const L = new THREE.PointLight(new THREE.Color(...p.light.col), p.light.b*0.6, p.light.range*1.5); L.position.set(p.cf[0],p.cf[1],p.cf[2]); g.add(L); }
+    }
+    g.position.x = it.x || 0;
+    scene.add(g);
+    const b = bboxOf(it.parts); b.translate(new THREE.Vector3(it.x||0,0,0)); all.union(b);
+  }
+  const size = all.getSize(new THREE.Vector3()), ctr = all.getCenter(new THREE.Vector3());
+  // ground shadow catcher
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(Math.max(size.x,size.z)*1.4+4, 48), new THREE.ShadowMaterial({opacity:.32}));
+  ground.rotation.x = -Math.PI/2; ground.position.y = all.min.y; ground.receiveShadow = true; scene.add(ground);
+  const cam = new THREE.PerspectiveCamera(30, w/h, 0.1, 1000);
+  const rad = MODE === 'lineup' ? Math.max(size.x*0.55/(w/h), size.y*0.6, 1.5) : Math.max(size.x*0.62, size.y*0.62*w/h, size.z*0.5, 1.5);
+  const dist = rad / Math.tan(THREE.MathUtils.degToRad(15)) * 1.15;
+  const dir = (MODE === 'lineup' ? new THREE.Vector3(0.12, 0.22, -1) : new THREE.Vector3(0.42, 0.32, -1)).normalize();
+  cam.position.copy(ctr).addScaledVector(dir, dist); cam.lookAt(ctr);
+  sun.position.copy(ctr).add(new THREE.Vector3(-dist*0.4, dist*0.9, -dist*0.6)); sun.target.position.copy(ctr);
+  const sc = Math.max(size.x,size.y,size.z)*1.3+4; Object.assign(sun.shadow.camera, {left:-sc,right:sc,top:sc,bottom:-sc,near:0.1,far:dist*4}); sun.shadow.camera.updateProjectionMatrix();
+  renderer.render(scene, cam);
+  if (label) { const l=document.createElement('div'); l.className='lbl'; l.textContent=label; cell.appendChild(l); }
+  if (sub) { const l=document.createElement('div'); l.className='sub'; l.textContent=sub; cell.appendChild(l); }
+  grid.appendChild(cell);
+}
+if (MODE === 'lineup') {
+  // все питомцы в ряд в реальном масштабе
+  let x = 0; const items = [];
+  for (const pet of DATA) { const b = bboxOf(pet.parts); const wdt = b.max.x - b.min.x; x += wdt/2; items.push({parts: pet.parts, x: x - (b.min.x+b.max.x)/2}); x += wdt/2 + 1.2; }
+  grid.style.gridTemplateColumns = `${CW}px`;
+  renderCell(items, CW, CH, null, null);
+} else {
+  for (const pet of DATA) renderCell([{parts: pet.parts}], CW, CH, pet.name, pet.sub);
+}
+window.__done = true;
+</script></body></html>

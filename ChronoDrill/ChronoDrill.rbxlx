@@ -100,6 +100,7 @@ return {
 	EggGrow = 1.23,
 	EggSpan = 6,
 	MythicMult = 2.2,
+	HugeMult = 1.8, -- «Огромный» питомец сильнее мифика своего яйца в 1.8 раза
 	LuckyRareThreshold = 5, -- Lucky Charm усиливает петов с шансом <= 5%
 	-- Питомец даёт два бонуса: к урону и к продаже. Бонусы экипированных складываются:
 	-- три пета по x1.20 = x1.60 (а не x3.6, как раньше).
@@ -344,6 +345,7 @@ return { List = Drills, ById = byId, Starter = "Wooden", TopOf = topOf }
 ]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000006"><Properties><string name="Name">EggsData</string><ProtectedString name="Source"><![CDATA[-- EggsData: 10 яиц и шансы питомцев.
 -- Pets = { {Id, Русское имя, шанс %, (не используется), "Mythic" — мифик}, ... }
 -- В каждом ярусе 3 яйца, в каждом яйце есть очень редкий мифик (0.03–0.1%).
+-- "Huge" — «Огромный» питомец (0.01%, 1 из 10 000): только в третьем яйце каждого яруса, в 3 раза больше обычных.
 -- Сила питомца считается в PetsData: зависит от номера яйца и редкости.
 local function rgb(r, g, b) return { r, g, b } end
 
@@ -377,13 +379,14 @@ local Eggs = {
 		Id = "Fluffy", Name = "Пушистое яйцо", Biome = 1, Price = 40000, Slot = 3,
 		Look = { Base = rgb(255, 236, 244), Accent = rgb(255, 150, 190), Band = rgb(255, 200, 90), Pattern = "spots" },
 		Pets = {
-			{ "Bunny", "Зайка", 34.0, 0 },
+			{ "Bunny", "Зайка", 33.99, 0 },
 			{ "Kitty", "Котёнок", 27.0, 0 },
 			{ "Puppy", "Щенок", 20.0, 0 },
 			{ "RedPanda", "Красная панда", 11.0, 0 },
 			{ "Fox", "Лисёнок", 6.0, 0 },
 			{ "Panda", "Панда", 1.9, 0 },
 			{ "DemonCat", "Кот-Демон", 0.1, 0, "Mythic" },
+			{ "HugeCloudCat", "Огромный Облачный Кот", 0.01, 0, "Huge" },
 		},
 	},
 	{
@@ -417,13 +420,14 @@ local Eggs = {
 		Id = "Safari", Name = "Яйцо саванны", Biome = 2, Price = 12000000, Slot = 3,
 		Look = { Base = rgb(236, 196, 110), Accent = rgb(120, 170, 70), Band = rgb(150, 96, 50), Pattern = "spots" },
 		Pets = {
-			{ "LionCub", "Львёнок", 33.04, 0 },
+			{ "LionCub", "Львёнок", 33.03, 0 },
 			{ "Zebra", "Зебра", 26.0, 0 },
 			{ "Hippo", "Бегемотик", 19.0, 0 },
 			{ "Giraffe", "Жирафик", 12.0, 0 },
 			{ "Rhino", "Носорог", 7.0, 0 },
 			{ "Elephant", "Слонёнок", 2.9, 0 },
 			{ "SunLion", "Король Солнца", 0.06, 0, "Mythic" },
+			{ "HugeAmberDragon", "Огромный Янтарный Дракон", 0.01, 0, "Huge" },
 		},
 	},
 	{
@@ -457,13 +461,14 @@ local Eggs = {
 		Id = "Aurora", Name = "Яйцо Северного сияния", Biome = 3, Price = 1200000000, Slot = 3,
 		Look = { Base = rgb(40, 60, 120), Accent = rgb(90, 255, 200), Band = rgb(200, 120, 255), Pattern = "stars", Neon = true },
 		Pets = {
-			{ "ArcticFox", "Песец", 33.05, 0 },
+			{ "ArcticFox", "Песец", 33.04, 0 },
 			{ "SnowOwl", "Полярная сова", 26.0, 0 },
 			{ "Seal", "Тюлень", 19.0, 0 },
 			{ "Reindeer", "Северный олень", 12.0, 0 },
 			{ "PolarBear", "Белый медведь", 7.0, 0 },
 			{ "AuroraWolf", "Волк сияния", 2.9, 0 },
 			{ "AuroraStag", "Олень Авроры", 0.05, 0, "Mythic" },
+			{ "HugeFrostWolf", "Огромный Ледяной Волк", 0.01, 0, "Huge" },
 		},
 	},
 	{
@@ -498,13 +503,14 @@ local Eggs = {
 		Id = "Dragon", Name = "Драконье яйцо", Biome = 4, Price = 1.5e11, Slot = 3,
 		Look = { Base = rgb(150, 30, 40), Accent = rgb(255, 180, 40), Band = rgb(40, 20, 30), Pattern = "flames", Neon = true },
 		Pets = {
-			{ "EmberPup", "Угольный щенок", 32.06, 0 },
+			{ "EmberPup", "Угольный щенок", 32.05, 0 },
 			{ "DrakeHatchling", "Дракончик", 25.0, 0 },
 			{ "LavaTurtle", "Лавовая черепаха", 19.0, 0 },
 			{ "FireFox", "Огненный лис", 13.0, 0 },
 			{ "MagmaDragon", "Магма-дракон", 8.0, 0 },
 			{ "ChaosDragon", "Дракон Хаоса", 2.9, 0 },
 			{ "DragonEmperor", "Император Драконов", 0.04, 0, "Mythic" },
+			{ "HugeLavaPhoenix", "Огромный Лавовый Феникс", 0.01, 0, "Huge" },
 		},
 	},
 	{
@@ -541,13 +547,14 @@ local Eggs = {
 		Id = "Cosmos", Name = "Космическое яйцо", Biome = 5, Price = 2e13, Slot = 3,
 		Look = { Base = rgb(30, 20, 70), Accent = rgb(255, 120, 220), Band = rgb(110, 240, 255), Pattern = "stars", Neon = true },
 		Pets = {
-			{ "StarBunny", "Звёздный зайка", 32.07, 0 },
+			{ "StarBunny", "Звёздный зайка", 32.06, 0 },
 			{ "CometCat", "Кот-комета", 25.0, 0 },
 			{ "NebulaPup", "Небула-щенок", 19.0, 0 },
 			{ "GalaxyOwl", "Галакти-сова", 13.0, 0 },
 			{ "MoonDragon", "Лунный дракон", 8.0, 0 },
 			{ "CosmicFox", "Космо-лис", 2.9, 0 },
 			{ "CosmicAngel", "Космический Ангел", 0.03, 0, "Mythic" },
+			{ "HugeStarWhale", "Огромный Звёздный Кит", 0.01, 0, "Huge" },
 		},
 	},
 }
@@ -875,6 +882,29 @@ return {
 		Mythic = { Body = "orb", Wings = "demon", C1 = c(20, 12, 40), Glow = c(110, 240, 255), Horns = "curved", HornColor = c(40, 30, 70), Smoke = c(40, 20, 90), Trim = false, Orbit = true } },
 	TimeLord = { A = "quad", C = c(250, 246, 236), C2 = c(255, 210, 80), C3 = c(30, 26, 40), X = { "ears_pointy", "clock_face" }, E = "glow", EyeColor = c(255, 230, 120),
 		Mythic = { Wings = "angel", C1 = c(30, 26, 40), C2 = c(255, 210, 80), Halo = true, Crown = true, Glow = c(255, 210, 80), Orbit = true } },
+
+	-- «ОГРОМНЫЕ» (Huge): в 3 раза больше обычных; Mythic — крылья/рога/нимб, Huge — аура и особые детали
+	HugeCloudCat = { A = "quad", C = c(255, 255, 255), C2 = c(255, 214, 236), C3 = c(214, 190, 255), X = { "ears_pointy", "tail_fluffy", "whiskers", "cheeks" }, Iris = c(110, 190, 255),
+		Mythic = { Wings = "angel", C1 = c(255, 255, 255), C2 = c(255, 196, 232), Halo = true, HaloColor = c(255, 170, 225), Glow = c(255, 160, 220), Gem = false, Trim = false },
+		Huge = { Cloud = true, Bow = c(255, 120, 190), Aura = c(255, 150, 220), Stars = true } },
+	HugeAmberDragon = { A = "quad", C = c(255, 168, 40), C2 = c(255, 236, 170), C3 = c(210, 90, 20), X = { "horns", "spikes_back", "tail_spikes", "fangs", "cheeks" }, Iris = c(255, 120, 20),
+		Mythic = { Wings = "flame", C1 = c(255, 110, 30), Glow = c(255, 190, 60), FlameTail = true, Fire = c(255, 130, 30), Fire2 = c(255, 230, 120), Gem = false, Trim = false },
+		Huge = { Aura = c(255, 170, 40), Stars = true } },
+	HugeFrostWolf = { A = "quad", C = c(220, 238, 255), C2 = c(255, 255, 255), C3 = c(70, 130, 220), X = { "ears_pointy_big", "tail_fluffy", "fangs", "nose" }, Iris = c(60, 170, 255),
+		Mythic = { Wings = "angel", C1 = c(240, 250, 255), C2 = c(140, 210, 255), Glow = c(120, 220, 255), Smoke = c(230, 245, 255), Gem = false, Trim = false },
+		Huge = { IceCrown = true, CrownColor = c(170, 235, 255), Aura = c(110, 210, 255), Stars = true } },
+	HugeLavaPhoenix = { A = "bird", C = c(255, 96, 36), C2 = c(255, 214, 90), C3 = c(190, 30, 20), X = { "beak", "crest_long", "tail_feathers", "cheeks" }, Iris = c(255, 200, 40),
+		Mythic = { Kind = "bird", Wings = "phoenix", Glow = c(255, 150, 40), Fire = c(255, 90, 30), Fire2 = c(255, 220, 80), Halo = true, HaloColor = c(255, 190, 60), FlameTail = true, Gem = false, Trim = false },
+		Huge = { Aura = c(255, 110, 30), Stars = true } },
+	HugeStarWhale = { A = "blob", C = c(56, 70, 170), C2 = c(180, 220, 255), C3 = c(120, 230, 255), X = { "tail_fluke", "flippers", "stars", "spots_glow", "cheeks" }, Iris = c(120, 220, 255), Fly = true, Box = { 2.8, 2.3, 3.2 },
+		Mythic = { Kind = "blob", Glow = c(130, 220, 255), Gem = false, Trim = false },
+		Huge = { Aura = c(120, 200, 255), Stars = true, Spout = c(140, 220, 255) } },
+	HugeChronoDragon = { A = "quad", C = c(255, 214, 110), C2 = c(255, 250, 235), C3 = c(40, 34, 70), X = { "horns", "spikes_back", "tail_spikes", "cheeks" }, Iris = c(40, 200, 255),
+		Mythic = { Wings = "royal", C1 = c(255, 255, 255), C2 = c(255, 200, 70), Glow = c(110, 240, 255), Crown = true, Gem = false, Trim = false },
+		Huge = { Cape = c(110, 50, 190), Aura = c(110, 230, 255), Stars = true } },
+	HugeRainbowUnicorn = { A = "quad", C = c(255, 255, 255), C2 = c(255, 226, 246), C3 = c(220, 200, 255), X = { "ears_pointy", "cheeks" }, Iris = c(200, 120, 255),
+		Mythic = { Wings = "rainbow", Horns = "unicorn", HornColor = c(255, 236, 140), Halo = true, HaloColor = c(255, 240, 160), Glow = c(255, 170, 240), Gem = false, Trim = false },
+		Huge = { Rainbow = true, Mane = true, RainbowTail = true, Aura = c(255, 170, 240), Stars = true } },
 }
 ]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000A"><Properties><string name="Name">PetsData</string><ProtectedString name="Source"><![CDATA[-- PetsData: единый реестр всех питомцев, собирается из EggsData и SeedsData.
 local EggsData = require(script.Parent.EggsData)
@@ -889,6 +919,7 @@ local Rarities = {
 	{ Key = "Legendary", Name = "Легендарный", Color = { 255, 190, 40 }, Min = 0 },
 	{ Key = "Mythic", Name = "Мифический", Color = { 255, 70, 120 }, Min = math.huge },
 	{ Key = "Secret", Name = "Хроно", Color = { 90, 240, 255 }, Min = -1 },
+	{ Key = "Huge", Name = "Огромный", Color = { 255, 96, 220 }, Min = -2 },
 }
 local RarityIndex = {}
 for i, r in ipairs(Rarities) do
@@ -899,6 +930,9 @@ end
 local function rarityFor(chance, flag)
 	if flag == "Mythic" then
 		return RarityIndex.Mythic
+	end
+	if flag == "Huge" then
+		return RarityIndex.Huge
 	end
 	for _, r in ipairs(Rarities) do
 		if chance >= r.Min then
@@ -923,7 +957,7 @@ local Pets = {}
 for e, egg in ipairs(EggsData.List) do
 	local n = 0
 	for _, entry in ipairs(egg.Pets) do
-		if entry[5] ~= "Mythic" then
+		if entry[5] ~= "Mythic" and entry[5] ~= "Huge" then
 			n = n + 1
 		end
 	end
@@ -932,10 +966,13 @@ for e, egg in ipairs(EggsData.List) do
 	for order, entry in ipairs(egg.Pets) do
 		local id = entry[1]
 		local mythic = entry[5] == "Mythic"
+		local huge = entry[5] == "Huge"
 		local rarity = rarityFor(entry[3], entry[5])
 		local p = pmin * EGG_SPAN ^ ((math.min(order, n) - 1) / math.max(1, n - 1))
 		if mythic then
 			p = pmin * EGG_SPAN * Balance.MythicMult
+		elseif huge then
+			p = pmin * EGG_SPAN * Balance.MythicMult * (Balance.HugeMult or 1.8)
 		end
 		local df, sf
 		if order >= n then
@@ -992,7 +1029,7 @@ for id, sp in pairs(RewardsData.SpecialPets) do
 		Special = sp.Source,
 		Biome = 1,
 		Order = 98,
-		Rarity = "Secret",
+		Rarity = sp.Rarity or "Secret",
 		Aura = sp.Aura,
 	}
 end
@@ -1140,6 +1177,23 @@ Rewards.SpecialPets = {
 		Source = "Джекпот колеса удачи",
 		RefIndex = 5, RefMult = 1.15, DmgF = 0.5, SellF = 1.5,
 		Aura = { Kind = "Speed", Value = 0.08, Text = "+8% к скорости бега" },
+	},
+	-- «Огромные» эксклюзивы: награды за перерождения (выдаёт RebirthManager)
+	HugeChronoDragon = {
+		Name = "Огромный Хроно-Дракон",
+		Source = "1-е перерождение",
+		RebirthAt = 1,
+		Rarity = "Huge",
+		RefIndex = 6, RefMult = 2.4,
+		Aura = { Kind = "Both", Value = 0.25, Text = "25% урона по соседу и +12% скорости" },
+	},
+	HugeRainbowUnicorn = {
+		Name = "Огромный Радужный Единорог",
+		Source = "5-е перерождение",
+		RebirthAt = 5,
+		Rarity = "Huge",
+		RefIndex = 6, RefMult = 3,
+		Aura = { Kind = "Both", Value = 0.3, Text = "30% урона по соседу и +15% скорости" },
 	},
 }
 
@@ -2419,7 +2473,8 @@ local IVORY = Color3.fromRGB(250, 242, 222)
 local PINK = Color3.fromRGB(255, 150, 170)
 local GOLD = Color3.fromRGB(255, 205, 60)
 
-local RARITY_SCALE = { Common = 1, Uncommon = 1.05, Rare = 1.1, Epic = 1.16, Legendary = 1.24, Mythic = 1.5, Secret = 1.3 }
+-- Размер по редкости: мифики и эксклюзивы примерно в 2 раза больше обычных, «Огромные» — в 3 раза
+local RARITY_SCALE = { Common = 1, Uncommon = 1.05, Rare = 1.1, Epic = 1.16, Legendary = 1.3, Mythic = 2.2, Secret = 2, Huge = 3 }
 
 ---------------------------------------------------------------------------------------------
 -- Контекст сборки
@@ -2937,7 +2992,8 @@ local function buildEyes(look, a)
 	end
 	local ex = w * 0.22
 	local ey = (a.eyeY or 0.1) * a.hs.Y * 2
-	local glow = style == "glow" or (look.Mythic ~= nil)
+	-- у «Огромных» всегда живые аниме-глаза с цветной радужкой (так милее), у мификов — светящиеся
+	local glow = (style == "glow" or (look.Mythic ~= nil)) and not look.Huge
 	local iris = look.Iris and MK.C(look.Iris) or (look.EyeColor and MK.C(look.EyeColor)) or IRIS[(ctx.hash % #IRIS) + 1]
 	for _, sx in ipairs({ -1, 1 }) do
 		local pos = faceAt(a, sx * ex, ey, 0.02)
@@ -3698,6 +3754,63 @@ WINGS.flame = function(a, m, s, root)
 	end
 end
 
+-- королевские крылья: три слоя перьев — длинные светлые, золотые и короткие с неоновым кантом
+WINGS.royal = function(a, m, s, root)
+	local c1, c2, c3 = mc(m.C1, WHITE), mc(m.C2, GOLD), mc(m.Glow, ctx.C2)
+	for k = 0, 5 do
+		blade(root, s, 3.5 - k * 0.32, 0.74, -14, 80 - k * 17, c1)
+	end
+	for k = 0, 4 do
+		blade(root + V3(0, -0.08, -0.1), s, 2.6 - k * 0.26, 0.62, -14, 72 - k * 18, c2, { Material = "Metal" })
+	end
+	for k = 0, 3 do
+		blade(root + V3(0, -0.14, -0.2), s, 1.6 - k * 0.16, 0.5, -14, 66 - k * 21, c3, { Material = "Neon", Transparency = 0.1 })
+	end
+	E(V3(0.75, 0.75, 0.55), root, c2, { Material = "Metal" })
+end
+local RAINBOW7 = {
+	Color3.fromRGB(255, 92, 120), Color3.fromRGB(255, 160, 60), Color3.fromRGB(255, 228, 90), Color3.fromRGB(110, 226, 120),
+	Color3.fromRGB(90, 196, 255), Color3.fromRGB(140, 120, 255), Color3.fromRGB(226, 120, 255),
+}
+-- радужные крылья: веер из перьев всех цветов и тонкие светящиеся «жилки»
+WINGS.rainbow = function(a, m, s, root)
+	for k = 0, 6 do
+		local col = RAINBOW7[k + 1]
+		blade(root, s, 3.4 - k * 0.2, 0.7, -14, 84 - k * 15, col)
+		blade(root + V3(0, 0, -0.06), s, 2.3 - k * 0.12, 0.2, -14, 84 - k * 15, col:Lerp(WHITE, 0.45), { Material = "Neon", Transparency = 0.15 })
+	end
+	E(V3(0.7, 0.7, 0.5), root, WHITE)
+end
+-- крылья феникса: огненный веер в три слоя (красный -> оранжевый -> жёлтый), кончики светятся
+WINGS.phoenix = function(a, m, s, root)
+	local cols = { Color3.fromRGB(230, 50, 30), Color3.fromRGB(255, 130, 30), Color3.fromRGB(255, 220, 80) }
+	for layer = 0, 2 do
+		for k = 0, 5 - layer do
+			local len = 3.1 - layer * 0.7 - k * 0.2
+			blade(root + V3(0, -layer * 0.12, -layer * 0.1), s, len, 0.68 - layer * 0.08, -12, 82 - k * 17 - layer * 3, cols[layer + 1], layer == 2 and { Material = "Neon", Transparency = 0.05 } or nil)
+		end
+	end
+	for k = 0, 3 do
+		local cf = CF(root) * ANG(0, rad(s * -12), rad(s * (82 - k * 17))) * CF(s * (2.95 - k * 0.2), 0, 0)
+		E(V3(0.5, 0.36, 0.2), cf, Color3.fromRGB(255, 240, 150), { Material = "Neon" })
+	end
+end
+-- галактические крылья: тёмная перепонка, звёзды и светящаяся кромка
+WINGS.galaxy = function(a, m, s, root)
+	local dark, edge = mc(m.C1, Color3.fromRGB(30, 24, 80)), mc(m.Glow, Color3.fromRGB(120, 220, 255))
+	local mem = CF(root) * ANG(rad(-8), rad(s * -18), rad(s * 24)) * CF(s * 2.0, 0.4, 0.05)
+	E(V3(4.0, 2.6, 0.14), mem, dark)
+	E(V3(3.3, 1.9, 0.16), mem * CF(s * 0.1, -0.05, -0.02), dark:Lerp(Color3.fromRGB(150, 80, 220), 0.45))
+	for k = 0, 2 do
+		local tip = (mem * CF(s * (2.0 - k * 0.25), 1.3 - k * 1.1, 0)).Position
+		Cyl(root, tip, 0.16 - k * 0.03, edge, { Material = "Neon" })
+	end
+	for i = 1, 7 do
+		local x, y = ((ctx.hash * i) % 7) / 7 - 0.5, ((ctx.hash * i * 3) % 5) / 5 - 0.5
+		E(V3(0.16, 0.16, 0.2), mem * CF(s * x * 2.6, y * 1.6, -0.06), (i % 3 == 0) and edge or WHITE, { Material = "Neon" })
+	end
+end
+
 local HORNS = {}
 -- изогнутые рога из цепочки цилиндров
 HORNS.curved = function(a, m, s)
@@ -3804,6 +3917,116 @@ local function mythicFx(look, a)
 	end
 end
 
+---------------------------------------------------------------------------------------------
+-- «Огромные» питомцы: аура-пьедестал, облако, бант, мантия, радужная грива и хвост,
+-- ледяная корона, самоцвет на груди, звёзды-спутники. Всё из примитивов Roblox.
+---------------------------------------------------------------------------------------------
+local function star4(pos, size, color, tilt)
+	local cf = CF(pos) * (tilt or ANG(0, 0, 0))
+	B(V3(size, size * 0.22, size * 0.22), cf, color, { Material = "Neon" })
+	B(V3(size * 0.22, size, size * 0.22), cf, color, { Material = "Neon" })
+	E(V3(size * 0.45, size * 0.45, size * 0.3), cf, WHITE, { Material = "Neon" })
+end
+
+local function hugeFx(look, a)
+	local h = look.Huge
+	local m = look.Mythic or {}
+	local glow = mc(h.Aura, mc(m.Glow, ctx.C2))
+	local zc = a.bodyC.Z
+	local R = math.max(a.bodyS.X, a.bodyS.Z) * 1.45
+	-- облако под лапами
+	if h.Cloud then
+		for i = 0, 7 do
+			local ang = i / 8 * math.pi * 2
+			E(V3(1.25, 0.75, 1.25), V3(math.cos(ang) * R * 0.75, 0.2, zc + math.sin(ang) * R * 0.75), WHITE)
+		end
+		E(V3(R * 1.6, 0.6, R * 1.6), V3(0, 0.18, zc), Color3.fromRGB(240, 246, 255))
+	end
+	-- аура-пьедестал: кольцо светящихся бусин и мягкий диск
+	local n = 30
+	for i = 0, n - 1 do
+		local ang = i / n * math.pi * 2
+		local col = h.Rainbow and RAINBOW7[i % #RAINBOW7 + 1] or glow
+		E(V3(0.36, 0.12, 0.36), V3(math.cos(ang) * R, 0.06, zc + math.sin(ang) * R), col, { Material = "Neon", NoShadow = true })
+	end
+	local disc = MK.Disc(ctx.model, 0.05, R * 2, V3(0, 0.03, zc), glow)
+	finish(disc, "Fixed", { Material = "Neon", Transparency = 0.8, NoShadow = true })
+	-- звёзды-спутники
+	if h.Stars then
+		for i = 0, 3 do
+			local ang = i / 4 * math.pi * 2 + 0.6
+			local p = a.bodyC + V3(math.cos(ang) * (R + 0.2), 0.6 + (i % 2) * 0.9, math.sin(ang) * (R + 0.2))
+			star4(p, 0.45, (i % 2 == 0) and glow or Color3.fromRGB(255, 226, 120), ANG(0, ang, rad(20)))
+		end
+	end
+	-- бант на макушке
+	if h.Bow then
+		local bc = mc(h.Bow, Color3.fromRGB(255, 120, 180))
+		local base = a.top + V3(a.hs.X * 0.45, 0.1, -0.2)
+		for _, sx in ipairs({ -1, 1 }) do
+			E(V3(0.75, 0.55, 0.3), CF(base + V3(sx * 0.42, 0.05, 0)) * ANG(0, 0, rad(sx * -20)), bc)
+			E(V3(0.3, 0.25, 0.32), CF(base + V3(sx * 0.42, 0.05, -0.02)), bc:Lerp(INK, 0.25))
+		end
+		E(V3(0.32, 0.32, 0.34), base, bc:Lerp(WHITE, 0.2))
+	end
+	-- королевская мантия за спиной и золотой воротник
+	if h.Cape then
+		local cc = mc(h.Cape, Color3.fromRGB(120, 40, 160))
+		local back = a.bodyC + V3(0, -0.05, a.bodyS.Z + 0.12)
+		E(V3(a.bodyS.X * 2.15, a.bodyS.Y * 1.9, 0.22), CF(back) * ANG(rad(10), 0, 0), cc)
+		E(V3(a.bodyS.X * 2.0, a.bodyS.Y * 1.7, 0.24), CF(back + V3(0, 0, 0.03)) * ANG(rad(10), 0, 0), cc:Lerp(INK, 0.3))
+		for i = 0, 8 do
+			local t = i / 8 - 0.5
+			E(V3(0.3, 0.3, 0.3), a.bodyC + V3(t * a.bodyS.X * 2.0, a.bodyS.Y * 0.95, a.bodyS.Z * 0.75 - math.abs(t) * 0.4), (i % 2 == 0) and GOLD or WHITE, { Material = (i % 2 == 0) and "Metal" or "SmoothPlastic" })
+		end
+	end
+	-- радужная грива по макушке и затылку
+	if h.Mane then
+		for i = 0, 6 do
+			local col = RAINBOW7[i + 1]
+			E(V3(0.62, 0.8, 0.5), a.top + V3(0, 0.12 - i * 0.07, -0.55 + i * 0.32), col)
+		end
+	end
+	-- пушистый радужный хвост
+	if h.RainbowTail then
+		local t0 = a.tail
+		for i = 0, 6 do
+			local col = RAINBOW7[i + 1]
+			E(V3(0.95 - i * 0.07, 0.9 - i * 0.06, 0.8 - i * 0.05), t0 + V3(0, 0.22 * i + 0.1, 0.35 + 0.26 * i), col)
+		end
+	end
+	-- фонтанчик кита: столбик капель и брызги
+	if h.Spout then
+		local sc = mc(h.Spout, Color3.fromRGB(140, 220, 255))
+		local base = a.top + V3(0, 0, 0.1)
+		for i = 0, 2 do
+			E(V3(0.4 - i * 0.06, 0.55, 0.4 - i * 0.06), base + V3(0, 0.3 + i * 0.45, 0), sc, { Material = "Glass", Transparency = 0.15 })
+		end
+		for i = 0, 5 do
+			local ang = i / 6 * math.pi * 2
+			E(V3(0.3, 0.38, 0.3), base + V3(math.cos(ang) * 0.6, 1.35 - (i % 2) * 0.15, math.sin(ang) * 0.6), (i % 2 == 0) and sc or WHITE, { Material = (i % 2 == 0) and "Glass" or "Neon", Transparency = 0.1 })
+		end
+	end
+	-- ледяная корона
+	if h.IceCrown then
+		for i = 0, 5 do
+			local ang = i / 6 * math.pi * 2
+			local p = a.top + V3(math.cos(ang) * a.hs.X * 0.55, -0.05, math.sin(ang) * a.hs.Z * 0.55)
+			crystal(p, (i % 2 == 0) and 1.0 or 0.65, ANG(rad(math.cos(ang) * -12), 0, rad(math.sin(ang) * 12)), mc(h.CrownColor, Color3.fromRGB(170, 230, 255)))
+		end
+	end
+	-- самоцвет на груди в золотой оправе
+	if h.Gem then
+		local g = a.hc + V3(0, -a.hs.Y * 0.62, -a.hs.Z - 0.08)
+		B(V3(0.62, 0.62, 0.16), CF(g) * ANG(0, 0, rad(45)), GOLD, { Material = "Metal" })
+		B(V3(0.42, 0.42, 0.22), CF(g + V3(0, 0, -0.04)) * ANG(0, 0, rad(45)), mc(h.Gem, glow), { Material = "Neon" })
+	end
+	MK.Light(ctx.root, glow, 18, 3)
+	local e = MK.Sparkles(ctx.root, { 255, 255, 255 }, 18, 0.6)
+	e.Color = ColorSequence.new(glow, WHITE)
+	e.Name = "HugeAura"
+end
+
 function PetBuilder.Build(id)
 	local look = PetLooks[id]
 	local def = PetsData.ById[id]
@@ -3861,6 +4084,9 @@ function PetBuilder.Build(id)
 	if look.Mythic then
 		mythicFx(look, a)
 	end
+	if look.Huge then
+		hugeFx(look, a)
+	end
 
 	local fly = look.Fly
 	if fly == nil then
@@ -3876,6 +4102,7 @@ function PetBuilder.Build(id)
 	model:SetAttribute("Fly", fly)
 	model:SetAttribute("Scale", scale)
 	model:SetAttribute("Rarity", rarity)
+	model:SetAttribute("Huge", look.Huge ~= nil)
 	if scale ~= 1 then
 		model:ScaleTo(scale)
 	end
@@ -7086,6 +7313,8 @@ local function openEgg(player, eggId, count)
 		if shiny then
 			data.Stats.Shinies = (data.Stats.Shinies or 0) + 1
 			Notifier.ToastAll("✦ " .. player.DisplayName .. " выбил ШАЙНИ " .. (def and def.Name or id) .. "! ✦", "unlock")
+		elseif def and def.Rarity == "Huge" then
+			Notifier.ToastAll("★ " .. player.DisplayName .. " выбил ОГРОМНОГО питомца: " .. def.Name .. " (1 из " .. Util.Format(math.floor(100 / math.max(def.Chance, 1e-6) + 0.5)) .. ")! ★", "unlock")
 		elseif def and (def.Rarity == "Legendary" or def.Rarity == "Mythic") then
 			Notifier.ToastAll(player.DisplayName .. " выбил " .. def.Name .. " (" .. string.format("%.1f", def.Chance) .. "%)!", "unlock")
 		end
@@ -7786,6 +8015,7 @@ local Notifier = require(Core.Notifier)
 local Shop = require(script.Parent.ShopManager)
 local Travel = require(script.Parent.TravelManager)
 local PetManager = require(script.Parent.PetManager)
+local RewardsData = require(Configs.RewardsData)
 
 local Rebirth = {}
 
@@ -7798,6 +8028,7 @@ local function doRebirth(player)
 		return { ok = false, msg = "Нужно: открыть Магму (4 500 м) и " .. Util.Format(Stats.RebirthCost(data)) .. " монет" }
 	end
 	local shards = Stats.RebirthShards(data)
+	local biomeBefore = data.UnlockedBiome or 1
 	-- сброс (ТЗ 8.2)
 	data.Coins = 0
 	data.Drill = DrillsData.Starter
@@ -7813,6 +8044,14 @@ local function doRebirth(player)
 	data.Shards = data.Shards + shards
 	Notifier.Alert(player, "Rebirth", { Rebirths = data.Rebirths, Shards = shards })
 	Notifier.Toast(player, "Перерождение #" .. data.Rebirths .. "! +" .. shards .. " Хроно-Осколков, продажа x" .. string.format("%.2f", Stats.RebirthMult(data)), "unlock", "Unlock")
+	-- «Огромные» эксклюзивы за перерождения (сила считается по ярусу, открытому до сброса)
+	for petId, sp in pairs(RewardsData.SpecialPets) do
+		if sp.RebirthAt and data.Rebirths == sp.RebirthAt then
+			PetManager.AddPet(data, petId, RewardsData.SpecialMult(petId, biomeBefore))
+			Notifier.Toast(player, "Награда за перерождение: " .. sp.Name .. "!", "unlock", "Reveal")
+			Notifier.ToastAll(player.DisplayName .. " получил " .. sp.Name .. "!", "unlock")
+		end
+	end
 	if data.Rebirths == RebirthData.IncubatorSlotAt then
 		Notifier.Toast(player, "Открыт 2-й слот инкубатора!", "good")
 	end
@@ -12178,13 +12417,16 @@ local function watch(player)
 end
 
 -- раскладка вокруг игрока: дуга позади
-local function slotOffset(i, n)
+-- k — масштаб питомца: крупные (мифики x2, «Огромные» x3) идут дальше от игрока, чтобы не заслонять его
+local function slotOffset(i, n, k)
+	k = math.max(1, k or 1)
+	local extra = (k - 1) * 2.2
 	if n == 1 then
-		return Vector3.new(2.6, 0, 3.5)
+		return Vector3.new(2.6 + extra * 0.6, 0, 3.5 + extra)
 	end
 	local spread = math.rad(150)
 	local a = -spread / 2 + spread * (i - 1) / (n - 1)
-	local r = 4.4
+	local r = 4.4 + extra
 	return Vector3.new(math.sin(a) * r, 0, math.cos(a) * r * 0.85 + 1)
 end
 
@@ -12210,7 +12452,7 @@ local function update(dt)
 				if not p.model.Parent then
 					p.model.Parent = folder
 				end
-				local off = slotOffset(i, #e.pets)
+				local off = slotOffset(i, #e.pets, p.ground)
 				local base = root.CFrame * CFrame.new(off)
 				local pos = base.Position
 				local groundY
@@ -14106,7 +14348,8 @@ local function cinematic(eggModel, p)
 	local def = PetsData.ById[p.Id]
 	local r = def and PetsData.Rarity[def.Rarity]
 	local col = r and Color3.fromRGB(r.Color[1], r.Color[2], r.Color[3]) or Color3.new(1, 1, 1)
-	local mythic = def and def.Rarity == "Mythic"
+	local huge = def and def.Rarity == "Huge"
+	local mythic = def and (def.Rarity == "Mythic" or huge)
 	local shiny = p.T == 6
 	if shiny then
 		col = Color3.fromRGB(120, 230, 255)
@@ -14253,7 +14496,7 @@ local function cinematic(eggModel, p)
 	ctxRef.Sound.Play("Upgrade")
 	ctxRef.Sound.Play("LevelUp")
 	burstStars(cineFront, mythic and 50 or 30, col, 6, 600)
-	title.Text = shiny and "✦ ШАЙНИ! ✦" or (mythic and "МИФИЧЕСКИЙ!" or string.upper((r and r.Name or "") .. "!"))
+	title.Text = shiny and "✦ ШАЙНИ! ✦" or (huge and "★ ОГРОМНЫЙ! ★" or (mythic and "МИФИЧЕСКИЙ!" or string.upper((r and r.Name or "") .. "!")))
 	title.TextColor3 = (mythic or shiny) and Color3.new(1, 1, 1) or col
 	if mythic or shiny then
 		local g = Instance.new("UIGradient")
@@ -15927,24 +16170,53 @@ local function pill(parent, glyph, color, size, pos, order)
 end
 
 -- карточка питомца: градиент цвета редкости, модель, тёмная полоска со статами снизу
+-- Карточка питомца: светлая карточка, сверху «витрина» в цвет редкости с мягким светом за питомцем,
+-- снизу тёмная стеклянная полоска характеристик. Мифики/«Огромные»/шайни — переливающаяся рамка.
+local CARD_MODES = {
+	rainbow = { ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 120, 160)), ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 210, 100)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(120, 230, 150)), ColorSequenceKeypoint.new(0.75, Color3.fromRGB(110, 190, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 130, 255)),
+	}), Color3.fromRGB(255, 190, 220), Color3.fromRGB(170, 200, 255) },
+	huge = { ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 220, 90)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 96, 220)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(140, 110, 255)),
+	}), Color3.fromRGB(255, 170, 235), Color3.fromRGB(190, 90, 230) },
+	shiny = { ColorSequence.new(Color3.fromRGB(140, 240, 255), Color3.fromRGB(255, 160, 235)), Color3.fromRGB(200, 250, 255), Color3.fromRGB(255, 190, 240) },
+}
 local function petCard(parent, size, col, order, mode)
 	local holder = UI.new("Frame", { BackgroundTransparency = 1, Size = size, LayoutOrder = order or 0, Parent = parent })
-	local shadow = UI.new("Frame", { BackgroundColor3 = UI.Darker(col, 0.45), BackgroundTransparency = 0.25, Size = UDim2.fromScale(1, 1), Position = UDim2.fromOffset(0, 4), Parent = holder })
+	local shadow = UI.new("Frame", { BackgroundColor3 = Color3.fromRGB(14, 10, 32), BackgroundTransparency = 0.72, Size = UDim2.fromScale(1, 1), Position = UDim2.fromOffset(0, 5), Parent = holder })
 	UI.Corner(shadow, 18)
-	local face = UI.new("Frame", { BackgroundColor3 = col, Size = UDim2.fromScale(1, 1), Parent = holder })
+	local face = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.fromScale(1, 1), Parent = holder })
 	UI.Corner(face, 18)
-	local stroke = UI.Stroke(face, 3, UI.Edge(col), true)
-	if mode == "rainbow" then
-		UI.Gradient(face, Color3.fromRGB(255, 170, 210), Color3.fromRGB(150, 200, 255), 35)
-	elseif mode == "shiny" then
-		UI.Gradient(face, Color3.fromRGB(190, 250, 255), Color3.fromRGB(255, 190, 240), 35)
-	else
-		UI.Gradient(face, UI.Lighter(col, 0.6), col)
+	UI.Gradient(face, Color3.fromRGB(255, 255, 255), UI.Lighter(col, 0.8))
+	face.BackgroundColor3 = Color3.new(1, 1, 1)
+	local stroke = UI.Stroke(face, 3, UI.Darker(col, 0.2), true)
+	local m = CARD_MODES[mode or ""]
+	-- витрина цвета редкости
+	local show = UI.new("Frame", { Name = "Showcase", BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.new(1, -8, 1, -58), Position = UDim2.fromOffset(4, 4), ZIndex = 0, Parent = face })
+	UI.Corner(show, 15)
+	local sg = UI.Gradient(show, m and m[2] or UI.Lighter(col, 0.5), m and m[3] or col, m and 35 or 90)
+	show.BackgroundColor3 = Color3.new(1, 1, 1)
+	sg.Enabled = true
+	local w = size.X.Offset
+	local spot = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.5, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.fromOffset(w * 0.66, w * 0.66), ZIndex = 0, Parent = show })
+	UI.Corner(spot, UDim.new(1, 0))
+	local halo = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.8, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.55, 0), Size = UDim2.fromOffset(w * 0.9, w * 0.9), ZIndex = 0, Parent = show })
+	UI.Corner(halo, UDim.new(1, 0))
+	UI.Gloss(show, UDim2.new(1, -14, 0, 18), UDim2.fromOffset(7, 3), 0.55, 0)
+	-- полоска характеристик
+	local strip = UI.new("Frame", { Size = UDim2.new(1, -10, 0, 46), Position = UDim2.new(0, 5, 1, -51), ZIndex = 3, Parent = face })
+	UI.Glass(strip, 12, 0.04)
+	if m then
+		stroke.Color = Color3.new(1, 1, 1)
+		stroke.Thickness = 3.5
+		local rg = Instance.new("UIGradient")
+		rg.Color = m[1]
+		rg.Rotation = 45
+		rg.Parent = stroke
 	end
-	local shine = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.7, Size = UDim2.new(1, -16, 0, 10), Position = UDim2.fromOffset(8, 4), ZIndex = 2, Parent = face })
-	UI.Corner(shine, UDim.new(1, 0))
-	local strip = UI.new("Frame", { BackgroundColor3 = UI.Darker(col, 0.55), BackgroundTransparency = 0.1, Size = UDim2.new(1, -10, 0, 46), Position = UDim2.new(0, 5, 1, -51), ZIndex = 3, Parent = face })
-	UI.Corner(strip, 12)
 	return holder, face, strip, stroke
 end
 
@@ -16313,7 +16585,9 @@ local function buildPets(screen, ctx)
 			cardRefs = {}
 			for i, s in ipairs(list) do
 				local col = cardColor(s)
-				local holder, face, strip, stroke = petCard(scroll, UDim2.fromOffset(112, 146), col, i, (s.tier == 5 and "rainbow") or (s.tier == 6 and "shiny") or nil)
+				local pdef = PetsData.ById[s.id]
+				local mode = (s.tier == 5 and "rainbow") or (s.tier == 6 and "shiny") or (pdef and pdef.Rarity == "Huge" and "huge") or (pdef and pdef.Rarity == "Mythic" and "rainbow") or nil
+				local holder, face, strip, stroke = petCard(scroll, UDim2.fromOffset(112, 146), col, i, mode)
 				UI.Viewport(face, ctx.PetModel(s.id, s.tier), UDim2.new(1, -8, 0, 84), UDim2.fromOffset(4, 8))
 				local l1 = statLine(strip, "Pickaxe", DMG_COLOR, UDim2.fromOffset(6, 3), UDim2.new(1, -10, 0, 19), 4)
 				l1.Text = fmtMult(s.dmg)
@@ -17240,7 +17514,7 @@ local function buildEgg(screen, ctx)
 		for i, e in ipairs(egg.Pets) do
 			local def = PetsData.ById[e[1]]
 			local col = rarityColor(def.Rarity)
-			local holder, face, strip, stroke = petCard(grid, UDim2.fromOffset(108, 148), col, i, def.Rarity == "Mythic" and "rainbow" or nil)
+			local holder, face, strip, stroke = petCard(grid, UDim2.fromOffset(108, 148), col, i, (def.Rarity == "Huge" and "huge") or (def.Rarity == "Mythic" and "rainbow") or nil)
 			local model = ctx.PetModel(e[1], false)
 			if not index[e[1]] then
 				EggOpening.Silhouette(model)
@@ -17258,7 +17532,7 @@ local function buildEgg(screen, ctx)
 			l1.Text = string.format("%.2f", 1 + db)
 			local l2 = statLine(strip, "Coin", SELL_COLOR, UDim2.new(0.5, 0, 0, 25), UDim2.new(0.5, -4, 0, 17), 4)
 			l2.Text = string.format("%.2f", 1 + sb)
-			chipText(face, def.Rarity == "Mythic" and "МИФ" or (PetsData.Rarity[def.Rarity] and PetsData.Rarity[def.Rarity].Name or ""), UI.Darker(col, 0.45), UDim2.fromOffset(72, 18), UDim2.fromOffset(6, 6), 6)
+			chipText(face, (def.Rarity == "Mythic" and "МИФ") or (def.Rarity == "Huge" and "ОГРОМНЫЙ") or (PetsData.Rarity[def.Rarity] and PetsData.Rarity[def.Rarity].Name or ""), UI.Darker(col, 0.45), UDim2.fromOffset(72, 18), UDim2.fromOffset(6, 6), 6)
 			-- метка автоудаления
 			local del = UI.new("Frame", { BackgroundColor3 = UI.Colors.Red, BackgroundTransparency = 0.35, Size = UDim2.fromScale(1, 1), ZIndex = 7, Visible = false, Parent = face })
 			UI.Corner(del, 18)

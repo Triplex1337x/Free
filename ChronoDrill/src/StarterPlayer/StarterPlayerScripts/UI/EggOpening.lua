@@ -404,7 +404,8 @@ local function cinematic(eggModel, p)
 	local def = PetsData.ById[p.Id]
 	local r = def and PetsData.Rarity[def.Rarity]
 	local col = r and Color3.fromRGB(r.Color[1], r.Color[2], r.Color[3]) or Color3.new(1, 1, 1)
-	local mythic = def and def.Rarity == "Mythic"
+	local huge = def and def.Rarity == "Huge"
+	local mythic = def and (def.Rarity == "Mythic" or huge)
 	local shiny = p.T == 6
 	if shiny then
 		col = Color3.fromRGB(120, 230, 255)
@@ -551,7 +552,7 @@ local function cinematic(eggModel, p)
 	ctxRef.Sound.Play("Upgrade")
 	ctxRef.Sound.Play("LevelUp")
 	burstStars(cineFront, mythic and 50 or 30, col, 6, 600)
-	title.Text = shiny and "✦ ШАЙНИ! ✦" or (mythic and "МИФИЧЕСКИЙ!" or string.upper((r and r.Name or "") .. "!"))
+	title.Text = shiny and "✦ ШАЙНИ! ✦" or (huge and "★ ОГРОМНЫЙ! ★" or (mythic and "МИФИЧЕСКИЙ!" or string.upper((r and r.Name or "") .. "!")))
 	title.TextColor3 = (mythic or shiny) and Color3.new(1, 1, 1) or col
 	if mythic or shiny then
 		local g = Instance.new("UIGradient")
