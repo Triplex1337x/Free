@@ -13,7 +13,21 @@
 | `security-guidance` | предупреждает, если Claude пишет небезопасный код |
 | `context7` | Claude подтягивает свежую документацию библиотек (Telethon и любых других) |
 
-Все они из официального каталога [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official), там больше 300 плагинов.
+**Дизайн, видео и анимации:**
+
+| Плагин / навык | Зачем |
+|---|---|
+| `hyperframes` (HeyGen) | видео из HTML: анимации GSAP, субтитры, озвучка, визуал под музыку, ролик из сайта. Рендерит в MP4 локально, аккаунт не нужен |
+| `frontend-design` | красивые сайты и интерфейсы без «типичного ИИ-дизайна» |
+| `playground` | интерактивные HTML-страницы с ползунками и живым превью |
+| `playwright` | браузер: я открываю то, что сделал, делаю скриншоты и проверяю, что всё выглядит как надо |
+| навыки `remotion-*` в `.claude/skills/` | видео на React через [Remotion](https://www.remotion.dev): создание, анимации, субтитры, рендер |
+
+Для видео нужны Node.js 22+ и FFmpeg.
+
+Есть и плагины, которым нужен аккаунт в сервисе: `canva`, `figma`, `adobe-for-creativity`, `runway-api` (генерация видео нейросетью), `superdesign`. Поставить так же, как ниже, потом войти в аккаунт.
+
+Все плагины из официального каталога [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official), там больше 300 плагинов.
 
 Хук `.claude/hooks/install-deps.sh` при каждом старте сессии ставит всё из `requirements.txt` (и `pyright` для плагина выше).
 
