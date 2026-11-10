@@ -1,11 +1,34 @@
--- Icons2D: однотонные векторные иконки в стиле популярных симуляторов.
+-- Icons2D: иконки интерфейса. Если загружен атлас цветных иконок (Configs/IconAtlas) — берутся оттуда,
+-- иначе — однотонные векторные иконки в стиле популярных симуляторов (ниже).
 -- Белый силуэт + толстая тёмная обводка + "наклеечная" тень снизу.
 -- Иконка собирается из фреймов (круги, капсулы, ромбы, кольца) в три слоя:
 --   1) тень  2) обводка (те же фигуры с внешним UIStroke)  3) заливка  4) тёмные детали.
 -- Перекрытие слоёв даёт единый контур вокруг всей фигуры, без линий внутри.
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Icons2D = {}
+
+-- Цветные иконки из атласа (Icons/ChronoDrill_Icons.png, раскладка — Configs/IconAtlas).
+-- Пока в IconAtlas.Id не вписан ID загруженной картинки, рисуются векторные иконки ниже.
+local Atlas
+do
+	local configs = ReplicatedStorage:FindFirstChild("Configs")
+	local mod = configs and configs:FindFirstChild("IconAtlas")
+	if mod then
+		local ok, res = pcall(require, mod)
+		if ok and type(res) == "table" and type(res.Id) == "string" and res.Id ~= "" and type(res.Icons) == "table" then
+			Atlas = res
+			if not string.find(Atlas.Id, "://") then
+				Atlas.Id = "rbxassetid://" .. Atlas.Id
+			end
+		end
+	end
+end
+-- Кнопочные значки (крестик, галочка, плюс, стрелка) остаются белыми векторными — так они читаются на любой кнопке
+local KEEP_VECTOR = { Close = true, Check = true, Plus = true, Arrow = true }
+-- Атласная иконка чуть крупнее «коробки» векторной: в ячейке атласа есть поля под обводку и тень
+local ATLAS_SCALE = 1.22
 
 local INK = Color3.fromRGB(28, 22, 44)
 local WHITE = Color3.fromRGB(255, 255, 255)
@@ -283,11 +306,48 @@ end
 
 -- Icons2D.New(parent, name, size, opts) -> Frame
 -- opts: Color (цвет заливки, по умолчанию белый), Ink (обводка), Shadow (true), ZIndex
+local function newAtlasIcon(parent, name, Spx, opts)
+	local idx = Atlas.Icons[name]
+	local cell = Atlas.Cell or 146
+	local cols = Atlas.Columns or 7
+	local holder = Instance.new("Frame")
+	holder.Name = "Icon_" .. name
+	holder.BackgroundTransparency = 1
+	holder.BorderSizePixel = 0
+	holder.Size = UDim2.fromOffset(Spx, Spx)
+	holder.ZIndex = opts.ZIndex or 3
+	local img = Instance.new("ImageLabel")
+	img.Name = "Image"
+	img.BackgroundTransparency = 1
+	img.BorderSizePixel = 0
+	img.AnchorPoint = Vector2.new(0.5, 0.5)
+	img.Position = UDim2.fromScale(0.5, 0.5)
+	img.Size = UDim2.fromScale(ATLAS_SCALE, ATLAS_SCALE)
+	img.Image = Atlas.Id
+	img.ImageRectOffset = Vector2.new((idx % cols) * cell, math.floor(idx / cols) * cell)
+	img.ImageRectSize = Vector2.new(cell, cell)
+	img.ScaleType = Enum.ScaleType.Fit
+	img.ZIndex = opts.ZIndex or 3
+	img.Parent = holder
+	local scale = Instance.new("UIScale")
+	scale.Parent = holder
+	holder.Parent = parent
+	return holder
+end
+
+function Icons2D.HasImage(name)
+	name = ALIAS[name] or name
+	return Atlas ~= nil and not KEEP_VECTOR[name] and Atlas.Icons[name] ~= nil
+end
+
 function Icons2D.New(parent, name, size, opts)
 	opts = opts or {}
 	name = ALIAS[name] or name
-	local def = Defs[name] or Defs.Star
 	local Spx = size or 48
+	if not opts.Procedural and Icons2D.HasImage(name) then
+		return newAtlasIcon(parent, name, Spx, opts)
+	end
+	local def = Defs[name] or Defs.Star
 	local fill = opts.Color or WHITE
 	local ink = opts.Ink or INK
 	local t = math.max(1.5, Spx * 0.06)
@@ -335,6 +395,12 @@ end
 
 -- Перекрасить заливку иконки (например, серый для закрытого)
 function Icons2D.SetColor(holder, color)
+	local img = holder:FindFirstChild("Image")
+	if img and img:IsA("ImageLabel") then
+		-- цветную картинку не перекрашиваем, а затемняем/тонируем (например, серый для закрытого)
+		img.ImageColor3 = color
+		return
+	end
 	local fl = holder:FindFirstChild("Fill")
 	if not fl then
 		return

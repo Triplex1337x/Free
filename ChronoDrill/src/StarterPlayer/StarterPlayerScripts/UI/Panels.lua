@@ -932,7 +932,7 @@ local function buildIncubator(screen, ctx)
 				clear(s.seedHolder)
 				if slot and slot.Seed then
 					local sd = SeedsData.ById[slot.Seed]
-					Icons2D.New(s.seedHolder, "Sprout", 70, { Color = c3(sd.Color) })
+					Icons2D.New(s.seedHolder, "Sprout", 70, { Color = c3(sd.Color), Procedural = true })
 				end
 			end
 			if i > maxSlots then

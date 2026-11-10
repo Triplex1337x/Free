@@ -1,0 +1,51 @@
+-- IconAtlas: раскладка атласа цветных иконок (Icons/ChronoDrill_Icons.png).
+-- Файл собирает tools/make_icons.py — раскладку руками не править.
+--
+-- Как включить: в Studio View -> Asset Manager -> Bulk Import -> Icons/ChronoDrill_Icons.png,
+-- затем ПКМ по картинке -> Copy Asset ID и впиши его в Id ниже (можно просто число):
+--   Id = "rbxassetid://1234567890",
+-- Пока Id пустой, игра рисует прежние векторные иконки (UI/Icons2D).
+-- Важно: нужен ID картинки (Image), а не декали (Decal) — подробности в README.
+return {
+	Id = "",
+	Cell = 146,
+	Columns = 7,
+	Icons = {
+		Coin = 0,
+		Shard = 1,
+		Paw = 2,
+		Chest = 3,
+		ShopBag = 4,
+		Stats = 5,
+		Gift = 6,
+		Wheel = 7,
+		Sprout = 8,
+		Hourglass = 9,
+		Globe = 10,
+		Quest = 11,
+		Pickaxe = 12,
+		Home = 13,
+		Clock = 14,
+		Star = 15,
+		Lock = 16,
+		Bolt = 17,
+		Clover = 18,
+		Drop = 19,
+		Flask = 20,
+		Backpack = 21,
+		Egg = 22,
+		Sword = 23,
+		Crown = 24,
+		Rocket = 25,
+		Gear = 26,
+		Note = 27,
+		Diamond = 28,
+		Bone = 29,
+		Snowflake = 30,
+		Flame = 31,
+		Saturn = 32,
+		Shield = 33,
+		Person = 34,
+		Flag = 35,
+	},
+}
