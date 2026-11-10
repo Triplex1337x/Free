@@ -1,0 +1,246 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+/*FONTS*/
+html, body { margin: 0; padding: 0; }
+#stage { position: relative; overflow: hidden; background: #6aa7e8; }
+.g { position: absolute; box-sizing: border-box; }
+.bg { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+.txt { position: absolute; inset: 0; display: flex; overflow: visible; white-space: pre; line-height: 1; }
+.txt span { display: block; }
+.ct { position: absolute; inset: 0; }
+.vp { position: absolute; inset: 12%; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(255,255,255,.55), rgba(255,255,255,.12) 60%, rgba(255,255,255,0) 70%); }
+</style></head>
+<body><div id="stage"></div>
+<script>
+const TREE = /*TREE*/null;
+const W = /*W*/1280, H = /*H*/720;
+const BG = /*BG*/"";
+const ICONS = /*ICONS*/"";
+const stage = document.getElementById("stage");
+stage.style.width = W + "px"; stage.style.height = H + "px";
+if (BG) { stage.style.background = `center/cover url(${BG})`; }
+else { stage.style.background = "linear-gradient(180deg,#8cc4ff 0%,#a9d6ff 45%,#6fbf5a 46%,#4f9a43 100%)"; }
+
+const GUI = new Set(["Frame","TextLabel","TextButton","TextBox","ImageLabel","ImageButton","ScrollingFrame","ViewportFrame","CanvasGroup"]);
+const TEXT = new Set(["TextLabel","TextButton","TextBox"]);
+const IMG = new Set(["ImageLabel","ImageButton"]);
+const rgb = (c, a = 1) => `rgba(${Math.round(c[0]*255)},${Math.round(c[1]*255)},${Math.round(c[2]*255)},${a})`;
+const ud = (s, o) => (s ? `calc(${s * 100}% + ${o}px)` : `${o}px`);
+const kid = (n, cls) => (n.Children || []).find((c) => c.ClassName === cls && c.Enabled !== false);
+
+function fontFor(n) {
+  const ff = n.FontFace || "";
+  let fam = "'Fredoka','Nunito',sans-serif", w = 600;
+  if (ff && ff.indexOf("enum:") !== 0) {
+    const [f, wt] = ff.split("|");
+    if (/Nunito/i.test(f)) fam = "'Nunito',sans-serif";
+    else if (/Fredoka/i.test(f)) fam = "'Fredoka','Nunito',sans-serif";
+    else if (/Montserrat|Gotham|Builder/i.test(f)) fam = "'Nunito','Segoe UI',sans-serif";
+    w = { Thin: 100, ExtraLight: 200, Light: 300, Regular: 400, Medium: 500, SemiBold: 600, Bold: 700, ExtraBold: 800, Heavy: 900 }[wt] || 700;
+    return [fam, w];
+  }
+  const f = n.Font || "FredokaOne";
+  if (/Fredoka/.test(f)) return ["'Fredoka','Nunito',sans-serif", 600];
+  if (/Gotham(Black|Bold)|Montserrat|Builder|Arial|SourceSans/.test(f)) return ["'Nunito','Segoe UI',sans-serif", /Black|Heavy/.test(f) ? 900 : 800];
+  return [fam, w];
+}
+
+function gradientCss(g, base) {
+  // UIGradient multiplies the object's color; Roblox rotation 0 = left->right
+  const stops = g.Color.map(([t, r, gg, b]) => `rgb(${Math.round(r*base[0]*255)},${Math.round(gg*base[1]*255)},${Math.round(b*base[2]*255)}) ${t*100}%`);
+  const off = g.Offset || [0, 0];
+  return `linear-gradient(${(g.Rotation || 0) + 90}deg, ${stops.join(",")})`;
+}
+function maskCss(g) {
+  const st = g.Transparency.map(([t, v]) => `rgba(0,0,0,${1 - v}) ${t*100}%`);
+  return `linear-gradient(${(g.Rotation || 0) + 90}deg, ${st.join(",")})`;
+}
+
+const post = [];
+function build(n, parentEl, parentNode, layout) {
+  if (n.ClassName === "ScreenGui" || n.ClassName === "Folder" || n.ClassName === "PlayerGui") {
+    if (n.ClassName === "ScreenGui" && n.Enabled === false) return;
+    const d = document.createElement("div");
+    d.className = "g"; d.style.inset = "0"; d.style.zIndex = n.DisplayOrder || 0;
+    d.dataset.name = n.Name;
+    parentEl.appendChild(d);
+    for (const c of n.Children || []) build(c, d, n, null);
+    return;
+  }
+  if (!GUI.has(n.ClassName) || n.Visible === false) return;
+  const d = document.createElement("div");
+  d.className = "g"; d.dataset.name = n.Name; d.dataset.id = n._id;
+  const S = n.Size || { xs: 0, xo: 100, ys: 0, yo: 100 };
+  const P = n.Position || { xs: 0, xo: 0, ys: 0, yo: 0 };
+  const A = n.AnchorPoint || [0, 0];
+  const auto = n.AutomaticSize || "None";
+  if (layout && layout.kind === "grid") {
+    d.style.position = "relative";
+  } else if (layout) {
+    d.style.position = "relative"; d.style.flex = "none";
+    d.style.width = ud(S.xs, S.xo); d.style.height = ud(S.ys, S.yo);
+  } else {
+    d.style.left = ud(P.xs, P.xo); d.style.top = ud(P.ys, P.yo);
+    d.style.width = ud(S.xs, S.xo); d.style.height = ud(S.ys, S.yo);
+  }
+  if (/X/.test(auto)) { d.style.width = "max-content"; d.style.minWidth = ud(S.xs, S.xo); }
+  if (/Y/.test(auto)) { d.style.height = "auto"; d.style.minHeight = ud(S.ys, S.yo); }
+  if (layout) d.style.order = String(layout.sortByName ? 0 : (n.LayoutOrder || 0));
+  const sc = kid(n, "UIScale");
+  const tr = [];
+  if (!layout) tr.push(`translate(${-A[0]*100}%, ${-A[1]*100}%)`);
+  if (n.Rotation) tr.push(`rotate(${n.Rotation}deg)`);
+  if (sc && sc.Scale !== 1) tr.push(`scale(${sc.Scale})`);
+  d.style.transform = tr.join(" ") || "translateZ(0)";
+  d.style.transformOrigin = `${A[0]*100}% ${A[1]*100}%`;
+  d.style.zIndex = n.ZIndex || 1;
+  if (n.ClipsDescendants || n.ClassName === "ScrollingFrame") d.style.overflow = "hidden";
+  const corner = kid(n, "UICorner");
+  if (corner) d.dataset.corner = JSON.stringify(corner.CornerRadius);
+  const grad = kid(n, "UIGradient");
+  // background
+  const bgT = n.BackgroundTransparency == null ? 0 : n.BackgroundTransparency;
+  if (bgT < 1) {
+    const b = document.createElement("div"); b.className = "bg";
+    const col = n.BackgroundColor3 || [0.64, 0.64, 0.65];
+    if (grad) {
+      b.style.background = gradientCss(grad, col);
+      if (grad.Transparency && grad.Transparency.some(([, v]) => v > 0)) { b.style.webkitMaskImage = maskCss(grad); b.style.maskImage = maskCss(grad); }
+    } else b.style.background = rgb(col);
+    b.style.opacity = 1 - bgT;
+    d.appendChild(b);
+  }
+  // border stroke
+  const strokes = (n.Children || []).filter((c) => c.ClassName === "UIStroke" && c.Enabled !== false);
+  const isText = TEXT.has(n.ClassName);
+  for (const s of strokes) {
+    const border = !isText || s.ApplyStrokeMode === "Border";
+    if (border) {
+      const sg = kid(s, "UIGradient");
+      const col = sg ? sg.Color[0].slice(1) : s.Color;
+      d.style.boxShadow = `0 0 0 ${s.Thickness}px ${rgb(col, 1 - (s.Transparency || 0))}`;
+    }
+  }
+  if (IMG.has(n.ClassName) && n.Image) {
+    const im = document.createElement("div"); im.className = "bg";
+    im.dataset.image = JSON.stringify({ img: n.Image, off: n.ImageRectOffset, size: n.ImageRectSize, scale: n.ScaleType || "Stretch" });
+    im.style.opacity = 1 - (n.ImageTransparency || 0);
+    const ic = n.ImageColor3;
+    if (ic && (ic[0] < 0.99 || ic[1] < 0.99 || ic[2] < 0.99)) im.style.filter = `brightness(${(ic[0] + ic[1] + ic[2]) / 3})`;
+    d.appendChild(im);
+  }
+  if (n.ClassName === "ViewportFrame") { const v = document.createElement("div"); v.className = "vp"; d.appendChild(v); }
+  if (isText && n.Text) {
+    const t = document.createElement("div"); t.className = "txt";
+    const [fam, w] = fontFor(n);
+    t.style.fontFamily = fam; t.style.fontWeight = w;
+    t.style.color = rgb(n.TextColor3 || [0, 0, 0], 1 - (n.TextTransparency || 0));
+    const xa = n.TextXAlignment || "Center", ya = n.TextYAlignment || "Center";
+    t.style.justifyContent = xa === "Left" ? "flex-start" : xa === "Right" ? "flex-end" : "center";
+    t.style.alignItems = ya === "Top" ? "flex-start" : ya === "Bottom" ? "flex-end" : "center";
+    t.style.textAlign = xa === "Left" ? "left" : xa === "Right" ? "right" : "center";
+    if (n.TextWrapped || n.TextScaled) t.style.whiteSpace = "pre-wrap";
+    const span = document.createElement("span");
+    if (n.RichText) span.innerHTML = n.Text.replace(/<font([^>]*)>/g, (m, a) => { const c = /color="([^"]+)"/.exec(a); return `<span style="${c ? "color:" + c[1] : ""}">`; }).replace(/<\/font>/g, "</span>").replace(/<stroke[^>]*>|<\/stroke>/g, "");
+    else span.textContent = n.Text;
+    const tstroke = strokes.find((s) => s.ApplyStrokeMode !== "Border");
+    if (tstroke) { span.style.webkitTextStroke = `${tstroke.Thickness * 2}px ${rgb(tstroke.Color, 1 - (tstroke.Transparency || 0))}`; span.style.paintOrder = "stroke fill"; }
+    else if (n.TextStrokeTransparency != null && n.TextStrokeTransparency < 1) { span.style.webkitTextStroke = `2px ${rgb(n.TextStrokeColor3 || [0,0,0], 1 - n.TextStrokeTransparency)}`; span.style.paintOrder = "stroke fill"; }
+    if (grad) { const c0 = grad.Color[0], c1 = grad.Color[grad.Color.length - 1], tc = n.TextColor3 || [1,1,1]; span.style.color = rgb([(c0[1]+c1[1])/2*tc[0], (c0[2]+c1[2])/2*tc[1], (c0[3]+c1[3])/2*tc[2]]); }
+    t.appendChild(span);
+    if (/X/.test(auto)) { t.style.position = "relative"; t.style.height = "100%"; }
+    const cons = kid(n, "UITextSizeConstraint");
+    t.dataset.fit = JSON.stringify({ scaled: !!n.TextScaled, size: n.TextSize || 14, max: cons ? cons.MaxTextSize : 1000, min: cons ? (cons.MinTextSize || 1) : 1, wrap: !!(n.TextWrapped) });
+    d.appendChild(t);
+  }
+  // content container (padding + layout)
+  const pad = kid(n, "UIPadding");
+  const ct = document.createElement("div"); ct.className = "ct";
+  ct.style.borderRadius = "inherit";
+  if (pad) {
+    const g = (u) => u || { s: 0, o: 0 };
+    ct.style.left = ud(g(pad.PaddingLeft).s, g(pad.PaddingLeft).o); ct.style.right = ud(g(pad.PaddingRight).s, g(pad.PaddingRight).o);
+    ct.style.top = ud(g(pad.PaddingTop).s, g(pad.PaddingTop).o); ct.style.bottom = ud(g(pad.PaddingBottom).s, g(pad.PaddingBottom).o);
+  }
+  if (n.ClassName === "ScrollingFrame") ct.style.right = "8px";
+  const list = kid(n, "UIListLayout"), grid = kid(n, "UIGridLayout");
+  let lay = null;
+  if (list) {
+    const horiz = list.FillDirection === "Horizontal";
+    ct.style.display = "flex"; ct.style.flexDirection = horiz ? "row" : "column";
+    const p = list.Padding || { s: 0, o: 0 };
+    ct.style.gap = `${p.o}px`;
+    if (list.Wraps) ct.style.flexWrap = "wrap";
+    const ha = list.HorizontalAlignment || "Left", va = list.VerticalAlignment || "Top";
+    const mapH = { Left: "flex-start", Center: "center", Right: "flex-end" }, mapV = { Top: "flex-start", Center: "center", Bottom: "flex-end" };
+    if (horiz) { ct.style.justifyContent = mapH[ha]; ct.style.alignItems = mapV[va]; }
+    else { ct.style.alignItems = mapH[ha]; ct.style.justifyContent = mapV[va]; }
+    lay = { kind: "list", sortByName: list.SortOrder !== "LayoutOrder" };
+  } else if (grid) {
+    const cs = grid.CellSize, cp = grid.CellPadding;
+    ct.style.display = "grid";
+    const cw = ud(cs.xs, cs.xo), ch = ud(cs.ys, cs.yo);
+    const max = grid.FillDirectionMaxCells || 0;
+    if (grid.FillDirection === "Vertical") { ct.style.gridAutoFlow = "column"; ct.style.gridTemplateRows = max ? `repeat(${max}, ${ch})` : `repeat(auto-fill, ${ch})`; ct.style.gridAutoColumns = cw; }
+    else { ct.style.gridTemplateColumns = max ? `repeat(${max}, ${cw})` : `repeat(auto-fill, ${cw})`; ct.style.gridAutoRows = ch; }
+    ct.style.columnGap = `${cp.xo}px`; ct.style.rowGap = `${cp.yo}px`;
+    const ha = grid.HorizontalAlignment || "Left";
+    ct.style.justifyContent = { Left: "start", Center: "center", Right: "end" }[ha];
+    ct.style.alignContent = { Top: "start", Center: "center", Bottom: "end" }[grid.VerticalAlignment || "Top"];
+    lay = { kind: "grid" };
+  }
+  d.appendChild(ct);
+  parentEl.appendChild(d);
+  let kids = (n.Children || []).filter((c) => GUI.has(c.ClassName));
+  if (lay && lay.sortByName) kids = kids.slice().sort((a, b) => (a.Name > b.Name ? 1 : a.Name < b.Name ? -1 : 0));
+  else if (lay) kids = kids.slice().sort((a, b) => (a.LayoutOrder || 0) - (b.LayoutOrder || 0) || a._id - b._id);
+  for (const c of kids) build(c, ct, n, lay);
+  if (/X|Y/.test(auto)) ct.style.position = "relative";
+}
+
+for (const c of TREE.Children || []) build(c, stage, TREE, null);
+if (TREE.ClassName !== "PlayerGui") build(TREE, stage, null, null);
+
+document.fonts.ready.then(() => {
+  // corners
+  document.querySelectorAll("[data-corner]").forEach((el) => {
+    const c = JSON.parse(el.dataset.corner), r = el.getBoundingClientRect();
+    const w = el.offsetWidth, h = el.offsetHeight, m = Math.min(w, h);
+    el.style.borderRadius = Math.min(m / 2, c.s * m + c.o) + "px";
+  });
+  // images
+  document.querySelectorAll("[data-image]").forEach((el) => {
+    const o = JSON.parse(el.dataset.image);
+    const w = el.offsetWidth, h = el.offsetHeight;
+    if (!/^rbxassetid:\/\/\d+$/.test(o.img) && !/^file:/.test(o.img)) return;
+    const src = /^file:/.test(o.img) ? o.img : ICONS;
+    if (o.size && o.size[0] > 0) {
+      const k = o.scale === "Fit" ? Math.min(w / o.size[0], h / o.size[1]) : w / o.size[0];
+      const ky = o.scale === "Fit" ? k : h / o.size[1];
+      const dx = (w - o.size[0] * k) / 2, dy = (h - o.size[1] * ky) / 2;
+      el.style.backgroundImage = `url(${src})`;
+      el.style.backgroundSize = `${1024 * k}px ${1024 * ky}px`;
+      el.style.backgroundPosition = `${dx - o.off[0] * k}px ${dy - o.off[1] * ky}px`;
+      el.style.backgroundRepeat = "no-repeat";
+    } else { el.style.background = `center/contain no-repeat url(${src})`; }
+  });
+  // text fitting
+  document.querySelectorAll("[data-fit]").forEach((t) => {
+    const f = JSON.parse(t.dataset.fit), span = t.firstChild;
+    const W = t.clientWidth, H = t.clientHeight;
+    if (!f.scaled) { span.style.fontSize = f.size + "px"; if (f.wrap) span.style.maxWidth = W + "px"; return; }
+    if (t.style.position === "relative") { span.style.fontSize = Math.min(f.max, f.size) + "px"; return; }
+    span.style.maxWidth = W + "px";
+    let lo = 1, hi = Math.max(1, Math.min(f.max, 100));
+    for (let i = 0; i < 12; i++) {
+      const mid = (lo + hi) / 2;
+      span.style.fontSize = mid + "px";
+      const ok = span.scrollWidth <= W + 0.5 && span.offsetHeight <= H + 0.5 && span.scrollHeight <= H + 0.5;
+      if (ok) lo = mid; else hi = mid;
+    }
+    span.style.fontSize = Math.floor(lo) + "px";
+  });
+  window.__done = true;
+});
+</script></body></html>

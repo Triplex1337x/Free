@@ -1,9 +1,8 @@
--- HUD 2.0 — раскладка как в популярных симуляторах:
---   слева      — сетка цветных кнопок меню с белыми иконками (питомцы, предметы, магазин, задания...)
---   слева по центру — столбик: рюкзак, монеты, осколки, характеристики
---   сверху     — ярус + глубина + таймер вайпа в одной плашке
---   слева внизу— активные бафы (иконка + таймер, подсказка при наведении)
---   снизу      — рюкзак, справа внизу — «На базу»
+-- HUD 3.0 — «стеклянный» интерфейс:
+--   слева по центру — рюкзак, монеты, осколки и характеристики на тёмных полупрозрачных капсулах
+--   справа         — меню: стеклянные плитки с цветными иконками, подпись под иконкой, акцентная полоска
+--   сверху         — ярус (своя иконка и цвет), глубина с полосой прогресса, таймер вайпа отдельной капсулой
+--   слева внизу    — активные бафы, справа внизу — большая кнопка «На базу»
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -31,36 +30,51 @@ local function c3(t)
 end
 
 local GOLD = Color3.fromRGB(255, 208, 64)
-local PILL = Color3.fromRGB(36, 30, 56)
+local PILL = Color3.fromRGB(24, 20, 52)
+local SOFT = Color3.fromRGB(196, 190, 236) -- второстепенный текст на стекле
+local BIOME_GLYPHS = { "Pickaxe", "Bone", "Snowflake", "Flame", "Saturn" }
 
--- Счётчик: тёмная капсула + цветной круглый значок с белой иконкой слева
--- Счётчик в стиле симуляторов: яркая голубая капсула с глянцем, круглый значок слева
-local PILL_BLUE = Color3.fromRGB(34, 156, 255)
-local PILL_EDGE = Color3.fromRGB(14, 66, 150)
-local function counter(parent, w, h, pos, glyph, badgeColor, glyphColor, pillColor)
+local function txt(parent, text, size, props)
+	props = props or {}
+	props.MaxText = size
+	if props.StrokeThickness == nil then
+		props.StrokeThickness = 1.6
+	end
+	local l = UI.Text(parent, text, props)
+	local st = l:FindFirstChildOfClass("UIStroke")
+	if st then
+		st.Color = Color3.fromRGB(14, 10, 32)
+		st.Transparency = 0.15
+	end
+	return l
+end
+
+-- Счётчик валюты: стеклянная капсула, большая цветная иконка «выходит» за левый край, крупное число
+local function counter(parent, w, h, pos, glyph, accent, plusFn, vecColor)
 	local holder = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(w, h), Position = pos, Parent = parent })
-	local pc = pillColor or PILL_BLUE
-	local pill = UI.new("Frame", { Name = "Pill", BackgroundColor3 = pc, Size = UDim2.new(1, -h * 0.45, 1, -8), Position = UDim2.new(0, h * 0.45, 0, 4), Parent = holder })
-	UI.Corner(pill, UDim.new(1, 0))
-	UI.Stroke(pill, 3.5, UI.Darker(pc, 0.55), true)
-	UI.Gradient(pill, UI.Lighter(pc, 0.25), UI.Darker(pc, 0.15))
-	local shine = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.7, Size = UDim2.new(1, -h * 0.9, 0.3, 0), Position = UDim2.new(0, h * 0.6, 0, 3), Parent = pill })
-	UI.Corner(shine, UDim.new(1, 0))
-	local badge = UI.new("Frame", { Name = "Badge", BackgroundColor3 = badgeColor, Size = UDim2.fromOffset(h, h), ZIndex = 3, Parent = holder })
-	UI.Corner(badge, UDim.new(1, 0))
-	UI.Stroke(badge, 3, UI.Ink, true)
-	UI.Gradient(badge, Color3.new(1, 1, 1), Color3.fromRGB(200, 200, 212))
-	local ic = Icons2D.New(badge, glyph, math.floor(h * 0.74), { Color = glyphColor, ZIndex = 4 })
-	ic.AnchorPoint = Vector2.new(0.5, 0.5)
-	ic.Position = UDim2.fromScale(0.5, 0.47)
-	local label = UI.Text(pill, "0", { Size = UDim2.new(1, -(h * 0.75), 1, -8), Position = UDim2.fromOffset(h * 0.62, 4), TextXAlignment = Enum.TextXAlignment.Left, MaxText = math.floor(h * 0.6), ZIndex = 3 })
+	local pill = UI.new("Frame", { Name = "Pill", Size = UDim2.new(1, -16, 1, -8), Position = UDim2.new(0, 16, 0, 4), Parent = holder })
+	UI.Glass(pill, UDim.new(1, 0))
+	-- цветная подсветка слева, под иконкой
+	local glow = UI.new("Frame", { BackgroundColor3 = accent, BackgroundTransparency = 0.25, Size = UDim2.new(0.55, 0, 1, 0), Parent = pill })
+	UI.Corner(glow, UDim.new(1, 0))
+	local gg = Instance.new("UIGradient")
+	gg.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 1) })
+	gg.Parent = glow
+	local ic = Icons2D.New(holder, glyph, h + 4, { ZIndex = 4, Color = vecColor })
+	ic.AnchorPoint = Vector2.new(0, 0.5)
+	ic.Position = UDim2.new(0, -4, 0.5, 0)
+	local label = txt(pill, "0", math.floor(h * 0.6), { Size = UDim2.new(1, -(h + (plusFn and 40 or 12)), 1, -8), Position = UDim2.fromOffset(h - 6, 4), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 3 })
+	if plusFn then
+		local plus = UI.Button({ Parent = pill, Glyph = "Plus", Color = UI.Colors.Green, Size = UDim2.fromOffset(h - 14, h - 14), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -6, 0.5, -2), Radius = 99 })
+		plus.Activated:Connect(plusFn)
+	end
 	local scale = Instance.new("UIScale")
 	scale.Parent = holder
 	local obj = { Holder = holder, Label = label, Icon = ic, Last = nil }
 	function obj.Set(text)
 		if obj.Last ~= text then
 			if obj.Last ~= nil then
-				scale.Scale = 1.07
+				scale.Scale = 1.06
 				TweenService:Create(scale, TweenInfo.new(0.25, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 			end
 			obj.Last = text
@@ -133,7 +147,7 @@ function HUD.Build(screen, ctx)
 		return hit
 	end
 
-	---------------------------------------------------------------- меню слева
+	---------------------------------------------------------------- меню справа
 	local menuDefs = {
 		{ "Pets", "Питомцы", UI.Colors.Orange, "Paw" },
 		{ "Bag", "Предметы", UI.Colors.Purple, "Chest" },
@@ -145,18 +159,17 @@ function HUD.Build(screen, ctx)
 		{ "Rebirth", "Ребёрс", UI.Colors.Teal, "Hourglass" },
 		{ "Stats", "Статы", Color3.fromRGB(120, 110, 255), "Stats" },
 		{ "Worlds", "Миры", Color3.fromRGB(60, 190, 255), "Globe" },
-		{ "Settings", "Настройки", Color3.fromRGB(130, 136, 160), "Gear" },
+		{ "Settings", "Настройки", Color3.fromRGB(150, 156, 186), "Gear" },
 		{ "Donate", "Донат", Color3.fromRGB(40, 200, 110), "Diamond" },
 	}
-	local BTN = touch and 62 or 72
+	local BTN = touch and 62 or 70
 	local cols = touch and 4 or 2
-	local gap = touch and 8 or 12
+	local gap = touch and 8 or 10
 	local rows = math.ceil(#menuDefs / cols)
 	local menuW = cols * BTN + (cols - 1) * gap
 	local menuH = rows * BTN + (rows - 1) * gap
 	local menu = UI.new("Frame", { Name = "Menu", BackgroundTransparency = 1, Size = UDim2.fromOffset(menuW, menuH), Parent = screen })
-	-- меню справа; верхний край на одном уровне с блоком валют слева
-	local TOP_Y = touch and UDim2.new(1, -14, 0, 12) or UDim2.new(1, -16, 0.5, -math.floor(menuH / 2) - 10)
+	local TOP_Y = touch and UDim2.new(1, -14, 0, 12) or UDim2.new(1, -18, 0.5, -math.floor(menuH / 2) - 14)
 	menu.AnchorPoint = Vector2.new(1, 0)
 	menu.Position = TOP_Y
 	local grid = Instance.new("UIGridLayout")
@@ -166,36 +179,51 @@ function HUD.Build(screen, ctx)
 	grid.Parent = menu
 	hud.MenuButtons = {}
 	for i, d in ipairs(menuDefs) do
-		local b = UI.Button({ Parent = menu, Color = d[3], Size = UDim2.fromOffset(BTN, BTN), LayoutOrder = i, Radius = 18 })
-		local ic = Icons2D.New(b.Face, d[4], math.floor(BTN * 0.62), { ZIndex = 4 })
+		local accent = d[3]
+		local holder = UI.new("Frame", { Name = d[1], BackgroundTransparency = 1, LayoutOrder = i, Parent = menu })
+		local face = UI.new("TextButton", { Name = "Face", AutoButtonColor = false, Text = "", Size = UDim2.fromScale(1, 1), Parent = holder })
+		local rim = UI.Glass(face, 18, 0.16)
+		-- цветное «свечение» снизу плитки и акцентная полоска
+		local glow = UI.new("Frame", { BackgroundColor3 = accent, Size = UDim2.new(1, 0, 0.62, 0), Position = UDim2.new(0, 0, 0.38, 0), ZIndex = 1, Parent = face })
+		UI.Corner(glow, 18)
+		local gg = Instance.new("UIGradient")
+		gg.Rotation = 90
+		gg.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0.45) })
+		gg.Parent = glow
+		local bar = UI.new("Frame", { BackgroundColor3 = accent, Size = UDim2.new(0.42, 0, 0, 4), AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -3), ZIndex = 2, Parent = face })
+		UI.Corner(bar, UDim.new(1, 0))
+		local ic = Icons2D.New(face, d[4], math.floor(BTN * 0.56), { ZIndex = 4 })
 		ic.AnchorPoint = Vector2.new(0.5, 0)
-		ic.Position = UDim2.new(0.5, 0, 0, math.floor(BTN * 0.07))
-		local label = UI.Text(b.Face, d[2], { Size = UDim2.new(1, -6, 0, math.floor(BTN * 0.27)), Position = UDim2.new(0, 3, 1, -math.floor(BTN * 0.3)), MaxText = math.floor(BTN * 0.22), ZIndex = 5, StrokeThickness = 2 })
-		local badge = UI.new("Frame", { BackgroundColor3 = UI.Colors.Red, Size = UDim2.fromOffset(24, 24), Position = UDim2.new(1, -16, 0, -8), Visible = false, ZIndex = 8, Parent = b.Holder })
+		ic.Position = UDim2.new(0.5, 0, 0, math.floor(BTN * 0.06))
+		local label = txt(face, d[2], math.floor(BTN * 0.19), { Size = UDim2.new(1, -4, 0, math.floor(BTN * 0.24)), Position = UDim2.new(0, 2, 1, -math.floor(BTN * 0.33)), ZIndex = 5 })
+		local badge = UI.new("Frame", { BackgroundColor3 = Color3.fromRGB(255, 72, 96), Size = UDim2.fromOffset(22, 22), Position = UDim2.new(1, -15, 0, -7), Visible = false, ZIndex = 8, Parent = holder })
 		UI.Corner(badge, UDim.new(1, 0))
-		UI.Stroke(badge, 2.5, UI.Ink, true)
-		UI.Text(badge, "!", { ZIndex = 9, MaxText = 18 })
+		UI.Stroke(badge, 2.5, Color3.new(1, 1, 1), true)
+		txt(badge, "!", 16, { ZIndex = 9, StrokeThickness = 0 })
 		local badgeScale = Instance.new("UIScale")
 		badgeScale.Parent = badge
-		b.Badge = badge
-		b.BadgeScale = badgeScale
-		b.Label = label
-		b.DefaultText = d[2]
-		b.Icon = ic
-		b.Activated:Connect(function()
+		local hs = UI.Bounce(face, holder)
+		face.MouseEnter:Connect(function()
+			Icons2D.Wiggle(ic)
+			rim.Color = accent
+			rim.Transparency = 0
+		end)
+		face.MouseLeave:Connect(function()
+			rim.Color = Color3.new(1, 1, 1)
+			rim.Transparency = 0.78
+		end)
+		local b = { Holder = holder, Face = face, Activated = face.Activated, Badge = badge, BadgeScale = badgeScale, Label = label, DefaultText = d[2], Icon = ic, Scale = hs }
+		face.Activated:Connect(function()
 			Icons2D.Bounce(ic, 1.2)
 			ctx.OpenPanel(d[1])
-		end)
-		b.Face.MouseEnter:Connect(function()
-			Icons2D.Wiggle(ic)
 		end)
 		hud.MenuButtons[d[1]] = b
 	end
 
 	-- кнопка панели разработчика (видна только админам; на ПК ещё и клавиша F2)
-	local adminBtn = UI.Button({ Parent = screen, Glyph = "Shield", Color = Color3.fromRGB(255, 84, 110), Size = UDim2.fromOffset(54, 54), Radius = 27 })
+	local adminBtn = UI.Button({ Parent = screen, Glyph = "Shield", Color = Color3.fromRGB(255, 84, 110), Size = UDim2.fromOffset(50, 50), Radius = 25 })
 	adminBtn.Holder.AnchorPoint = Vector2.new(1, 0)
-	adminBtn.Holder.Position = touch and UDim2.new(1, -(menuW + 26), 0, 12) or UDim2.new(1, -16, 0, 16)
+	adminBtn.Holder.Position = touch and UDim2.new(1, -(menuW + 26), 0, 12) or UDim2.new(1, -18, 0, 16)
 	adminBtn.Holder.Visible = player:GetAttribute("IsAdmin") == true
 	player:GetAttributeChangedSignal("IsAdmin"):Connect(function()
 		adminBtn.Holder.Visible = player:GetAttribute("IsAdmin") == true
@@ -208,7 +236,7 @@ function HUD.Build(screen, ctx)
 	-- купленные геймпассы: ряд значков в углу (наведи — подсказка)
 	local passRow = UI.new("Frame", { Name = "OwnedPasses", BackgroundTransparency = 1, Size = UDim2.fromOffset(0, 0), Parent = screen })
 	local passList = Instance.new("UIGridLayout")
-	passList.CellSize = UDim2.fromOffset(38, 38)
+	passList.CellSize = UDim2.fromOffset(40, 40)
 	passList.CellPadding = UDim2.fromOffset(6, 6)
 	passList.SortOrder = Enum.SortOrder.LayoutOrder
 	passList.Parent = passRow
@@ -217,7 +245,7 @@ function HUD.Build(screen, ctx)
 		passRow.Position = UDim2.new(1, -14, 0, menuH + 22)
 		passList.HorizontalAlignment = Enum.HorizontalAlignment.Right
 	else
-		passRow.Position = UDim2.fromOffset(16, 16)
+		passRow.Position = UDim2.fromOffset(18, 16)
 	end
 	local passKey = nil
 	function hud.RefreshPasses(data)
@@ -242,43 +270,44 @@ function HUD.Build(screen, ctx)
 			end
 		end
 		local perRow = 6
-		passRow.Size = UDim2.fromOffset(math.min(#owned, perRow) * 44, math.ceil(#owned / perRow) * 44)
+		passRow.Size = UDim2.fromOffset(math.min(#owned, perRow) * 46, math.ceil(#owned / perRow) * 46)
 		for i, def in ipairs(owned) do
 			local col = c3(def.Color)
-			local f = UI.new("Frame", { BackgroundColor3 = col, Size = UDim2.fromOffset(38, 38), LayoutOrder = i, Parent = passRow })
-			UI.Corner(f, UDim.new(1, 0))
-			UI.Stroke(f, 2.5, UI.Edge(col), true)
-			UI.Gradient(f, UI.Lighter(col, 0.3), UI.Darker(col, 0.1))
-			local ic = Icons2D.New(f, def.Glyph, 28, { Ink = UI.Edge(col), ZIndex = 4 })
+			local f = UI.new("Frame", { Size = UDim2.fromOffset(40, 40), LayoutOrder = i, Parent = passRow })
+			local st = UI.Glass(f, UDim.new(1, 0), 0.2)
+			st.Color = col
+			st.Transparency = 0.1
+			local ic = Icons2D.New(f, def.Glyph, 30, { ZIndex = 4 })
 			ic.AnchorPoint = Vector2.new(0.5, 0.5)
-			ic.Position = UDim2.fromScale(0.5, 0.48)
+			ic.Position = UDim2.fromScale(0.5, 0.5)
 			hoverTip({ Frame = f }, f, def.Name, function()
 				return def.Desc
 			end, touch and "left" or "below")
 		end
 	end
 
-	---------------------------------------------------------------- справа: валюты и характеристики
-	-- столбик слева по центру: рюкзак, монеты, осколки, характеристики
-	local right = UI.new("Frame", { Name = "Currencies", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0, touch and 0 or 0.5), Position = touch and UDim2.fromOffset(14, 8) or UDim2.new(0, 16, 0.5, 0), Size = UDim2.fromOffset(300, 246), Parent = screen })
-	local coins = counter(right, 300, 62, UDim2.fromOffset(0, 70), "Coin", Color3.fromRGB(255, 196, 40), GOLD)
-	coins.Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-	local shards = counter(right, 240, 52, UDim2.fromOffset(0, 140), "Shard", Color3.fromRGB(210, 90, 255), nil, Color3.fromRGB(196, 92, 255))
-	-- карточка характеристик
-	local statRow = UI.new("Frame", { Name = "StatRow", BackgroundTransparency = 1, Size = UDim2.fromOffset(300, 46), Position = UDim2.fromOffset(0, 200), Parent = right })
+	---------------------------------------------------------------- слева: рюкзак, валюты, характеристики
+	local COLW = 268
+	local right = UI.new("Frame", { Name = "Currencies", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0, touch and 0 or 0.5), Position = touch and UDim2.fromOffset(14, 8) or UDim2.new(0, 18, 0.5, -8), Size = UDim2.fromOffset(COLW, 236), Parent = screen })
+	local coins = counter(right, COLW, 58, UDim2.fromOffset(0, 66), "Coin", Color3.fromRGB(255, 186, 30), function()
+		ctx.OpenPanel("Donate")
+	end, GOLD)
+	local shards = counter(right, COLW - 44, 50, UDim2.fromOffset(0, 128), "Shard", Color3.fromRGB(190, 90, 255), nil, Color3.fromRGB(214, 150, 255))
+	-- характеристики: три стеклянных чипа
+	local statRow = UI.new("Frame", { Name = "StatRow", BackgroundTransparency = 1, Size = UDim2.fromOffset(COLW, 36), Position = UDim2.fromOffset(16, 186), Parent = right })
 	UI.List(statRow, 6, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left)
-	local function chip(order, glyph, color)
-		local f = UI.new("Frame", { BackgroundColor3 = PILL, BackgroundTransparency = 0.12, Size = UDim2.fromOffset(94, 40), LayoutOrder = order, Parent = statRow })
-		UI.Corner(f, 12)
-		UI.Stroke(f, 3, UI.Ink, true)
-		local ic = Icons2D.New(f, glyph, 30, { Color = color, ZIndex = 3 })
-		ic.Position = UDim2.fromOffset(3, 3)
-		local l = UI.Text(f, "", { Size = UDim2.new(1, -38, 1, -10), Position = UDim2.fromOffset(34, 5), TextXAlignment = Enum.TextXAlignment.Left, MaxText = 18, ZIndex = 3 })
+	local function chip(order, glyph, vecColor)
+		local f = UI.new("Frame", { Size = UDim2.fromOffset(80, 34), LayoutOrder = order, Parent = statRow })
+		UI.Glass(f, UDim.new(1, 0), 0.22)
+		local ic = Icons2D.New(f, glyph, 28, { ZIndex = 3, Color = vecColor })
+		ic.AnchorPoint = Vector2.new(0, 0.5)
+		ic.Position = UDim2.new(0, 2, 0.5, 0)
+		local l = txt(f, "", 16, { Size = UDim2.new(1, -36, 1, -8), Position = UDim2.fromOffset(32, 4), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 3 })
 		return { Frame = f, Label = l }
 	end
 	local damage = chip(1, "Pickaxe", Color3.fromRGB(255, 160, 90))
 	local petMult = chip(2, "Paw", Color3.fromRGB(140, 235, 140))
-	local sellMult = chip(3, "Coin", Color3.fromRGB(255, 214, 70))
+	local sellMult = chip(3, "Coin", GOLD)
 	local function derived()
 		return (ClientState.Data and ClientState.Data.Derived) or {}
 	end
@@ -299,64 +328,85 @@ function HUD.Build(screen, ctx)
 	end, "right")
 
 	---------------------------------------------------------------- сверху: ярус, глубина, вайп
-	local top = UI.new("Frame", { Name = "TopInfo", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 10), Size = UDim2.fromOffset(440, 50), Parent = screen })
+	local top = UI.new("Frame", { Name = "TopInfo", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 10), Size = UDim2.fromOffset(470, 54), Parent = screen })
 	if touch then
-		top.Position = UDim2.new(0.5, 0, 0, 10)
-		top.Size = UDim2.fromOffset(400, 50)
+		top.Size = UDim2.fromOffset(400, 54)
 	end
-	local topPill = UI.new("Frame", { BackgroundColor3 = PILL, BackgroundTransparency = 0.12, Size = UDim2.new(1, -24, 1, -10), Position = UDim2.fromOffset(24, 5), Parent = top })
-	UI.Corner(topPill, UDim.new(1, 0))
-	UI.Stroke(topPill, 3, UI.Ink, true)
-	local biomeBadge = UI.new("Frame", { BackgroundColor3 = UI.Colors.Green, Size = UDim2.fromOffset(50, 50), ZIndex = 3, Parent = top })
+	local topPill = UI.new("Frame", { Size = UDim2.new(1, -128, 0, 46), Position = UDim2.fromOffset(18, 4), Parent = top })
+	UI.Glass(topPill, UDim.new(1, 0), 0.16)
+	local biomeBadge = UI.new("Frame", { BackgroundColor3 = UI.Colors.Green, Size = UDim2.fromOffset(54, 54), ZIndex = 3, Parent = top })
 	UI.Corner(biomeBadge, UDim.new(1, 0))
-	UI.Stroke(biomeBadge, 3, UI.Ink, true)
-	UI.Gradient(biomeBadge, Color3.new(1, 1, 1), Color3.fromRGB(200, 200, 212))
-	local biomeIcon = Icons2D.New(biomeBadge, "Globe", 36, { ZIndex = 4 })
-	biomeIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-	biomeIcon.Position = UDim2.fromScale(0.5, 0.48)
-	local depthTrack = UI.new("Frame", { BackgroundColor3 = Color3.fromRGB(18, 14, 30), Size = UDim2.new(1, -164, 0, 24), Position = UDim2.fromOffset(34, 8), ZIndex = 2, Parent = topPill })
+	local biomeStroke = UI.Stroke(biomeBadge, 3, Color3.new(1, 1, 1), true)
+	biomeStroke.Transparency = 0.2
+	local biomeGrad = UI.Candy(biomeBadge, UI.Colors.Green)
+	local biomeIconHolder = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 4, Parent = biomeBadge })
+	local biomeIcon
+	local shownBiome = nil
+	local paintedBiome = nil
+	local function setBiomeIcon(b)
+		if shownBiome == b then
+			return
+		end
+		shownBiome = b
+		if biomeIcon then
+			biomeIcon:Destroy()
+		end
+		biomeIcon = Icons2D.New(biomeIconHolder, BIOME_GLYPHS[b] or "Globe", 38, { ZIndex = 4 })
+		biomeIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+		biomeIcon.Position = UDim2.fromScale(0.5, 0.5)
+	end
+	setBiomeIcon(1)
+	local biomeName = txt(topPill, "Карьер", 19, { Size = UDim2.new(0.5, -40, 0, 22), Position = UDim2.fromOffset(42, 4), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 3 })
+	local depthText = txt(topPill, "", 15, { Size = UDim2.new(0.5, -10, 0, 22), Position = UDim2.new(0.5, -6, 0, 5), TextXAlignment = Enum.TextXAlignment.Right, TextColor3 = SOFT, ZIndex = 3 })
+	local depthTrack = UI.new("Frame", { BackgroundColor3 = Color3.fromRGB(10, 8, 24), BackgroundTransparency = 0.2, Size = UDim2.new(1, -60, 0, 8), Position = UDim2.fromOffset(42, 30), ZIndex = 2, Parent = topPill })
 	UI.Corner(depthTrack, UDim.new(1, 0))
-	local depthFill = UI.new("Frame", { BackgroundColor3 = UI.Colors.Green, Size = UDim2.fromScale(0, 1), ZIndex = 2, Parent = depthTrack })
+	local depthFill = UI.new("Frame", { BackgroundColor3 = UI.Colors.Green, Size = UDim2.fromScale(0, 1), ZIndex = 3, Parent = depthTrack })
 	UI.Corner(depthFill, UDim.new(1, 0))
-	UI.Gradient(depthFill, Color3.new(1, 1, 1), Color3.fromRGB(190, 190, 200))
-	local depthText = UI.Text(depthTrack, "", { Size = UDim2.new(1, -12, 1, -4), Position = UDim2.fromOffset(6, 2), MaxText = 17, ZIndex = 3 })
-	local sep = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.8, Size = UDim2.new(0, 2, 1, -14), Position = UDim2.new(1, -124, 0, 7), Parent = topPill })
-	local clock = Icons2D.New(topPill, "Clock", 30, { ZIndex = 3, Shadow = false })
-	clock.Position = UDim2.new(1, -116, 0, 5)
-	local timerText = UI.Text(topPill, "20:00", { Size = UDim2.fromOffset(78, 26), Position = UDim2.new(1, -84, 0, 7), MaxText = 22, ZIndex = 3, TextXAlignment = Enum.TextXAlignment.Left })
-	local topHit = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(130, 40), Position = UDim2.new(1, -130, 0, 0), Parent = topPill })
-	hoverTip(topHit, topHit, "Вайп шахты", function()
+	UI.Gradient(depthFill, Color3.new(1, 1, 1), Color3.fromRGB(200, 200, 210))
+	-- таймер вайпа — отдельная капсула справа
+	local timerPill = UI.new("Frame", { Size = UDim2.fromOffset(112, 46), AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 4), Parent = top })
+	UI.Glass(timerPill, UDim.new(1, 0), 0.16)
+	local clock = Icons2D.New(timerPill, "Clock", 38, { ZIndex = 3 })
+	clock.AnchorPoint = Vector2.new(0, 0.5)
+	clock.Position = UDim2.new(0, 2, 0.5, 0)
+	local timerText = txt(timerPill, "20:00", 21, { Size = UDim2.new(1, -48, 1, -12), Position = UDim2.fromOffset(42, 6), ZIndex = 3, TextXAlignment = Enum.TextXAlignment.Left })
+	hoverTip(timerPill, timerPill, "Вайп шахты", function()
 		return "Каждые 20 минут шахта восстанавливается. После — Золотая лихорадка."
 	end, "below")
 
 	---------------------------------------------------------------- бафы
-	local buffRow = UI.new("Frame", { Name = "Buffs", BackgroundTransparency = 1, Size = UDim2.fromOffset(340, 76), Parent = screen })
+	local buffRow = UI.new("Frame", { Name = "Buffs", BackgroundTransparency = 1, Size = UDim2.fromOffset(360, 80), Parent = screen })
 	local buffList = UI.List(buffRow, 10, Enum.FillDirection.Horizontal, nil, Enum.VerticalAlignment.Bottom)
 	if touch then
-		-- на телефоне слева внизу джойстик: бафы справа под валютой
 		buffRow.AnchorPoint = Vector2.new(0, 0)
 		buffRow.Position = UDim2.fromOffset(14, 262)
 		buffList.VerticalAlignment = Enum.VerticalAlignment.Top
 	else
 		buffRow.AnchorPoint = Vector2.new(0, 1)
-		buffRow.Position = UDim2.new(0, 16, 1, -18)
+		buffRow.Position = UDim2.new(0, 18, 1, -18)
 	end
 	local buffChips = {}
 	local function buffChip(id, title, desc, glyph, color, order)
-		local holder = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(60, 76), LayoutOrder = order, Visible = false, Parent = buffRow })
-		local box = UI.new("Frame", { BackgroundColor3 = color, Size = UDim2.fromOffset(60, 60), Parent = holder })
-		UI.Corner(box, 16)
-		UI.Stroke(box, 3, UI.Ink, true)
-		UI.Gradient(box, Color3.new(1, 1, 1), Color3.fromRGB(195, 195, 210))
-		local ic = Icons2D.New(box, glyph, 42, { ZIndex = 3 })
+		local holder = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(62, 80), LayoutOrder = order, Visible = false, Parent = buffRow })
+		local box = UI.new("Frame", { Size = UDim2.fromOffset(62, 62), Parent = holder })
+		local st = UI.Glass(box, 18, 0.16)
+		st.Color = color
+		st.Transparency = 0.15
+		local glow = UI.new("Frame", { BackgroundColor3 = color, Size = UDim2.fromScale(1, 1), Parent = box })
+		UI.Corner(glow, 18)
+		local gg = Instance.new("UIGradient")
+		gg.Rotation = 90
+		gg.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0.5) })
+		gg.Parent = glow
+		local ic = Icons2D.New(box, glyph, 44, { ZIndex = 3 })
 		ic.AnchorPoint = Vector2.new(0.5, 0.5)
-		ic.Position = UDim2.fromScale(0.5, 0.46)
+		ic.Position = UDim2.fromScale(0.5, 0.44)
 		-- полоса оставшегося времени по низу значка
-		local barBg = UI.new("Frame", { BackgroundColor3 = UI.Ink, BackgroundTransparency = 0.3, Size = UDim2.new(1, -12, 0, 6), Position = UDim2.new(0, 6, 1, -10), ZIndex = 4, Parent = box })
+		local barBg = UI.new("Frame", { BackgroundColor3 = Color3.fromRGB(8, 6, 20), BackgroundTransparency = 0.25, Size = UDim2.new(1, -14, 0, 6), Position = UDim2.new(0, 7, 1, -11), ZIndex = 4, Parent = box })
 		UI.Corner(barBg, 3)
-		local bar = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.fromScale(1, 1), ZIndex = 5, Parent = barBg })
+		local bar = UI.new("Frame", { BackgroundColor3 = UI.Lighter(color, 0.2), Size = UDim2.fromScale(1, 1), ZIndex = 5, Parent = barBg })
 		UI.Corner(bar, 3)
-		local timer = UI.Text(holder, "0:00", { Size = UDim2.new(1, 16, 0, 20), Position = UDim2.new(0, -8, 1, -20), MaxText = 17, ZIndex = 6 })
+		local timer = txt(holder, "0:00", 16, { Size = UDim2.new(1, 20, 0, 18), Position = UDim2.new(0, -10, 1, -17), ZIndex = 6 })
 		local obj = { Holder = holder, Timer = timer, Bar = bar, Icon = ic }
 		hoverTip(obj, box, title, function()
 			return desc
@@ -376,36 +426,59 @@ function HUD.Build(screen, ctx)
 	buffChip("Event_Luck", "Событие: удача", "Повышен шанс редких питомцев", "Clover", Color3.fromRGB(70, 205, 100), 13)
 
 	---------------------------------------------------------------- рюкзак
-	local packHolder = UI.new("Frame", { Name = "Backpack", BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 8), Size = UDim2.fromOffset(300, 56), Parent = right })
-	local packBar = UI.Bar(packHolder, UDim2.new(1, -30, 0, 38), UDim2.fromOffset(30, 10), UI.Colors.Yellow, PILL_EDGE)
-	packBar.Label.Size = UDim2.new(1, -40, 1, -6)
-	packBar.Label.Position = UDim2.fromOffset(34, 3)
-	local packBadge = UI.new("Frame", { BackgroundColor3 = UI.Colors.Orange, Size = UDim2.fromOffset(56, 56), ZIndex = 3, Parent = packHolder })
-	UI.Corner(packBadge, UDim.new(1, 0))
-	UI.Stroke(packBadge, 3, UI.Ink, true)
-	UI.Gradient(packBadge, Color3.new(1, 1, 1), Color3.fromRGB(200, 200, 212))
-	local packIcon = Icons2D.New(packBadge, "Backpack", 40, { ZIndex = 4 })
-	packIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-	packIcon.Position = UDim2.fromScale(0.5, 0.47)
+	local packHolder = UI.new("Frame", { Name = "Backpack", BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 4), Size = UDim2.fromOffset(COLW, 58), Parent = right })
+	local packPill = UI.new("Frame", { Size = UDim2.new(1, -16, 0, 46), Position = UDim2.fromOffset(16, 12), Parent = packHolder })
+	UI.Glass(packPill, UDim.new(1, 0), 0.16)
+	local packTrack = UI.new("Frame", { BackgroundColor3 = Color3.fromRGB(8, 6, 22), BackgroundTransparency = 0.25, Size = UDim2.new(1, -58, 0, 26), Position = UDim2.fromOffset(46, 10), ZIndex = 2, Parent = packPill })
+	UI.Corner(packTrack, UDim.new(1, 0))
+	local packFill = UI.new("Frame", { Name = "Fill", BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.fromScale(0, 1), ZIndex = 3, Parent = packTrack })
+	UI.Corner(packFill, UDim.new(1, 0))
+	local packGrad = UI.Candy(packFill, UI.Colors.Yellow)
+	UI.Gloss(packFill, UDim2.new(1, -8, 0.45, 0), UDim2.fromOffset(4, 2), 0.5, 4)
+	local packText = txt(packTrack, "0 / 0", 18, { Size = UDim2.new(1, -12, 1, -4), Position = UDim2.fromOffset(6, 2), ZIndex = 5 })
+	local packIcon = Icons2D.New(packHolder, "Backpack", 58, { ZIndex = 4, Color = Color3.fromRGB(255, 170, 70) })
+	packIcon.AnchorPoint = Vector2.new(0, 0.5)
+	packIcon.Position = UDim2.new(0, -4, 0, 35)
 	local packScale = Instance.new("UIScale")
 	packScale.Parent = packHolder
-	local packInfo = UI.Text(packHolder, "", { Size = UDim2.new(1, -60, 0, 20), Position = UDim2.fromOffset(60, -10), TextColor3 = Color3.fromRGB(255, 230, 140), MaxText = 17, TextXAlignment = Enum.TextXAlignment.Left })
+	local packInfo = txt(packHolder, "", 14, { Size = UDim2.new(1, -66, 0, 16), Position = UDim2.fromOffset(62, -6), TextColor3 = Color3.fromRGB(255, 226, 130), TextXAlignment = Enum.TextXAlignment.Left })
+	local packBar = { Frame = packTrack, Fill = packFill }
+	local packLast = -1
+	function packBar.Set(frac, text)
+		packText.Text = text
+		frac = math.clamp(frac, 0, 1)
+		if frac ~= packLast then
+			packLast = frac
+			TweenService:Create(packFill, TweenInfo.new(0.2, Enum.EasingStyle.Quad), { Size = UDim2.fromScale(frac < 0.001 and 0 or math.max(frac, 0.08), 1) }):Play()
+		end
+	end
+	local packColor
+	local function setPackColor(c)
+		if packColor ~= c then
+			packColor = c
+			packGrad.Color = UI.CandySeq(c)
+		end
+	end
 
 	---------------------------------------------------------------- «На базу»
-	local TPS = touch and 78 or 92
-	local tp = UI.Button({ Parent = screen, Name = "Teleport", Color = UI.Colors.Teal, Size = UDim2.fromOffset(TPS, TPS), AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -20, 1, -22), Radius = 22 })
+	local TPS = touch and 78 or 88
+	local tp = UI.Button({ Parent = screen, Name = "Teleport", Color = UI.Colors.Teal, Size = UDim2.fromOffset(TPS, TPS), AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -20, 1, -24), Radius = 26 })
 	if touch then
 		tp.Holder.AnchorPoint = Vector2.new(0.5, 1)
 		tp.Holder.Position = UDim2.new(0.5, 0, 1, -12)
 	end
-	local homeIcon = Icons2D.New(tp.Face, "Home", math.floor(TPS * 0.6), { ZIndex = 4 })
+	local homeIcon = Icons2D.New(tp.Face, "Home", math.floor(TPS * 0.62), { ZIndex = 4 })
 	homeIcon.AnchorPoint = Vector2.new(0.5, 0)
-	homeIcon.Position = UDim2.new(0.5, 0, 0, math.floor(TPS * 0.07))
-	UI.Text(tp.Face, touch and "БАЗА" or "НА БАЗУ", { Size = UDim2.new(1, -6, 0, math.floor(TPS * 0.27)), Position = UDim2.new(0, 3, 1, -math.floor(TPS * 0.3)), MaxText = 20, ZIndex = 5 })
-	local key = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.fromOffset(24, 24), Position = UDim2.new(0, -8, 0, -8), ZIndex = 8, Visible = not touch, Parent = tp.Holder })
-	UI.Corner(key, 6)
-	UI.Stroke(key, 2.5, UI.Ink, true)
-	UI.Text(key, "T", { ZIndex = 9, MaxText = 16, TextColor3 = UI.Ink, Stroke = false })
+	homeIcon.Position = UDim2.new(0.5, 0, 0, math.floor(TPS * 0.04))
+	local tpLabel = UI.Text(tp.Face, touch and "БАЗА" or "НА БАЗУ", { Size = UDim2.new(1, -8, 0, math.floor(TPS * 0.24)), Position = UDim2.new(0, 4, 1, -math.floor(TPS * 0.3)), MaxText = 17, ZIndex = 5, StrokeThickness = 2 })
+	local tls = tpLabel:FindFirstChildOfClass("UIStroke")
+	if tls then
+		tls.Color = UI.Edge(UI.Colors.Teal)
+	end
+	local key = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.fromOffset(26, 26), Position = UDim2.new(0, -9, 0, -9), ZIndex = 8, Visible = not touch, Parent = tp.Holder })
+	UI.Corner(key, 8)
+	UI.Stroke(key, 2.5, UI.Edge(UI.Colors.Teal), true)
+	UI.Text(key, "T", { ZIndex = 9, MaxText = 17, TextColor3 = UI.Edge(UI.Colors.Teal), Stroke = false })
 	-- телепорт на базу — мгновенный (небольшая защита от спама)
 	local lastTp = 0
 	local function startCast()
@@ -426,7 +499,7 @@ function HUD.Build(screen, ctx)
 	end)
 
 	---------------------------------------------------------------- тосты
-	local toastArea = UI.new("Frame", { Name = "Toasts", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 72), Size = UDim2.fromOffset(520, 260), Parent = screen })
+	local toastArea = UI.new("Frame", { Name = "Toasts", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 76), Size = UDim2.fromOffset(520, 260), Parent = screen })
 	UI.List(toastArea, 6, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Center)
 	local TOAST_COLORS = { info = UI.Colors.Blue, good = UI.Colors.Green, warn = UI.Colors.Orange, error = UI.Colors.Red, seed = UI.Colors.Teal, unlock = UI.Colors.Purple }
 	local TOAST_ICONS = { info = "Quest", good = "Check", warn = "Clock", error = "Close", seed = "Sprout", unlock = "Star" }
@@ -434,15 +507,25 @@ function HUD.Build(screen, ctx)
 	function hud.Toast(text, kind)
 		kind = kind or "info"
 		toastOrder = toastOrder + 1
-		local holder = UI.new("Frame", { BackgroundColor3 = PILL, BackgroundTransparency = 0.08, Size = UDim2.fromOffset(500, 40), LayoutOrder = toastOrder, Parent = toastArea })
-		UI.Corner(holder, UDim.new(1, 0))
-		UI.Stroke(holder, 3, UI.Ink, true)
-		local dot = UI.new("Frame", { BackgroundColor3 = TOAST_COLORS[kind] or UI.Colors.Blue, Size = UDim2.fromOffset(34, 34), Position = UDim2.fromOffset(3, 3), Parent = holder })
+		local col = TOAST_COLORS[kind] or UI.Colors.Blue
+		local holder = UI.new("Frame", { Size = UDim2.fromOffset(0, 42), AutomaticSize = Enum.AutomaticSize.X, LayoutOrder = toastOrder, Parent = toastArea })
+		local st = UI.Glass(holder, UDim.new(1, 0), 0.1)
+		st.Color = col
+		st.Transparency = 0.25
+		local pad = Instance.new("UIPadding")
+		pad.PaddingLeft = UDim.new(0, 5)
+		pad.PaddingRight = UDim.new(0, 18)
+		pad.Parent = holder
+		UI.List(holder, 10, Enum.FillDirection.Horizontal, nil, Enum.VerticalAlignment.Center)
+		local dot = UI.new("Frame", { BackgroundColor3 = col, Size = UDim2.fromOffset(32, 32), LayoutOrder = 1, Parent = holder })
 		UI.Corner(dot, UDim.new(1, 0))
-		local ic = Icons2D.New(dot, TOAST_ICONS[kind] or "Star", 24, { ZIndex = 3, Shadow = false })
+		UI.Candy(dot, col)
+		local glyph = TOAST_ICONS[kind] or "Star"
+		local ic = Icons2D.New(dot, glyph, Icons2D.HasImage(glyph) and 30 or 22, { ZIndex = 3, Shadow = false })
 		ic.AnchorPoint = Vector2.new(0.5, 0.5)
 		ic.Position = UDim2.fromScale(0.5, 0.5)
-		UI.Text(holder, text, { Size = UDim2.new(1, -56, 1, -10), Position = UDim2.fromOffset(44, 5), MaxText = 19, TextXAlignment = Enum.TextXAlignment.Left })
+		local l = txt(holder, text, 18, { Size = UDim2.fromOffset(0, 26), AutomaticSize = Enum.AutomaticSize.X, TextScaled = false, TextSize = 18, LayoutOrder = 2 })
+		l.Size = UDim2.fromOffset(0, 26)
 		UI.Pop(holder, 0.6)
 		local frames = {}
 		for _, c in ipairs(toastArea:GetChildren()) do
@@ -470,25 +553,32 @@ function HUD.Build(screen, ctx)
 	end
 
 	---------------------------------------------------------------- баннеры
-	local banner = UI.new("Frame", { Name = "Banner", BackgroundColor3 = UI.Colors.Yellow, Size = UDim2.fromOffset(620, 64), AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 170), Visible = false, Parent = screen })
-	UI.Corner(banner, 20)
-	UI.Stroke(banner, 4, UI.Ink, true)
-	UI.Gradient(banner, Color3.new(1, 1, 1), Color3.fromRGB(205, 205, 218))
-	local bannerLabel = UI.Text(banner, "", { Size = UDim2.new(1, -28, 1, -14), Position = UDim2.fromOffset(14, 7), MaxText = 32, StrokeThickness = 3 })
+	local banner = UI.new("Frame", { Name = "Banner", BackgroundColor3 = UI.Colors.Yellow, Size = UDim2.fromOffset(640, 66), AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 176), Visible = false, Parent = screen })
+	UI.Corner(banner, UDim.new(1, 0))
+	local bannerStroke = UI.Stroke(banner, 3, Color3.new(1, 1, 1), true)
+	bannerStroke.Transparency = 0.1
+	local bannerGrad = UI.Candy(banner, UI.Colors.Yellow)
+	UI.Gloss(banner, UDim2.new(1, -40, 0.45, 0), UDim2.fromOffset(20, 3), 0.45)
+	local bannerLabel = UI.Text(banner, "", { Size = UDim2.new(1, -36, 1, -16), Position = UDim2.fromOffset(18, 8), MaxText = 30, StrokeThickness = 2.5 })
 	local bannerToken = 0
 	function hud.Banner(text, color, duration, pulse)
 		bannerToken = bannerToken + 1
 		local my = bannerToken
 		banner.Visible = true
-		banner.BackgroundColor3 = color
+		bannerGrad.Color = UI.CandySeq(color)
+		local bs = bannerLabel:FindFirstChildOfClass("UIStroke")
+		if bs then
+			bs.Color = UI.Edge(color)
+		end
 		bannerLabel.Text = text
 		UI.Pop(banner, 0.5)
 		if pulse then
 			task.spawn(function()
-				while bannerToken == my and banner.Visible do
-					TweenService:Create(banner, TweenInfo.new(0.25), { BackgroundColor3 = UI.Lighter(color, 0.35) }):Play()
+				local s = banner:FindFirstChildOfClass("UIScale")
+				while bannerToken == my and banner.Visible and s do
+					TweenService:Create(s, TweenInfo.new(0.25, Enum.EasingStyle.Sine), { Scale = 1.04 }):Play()
 					task.wait(0.25)
-					TweenService:Create(banner, TweenInfo.new(0.25), { BackgroundColor3 = color }):Play()
+					TweenService:Create(s, TweenInfo.new(0.25, Enum.EasingStyle.Sine), { Scale = 1 }):Play()
 					task.wait(0.25)
 				end
 			end)
@@ -502,14 +592,30 @@ function HUD.Build(screen, ctx)
 
 	---------------------------------------------------------------- всплывающие монеты
 	function hud.CoinPop(amount)
-		-- цифра всплывает справа от счётчика монет и улетает вверх
-		local base = right.Position
-		local l = UI.Text(screen, "+" .. Util.Format(amount), { Size = UDim2.fromOffset(220, 40), Position = base + UDim2.fromOffset(310, -46), TextColor3 = GOLD, MaxText = 32, TextXAlignment = Enum.TextXAlignment.Left })
-		UI.Pop(l, 0.4)
-		TweenService:Create(l, TweenInfo.new(1.1, Enum.EasingStyle.Quad), { Position = base + UDim2.fromOffset(310, -88), TextTransparency = 1 }):Play()
-		TweenService:Create(l:FindFirstChildOfClass("UIStroke"), TweenInfo.new(1.1), { Transparency = 1 }):Play()
+		-- «+сумма» с монеткой всплывает справа от счётчика и тает
+		local base = right.Position + (touch and UDim2.fromOffset(60, 238) or UDim2.fromOffset(COLW + 8, 60))
+		local f = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(220, 40), Position = base, Parent = screen })
+		local ic = Icons2D.New(f, "Coin", 34, { ZIndex = 3, Color = GOLD })
+		ic.AnchorPoint = Vector2.new(0, 0.5)
+		ic.Position = UDim2.new(0, 0, 0.5, 0)
+		local l = txt(f, "+" .. Util.Format(amount), 28, { Size = UDim2.new(1, -38, 1, 0), Position = UDim2.fromOffset(38, 0), TextColor3 = GOLD, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 3, StrokeThickness = 2.4 })
+		UI.Pop(f, 0.4)
+		TweenService:Create(f, TweenInfo.new(1.1, Enum.EasingStyle.Quad), { Position = base - UDim2.fromOffset(0, 46) }):Play()
+		task.delay(0.6, function()
+			TweenService:Create(l, TweenInfo.new(0.5), { TextTransparency = 1 }):Play()
+			local ls = l:FindFirstChildOfClass("UIStroke")
+			if ls then
+				TweenService:Create(ls, TweenInfo.new(0.5), { Transparency = 1 }):Play()
+			end
+			local img = ic:FindFirstChild("Image")
+			if img then
+				TweenService:Create(img, TweenInfo.new(0.5), { ImageTransparency = 1 }):Play()
+			else
+				ic.Visible = false
+			end
+		end)
 		task.delay(1.2, function()
-			l:Destroy()
+			f:Destroy()
 		end)
 		Icons2D.Bounce(coins.Icon, 1.3)
 	end
@@ -534,11 +640,11 @@ function HUD.Build(screen, ctx)
 			packBar.Set(cnt / cap, Util.Format(cnt) .. " / " .. Util.Format(cap))
 		end
 		local full = (not infinite) and cnt >= cap
-		packInfo.Text = full and "РЮКЗАК ПОЛОН" or (cnt > 0 and ("Стоимость: ~" .. Util.Format(worth)) or "")
-		packInfo.TextColor3 = full and Color3.fromRGB(255, 120, 110) or Color3.fromRGB(255, 230, 140)
-		packBar.Fill.BackgroundColor3 = full and UI.Colors.Red or (infinite and Color3.fromRGB(255, 90, 160) or UI.Colors.Yellow)
+		packInfo.Text = full and "РЮКЗАК ПОЛОН — ПРОДАЙ!" or (cnt > 0 and ("РЮКЗАК · ≈ " .. Util.Format(worth)) or "РЮКЗАК")
+		packInfo.TextColor3 = full and Color3.fromRGB(255, 120, 110) or Color3.fromRGB(255, 226, 130)
+		setPackColor(full and UI.Colors.Red or (infinite and Color3.fromRGB(255, 90, 160) or UI.Colors.Yellow))
 		if cnt > lastCount then
-			packScale.Scale = 1.05
+			packScale.Scale = 1.04
 			TweenService:Create(packScale, TweenInfo.new(0.2, Enum.EasingStyle.Back), { Scale = 1 }):Play()
 		end
 		lastCount = cnt
@@ -628,8 +734,13 @@ function HUD.Build(screen, ctx)
 		depthFill.Visible = frac > 0.02
 		local uic = c3(biome.Theme.UI)
 		depthFill.BackgroundColor3 = uic
-		biomeBadge.BackgroundColor3 = uic
-		depthText.Text = biome.Short .. "  ·  " .. Util.Commas(dm) .. " / " .. Util.Commas(biome.MaxDepth) .. " м"
+		if paintedBiome ~= b then
+			paintedBiome = b
+			biomeGrad.Color = UI.CandySeq(uic)
+			setBiomeIcon(b)
+		end
+		biomeName.Text = biome.Short
+		depthText.Text = Util.Commas(dm) .. " / " .. Util.Commas(biome.MaxDepth) .. " м"
 	end)
 
 	hud.Screen = screen

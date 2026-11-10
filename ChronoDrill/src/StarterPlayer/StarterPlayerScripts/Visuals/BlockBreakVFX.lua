@@ -1,4 +1,7 @@
--- BlockBreakVFX: процедурные эффекты бурения (ТЗ 9.3).
+-- BlockBreakVFX: процедурные эффекты бурения.
+--  * искры на каждом ударе, золотые искры и тряска камеры на крите
+--  * всплывающие цифры урона с пружинкой (крит — золотой градиент и наклон)
+--  * самоцвет руды летит в рюкзак со светящимся шлейфом
 --  * Squash & Stretch блока: Y -15%, X/Z +10%, возврат за 0.08 с
 --  * 4-6 кубических low-poly осколков + облачко пыли
 --  * руда летит в рюкзак, всплывающие цифры урона
@@ -121,7 +124,9 @@ end
 function VFX.HitSpark(pos, color, crit)
 	puff(pos, color, crit and 6 or 3, 0.7)
 	if crit then
-		VFX.Sparkle(pos, Color3.fromRGB(255, 200, 60), 10)
+		VFX.Sparkle(pos, Color3.fromRGB(255, 200, 60), 14)
+	else
+		VFX.Sparkle(pos, color:Lerp(Color3.new(1, 1, 1), 0.5), 3)
 	end
 end
 
@@ -220,6 +225,25 @@ function VFX.OreFly(pos, color, character)
 	gem.CastShadow = false
 	gem.CFrame = CFrame.new(pos)
 	gem.Parent = fx()
+	-- светящийся шлейф за самоцветом
+	pcall(function()
+		local a0 = Instance.new("Attachment")
+		a0.Position = Vector3.new(0, 0.3, 0)
+		a0.Parent = gem
+		local a1 = Instance.new("Attachment")
+		a1.Position = Vector3.new(0, -0.3, 0)
+		a1.Parent = gem
+		local tr = Instance.new("Trail")
+		tr.Attachment0 = a0
+		tr.Attachment1 = a1
+		tr.Lifetime = 0.25
+		tr.LightEmission = 1
+		tr.FaceCamera = true
+		tr.Color = ColorSequence.new(gem.Color, Color3.new(1, 1, 1))
+		tr.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 1) })
+		tr.WidthScale = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0) })
+		tr.Parent = gem
+	end)
 	local start = pos
 	local t0 = os.clock()
 	local dur = 0.42
@@ -245,7 +269,40 @@ function VFX.OreFly(pos, color, character)
 	end)
 end
 
--- Всплывающая цифра урона
+-- Лёгкая тряска камеры (крит, Хроно-Жила): смещение камеры персонажа, быстро затухает
+local shakeUntil, shakePower = 0, 0
+local shakeConn
+function VFX.Shake(power)
+	local char = Players.LocalPlayer.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if not hum then
+		return
+	end
+	shakePower = math.max(shakePower, power or 0.3)
+	shakeUntil = os.clock() + 0.22
+	if shakeConn then
+		return
+	end
+	shakeConn = RunService.RenderStepped:Connect(function()
+		local left = shakeUntil - os.clock()
+		if left <= 0 or not hum.Parent then
+			hum.CameraOffset = Vector3.new()
+			shakePower = 0
+			shakeConn:Disconnect()
+			shakeConn = nil
+			return
+		end
+		local k = shakePower * (left / 0.22)
+		hum.CameraOffset = Vector3.new((math.random() - 0.5) * k, (math.random() - 0.5) * k, (math.random() - 0.5) * k * 0.5)
+	end)
+end
+
+-- Всплывающая цифра урона: «выпрыгивает» с пружинкой, взлетает по дуге и тает.
+-- Крит — крупнее, золотисто-оранжевый градиент и лёгкий наклон.
+local NUNITO
+pcall(function()
+	NUNITO = Font.new("rbxasset://fonts/families/Nunito.json", Enum.FontWeight.Heavy)
+end)
 local pool = {}
 function VFX.DamageNumber(pos, text, crit)
 	local holder = table.remove(pool)
@@ -268,28 +325,50 @@ function VFX.DamageNumber(pos, text, crit)
 		l.BackgroundTransparency = 1
 		l.Size = UDim2.fromScale(1, 1)
 		l.Font = Enum.Font.FredokaOne
+		if NUNITO then
+			l.FontFace = NUNITO
+		end
 		l.TextScaled = true
 		l.Parent = bb
 		local st = Instance.new("UIStroke")
 		st.Thickness = 3
 		st.Color = Color3.fromRGB(30, 22, 40)
 		st.Parent = l
+		local g = Instance.new("UIGradient")
+		g.Rotation = 90
+		g.Parent = l
+		local sc = Instance.new("UIScale")
+		sc.Parent = l
 	end
 	holder.Parent = fx()
 	local bb = holder.BB
 	local l = bb.L
+	local g = l:FindFirstChildOfClass("UIGradient")
+	local sc = l:FindFirstChildOfClass("UIScale")
 	l.Text = text
-	l.TextColor3 = crit and Color3.fromRGB(255, 170, 40) or Color3.fromRGB(255, 255, 255)
+	l.TextColor3 = Color3.new(1, 1, 1)
+	if crit then
+		g.Color = ColorSequence.new(Color3.fromRGB(255, 236, 120), Color3.fromRGB(255, 110, 40))
+		l.UIStroke.Color = Color3.fromRGB(90, 20, 10)
+		l.Rotation = math.random(-8, 8)
+	else
+		g.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(214, 222, 255))
+		l.UIStroke.Color = Color3.fromRGB(24, 18, 44)
+		l.Rotation = 0
+	end
 	l.TextTransparency = 0
 	l.UIStroke.Transparency = 0
-	bb.Size = crit and UDim2.fromOffset(220, 64) or UDim2.fromOffset(150, 40)
-	local p = pos + Vector3.new(math.random() * 2 - 1, 2.5, math.random() * 2 - 1)
+	bb.Size = crit and UDim2.fromOffset(240, 70) or UDim2.fromOffset(150, 40)
+	local side = math.random() * 2 - 1
+	local p = pos + Vector3.new(side * 1.2, 2.4, math.random() * 2 - 1)
 	holder.CFrame = CFrame.new(p)
-	local tw = TweenService:Create(holder, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = CFrame.new(p + Vector3.new(0, 3, 0)) })
+	sc.Scale = crit and 1.9 or 1.5
+	TweenService:Create(sc, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	local tw = TweenService:Create(holder, TweenInfo.new(0.75, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = CFrame.new(p + Vector3.new(side * 1.5, crit and 3.6 or 2.8, 0)) })
 	tw:Play()
-	TweenService:Create(l, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.35), { TextTransparency = 1 }):Play()
-	TweenService:Create(l.UIStroke, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.35), { Transparency = 1 }):Play()
-	task.delay(0.72, function()
+	TweenService:Create(l, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.42), { TextTransparency = 1 }):Play()
+	TweenService:Create(l.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.42), { Transparency = 1 }):Play()
+	task.delay(0.76, function()
 		holder.Parent = nil
 		table.insert(pool, holder)
 	end)

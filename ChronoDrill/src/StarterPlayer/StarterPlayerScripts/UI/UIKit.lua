@@ -8,6 +8,16 @@ local Lighting = game:GetService("Lighting")
 local UI = {}
 
 UI.Font = Enum.Font.FredokaOne
+-- Основной шрифт — Nunito (жирный, округлый, с кириллицей). У FredokaOne нет русских букв, и Roblox
+-- подставлял случайный запасной шрифт. Все тексты с Font = FredokaOne автоматически получают Nunito.
+UI.FontFamily = "rbxasset://fonts/families/Nunito.json"
+function UI.FontFace(weight)
+	local ok, f = pcall(function()
+		return Font.new(UI.FontFamily, weight or Enum.FontWeight.Heavy)
+	end)
+	return ok and f or nil
+end
+local HEAVY = UI.FontFace(Enum.FontWeight.Heavy)
 UI.Ink = Color3.fromRGB(28, 22, 44)
 UI.Colors = {
 	Panel = Color3.fromRGB(250, 247, 255),
@@ -46,6 +56,9 @@ function UI.new(class, props, children)
 	end
 	if inst:IsA("GuiObject") and (not props or props.BorderSizePixel == nil) then
 		inst.BorderSizePixel = 0
+	end
+	if HEAVY and (class == "TextLabel" or class == "TextButton" or class == "TextBox") and inst.Font == UI.Font and not (props and props.FontFace) then
+		inst.FontFace = HEAVY
 	end
 	if children then
 		for _, c in ipairs(children) do
@@ -151,6 +164,23 @@ function UI.Candy(inst, c, rot)
 	g.Rotation = rot or 90
 	g.Parent = inst
 	return g
+end
+
+-- «Стекло»: тёмная полупрозрачная плашка с мягким градиентом и тонкой светлой кромкой (HUD 3.0)
+UI.GlassColor = Color3.fromRGB(24, 20, 52)
+function UI.Glass(inst, radius, transparency)
+	inst.BackgroundColor3 = Color3.new(1, 1, 1)
+	inst.BackgroundTransparency = transparency or 0.18
+	if radius then
+		UI.Corner(inst, radius)
+	end
+	local g = Instance.new("UIGradient")
+	g.Rotation = 90
+	g.Color = ColorSequence.new(Color3.fromRGB(46, 40, 92), Color3.fromRGB(18, 15, 40))
+	g.Parent = inst
+	local s = UI.Stroke(inst, 2, Color3.new(1, 1, 1), true)
+	s.Transparency = 0.78
+	return s, g
 end
 
 -- Мягкий глянец: белая полоса сверху, которая плавно растворяется книзу
@@ -476,47 +506,41 @@ function UI.Window(screen, opts)
 	})
 	local scale = Instance.new("UIScale")
 	scale.Parent = root
-	local shadow = UI.new("Frame", { Name = "Shadow", BackgroundColor3 = UI.Darker(color, 0.7), BackgroundTransparency = 0.55, Size = UDim2.fromScale(1, 1), Position = UDim2.fromOffset(0, 10), Parent = root })
-	UI.Corner(shadow, 28)
+	-- мягкая тень под окном
+	local shadow = UI.new("Frame", { Name = "Shadow", BackgroundColor3 = Color3.fromRGB(12, 8, 30), BackgroundTransparency = 0.72, Size = UDim2.new(1, 6, 1, 6), Position = UDim2.fromOffset(-3, 8), Parent = root })
+	UI.Corner(shadow, 32)
+	-- тело: чистый светлый градиент с лёгким оттенком цвета окна, тонкая тёмная обводка
 	local body = UI.new("Frame", { Name = "Body", BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.fromScale(1, 1), Parent = root })
 	UI.Corner(body, 28)
-	UI.Stroke(body, 4.5, dark, true)
-	UI.Gradient(body, Color3.fromRGB(255, 255, 255), UI.Lighter(color, 0.84))
-	-- мягкие диагональные полосы оттенка окна
-	local pattern = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, -8, 1, -HEAD - 6), Position = UDim2.fromOffset(4, HEAD), ClipsDescendants = true, Parent = body })
-	for k = 0, 16 do
-		UI.new("Frame", { BackgroundColor3 = UI.Lighter(color, 0.6), BackgroundTransparency = 0.82, Size = UDim2.new(0, 26, 3, 0), Position = UDim2.new(0, k * 78 - 120, -1, 0), Rotation = 30, Parent = pattern })
-	end
+	UI.Stroke(body, 3.5, UI.Darker(color, 0.62), true)
+	UI.Gradient(body, Color3.fromRGB(252, 252, 255), UI.Lighter(color, 0.9):Lerp(Color3.fromRGB(236, 238, 248), 0.5))
 	-- шапка
 	local header = UI.new("Frame", { Name = "Header", BackgroundColor3 = color, Size = UDim2.new(1, 0, 0, HEAD), ZIndex = 2, Parent = body })
-	UI.Corner(header, 26)
-	local headTop, headBottom = UI.Lighter(color, 0.28), UI.Darker(color, 0.1)
+	UI.Corner(header, 28)
+	local headTop, headBottom = UI.Lighter(color, 0.3), UI.Darker(color, 0.08)
 	UI.Gradient(header, headTop, headBottom)
 	header.BackgroundColor3 = Color3.new(1, 1, 1) -- цвет целиком в градиенте (даже у почти серых окон)
 	-- квадратный низ шапки (под скруглением) в тех же цветах градиента
-	local patch = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.new(1, 0, 0, 26), Position = UDim2.new(0, 0, 1, -26), ZIndex = 2, Parent = header })
+	local patch = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.new(1, 0, 0, 28), Position = UDim2.new(0, 0, 1, -28), ZIndex = 2, Parent = header })
 	local pg = Instance.new("UIGradient")
 	pg.Rotation = 90
-	pg.Color = ColorSequence.new(headTop:Lerp(headBottom, (HEAD - 26) / HEAD), headBottom)
+	pg.Color = ColorSequence.new(headTop:Lerp(headBottom, (HEAD - 28) / HEAD), headBottom)
 	pg.Parent = patch
-	UI.new("Frame", { Name = "HeaderLine", BackgroundColor3 = dark, Size = UDim2.new(1, 0, 0, 4), Position = UDim2.new(0, 0, 1, -2), ZIndex = 4, Parent = header })
-	UI.Gloss(header, UDim2.new(1, -48, 0, 22), UDim2.fromOffset(24, 4), 0.4, 3)
-	-- значок в белом кружке
-	local badge = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.fromOffset(52, 52), Position = UDim2.fromOffset(12, 5), ZIndex = 5, Parent = header })
-	UI.Corner(badge, UDim.new(1, 0))
-	UI.Stroke(badge, 3, dark, true)
-	UI.Gradient(badge, Color3.new(1, 1, 1), UI.Lighter(color, 0.7))
+	UI.new("Frame", { Name = "HeaderLine", BackgroundColor3 = UI.Darker(color, 0.25), Size = UDim2.new(1, 0, 0, 3), Position = UDim2.new(0, 0, 1, -1), ZIndex = 4, Parent = header })
+	UI.Gloss(header, UDim2.new(1, -150, 0, 24), UDim2.fromOffset(84, 4), 0.42, 3)
+	-- большая иконка «выходит» за левый верхний угол окна
 	local iconName = opts.Icon or WINDOW_ICONS[opts.Name or ""] or "Star"
-	local glyph = require(script.Parent.Icons2D).New(badge, iconName, 38, { ZIndex = 6, Color = color, Ink = dark })
+	local Icons2D = require(script.Parent.Icons2D)
+	local glyph = Icons2D.New(root, iconName, 70, { ZIndex = 14, Color = Icons2D.HasImage(iconName) and nil or Color3.new(1, 1, 1), Ink = dark })
 	glyph.AnchorPoint = Vector2.new(0.5, 0.5)
-	glyph.Position = UDim2.fromScale(0.5, 0.47)
-	local title = UI.Text(header, opts.Title or "", { Size = UDim2.new(1, -170, 0, 42), Position = UDim2.fromOffset(76, 9), MaxText = 36, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5, StrokeThickness = 3.5 })
+	glyph.Position = UDim2.fromOffset(36, 22)
+	local title = UI.Text(header, opts.Title or "", { Size = UDim2.new(1, -170, 0, 40), Position = UDim2.fromOffset(84, 11), MaxText = 34, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 5, StrokeThickness = 3 })
 	local ts = title:FindFirstChildOfClass("UIStroke")
 	if ts then
-		ts.Color = dark
+		ts.Color = UI.Darker(color, 0.55)
 	end
-	-- круглый крестик за углом
-	local close = UI.Button({ Parent = root, Glyph = "Close", Color = UI.Colors.Red, Size = UDim2.fromOffset(54, 54), Position = UDim2.new(1, -40, 0, -14), Radius = 27 })
+	-- крестик — скруглённый квадрат внутри шапки
+	local close = UI.Button({ Parent = root, Glyph = "Close", Color = UI.Colors.Red, Size = UDim2.fromOffset(48, 48), AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -10, 0, 6), Radius = 16 })
 	close.Holder.ZIndex = 12
 	local content = UI.new("Frame", { Name = "Content", BackgroundTransparency = 1, Size = UDim2.new(1, -36, 1, -(HEAD + 30)), Position = UDim2.fromOffset(18, HEAD + 14), ZIndex = 2, Parent = body })
 	local win = { Root = root, Content = content, Title = title, Close = close, IsOpen = false, Color = color }

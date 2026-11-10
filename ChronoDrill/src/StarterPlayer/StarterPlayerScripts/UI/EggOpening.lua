@@ -1,6 +1,7 @@
--- EggOpening: анимация открытия яиц (ТЗ 9.3):
--- фокус камеры на яйце -> 3 нарастающих раскачивания -> белая вспышка 0.2 с ->
--- половинки скорлупы разлетаются -> питомец вылетает с овершутом (Back.Out).
+-- EggOpening: анимация открытия яиц.
+-- Обычное открытие: наезд камеры -> «зарядка» (раскачка, подпрыгивания, пульс кольца, разгон лучей) ->
+-- вспышка, ударная волна и искры цвета редкости -> питомец влетает с разворотом, за ним крутятся лучи,
+-- снизу имя, плашка редкости и чипы урона/продажи. Очень редкие — отдельная кинематографичная сцена.
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -85,76 +86,184 @@ local function animate(duration, fn, style, dir)
 	end
 end
 
--- слот: мягкая «подложка» за питомцем (всегда ПОД ViewportFrame), ниже имя и плашка редкости
+local function rarityOf(petId, tier)
+	local def = PetsData.ById[petId]
+	local r = def and PetsData.Rarity[def.Rarity]
+	local rc = r and Color3.fromRGB(r.Color[1], r.Color[2], r.Color[3]) or Color3.fromRGB(150, 148, 170)
+	if tier == 6 then
+		rc = Color3.fromRGB(90, 210, 255)
+	end
+	return def, r, rc, (r and r.Index or 1)
+end
+
+-- лучи за питомцем: 12 полос с мягкими концами, крутятся; цвет и яркость задаются при раскрытии
+local function makeRays(parent, size, z)
+	local holder = UI.new("Frame", { Name = "Rays", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(size, size), ZIndex = z, Parent = parent })
+	local rays = {}
+	for k = 0, 11 do
+		local wide = k % 2 == 0
+		local ray = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.new(0, wide and math.floor(size * 0.12) or math.floor(size * 0.05), 1, 0), Rotation = k * 15, ZIndex = z, Parent = holder })
+		local g = Instance.new("UIGradient")
+		g.Rotation = 90
+		g.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0.15), NumberSequenceKeypoint.new(1, 1) })
+		g.Parent = ray
+		table.insert(rays, ray)
+	end
+	return holder, rays
+end
+
+local function setRays(rays, color, transparency, t)
+	for _, ray in ipairs(rays) do
+		if t and t > 0 then
+			TweenService:Create(ray, TweenInfo.new(t), { BackgroundColor3 = color, BackgroundTransparency = transparency }):Play()
+		else
+			ray.BackgroundColor3 = color
+			ray.BackgroundTransparency = transparency
+		end
+	end
+end
+
+-- взрыв в слоте: ударная волна-кольцо и разлёт искр-ромбиков цвета редкости
+local function slotBurst(slot, col, strength)
+	local c = slot.center
+	local wave = UI.new("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(40, 40), ZIndex = 6, Parent = c })
+	UI.Corner(wave, UDim.new(1, 0))
+	local ws = UI.Stroke(wave, 10, UI.Lighter(col, 0.25))
+	TweenService:Create(wave, TweenInfo.new(0.55, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.fromOffset(slot.size * 1.5, slot.size * 1.5) }):Play()
+	TweenService:Create(ws, TweenInfo.new(0.55), { Transparency = 1, Thickness = 2 }):Play()
+	task.delay(0.6, function()
+		wave:Destroy()
+	end)
+	for i = 1, 8 + strength * 3 do
+		local ang = (i / (8 + strength * 3)) * math.pi * 2 + math.random() * 0.4
+		local dist = slot.size * (0.45 + math.random() * 0.35)
+		local sz = math.random(8, 16)
+		local st = UI.new("Frame", { BackgroundColor3 = (i % 3 == 0) and Color3.new(1, 1, 1) or UI.Lighter(col, 0.2), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(sz, sz), Rotation = 45, ZIndex = 7, Parent = c })
+		UI.Corner(st, 3)
+		TweenService:Create(st, TweenInfo.new(0.7 + math.random() * 0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+			Position = UDim2.new(0.5, math.cos(ang) * dist, 0.5, math.sin(ang) * dist),
+			BackgroundTransparency = 1,
+			Rotation = 45 + math.random(-160, 160),
+			Size = UDim2.fromOffset(sz * 0.3, sz * 0.3),
+		}):Play()
+		task.delay(1.1, function()
+			st:Destroy()
+		end)
+	end
+end
+
+-- маленький чип «иконка + множитель» под питомцем
+local function statChip(parent, glyph, order, h)
+	local f = UI.new("Frame", { Size = UDim2.fromOffset(0, h), AutomaticSize = Enum.AutomaticSize.X, LayoutOrder = order, ZIndex = 4, Parent = parent })
+	UI.Glass(f, UDim.new(1, 0), 0.12)
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft = UDim.new(0, 2)
+	pad.PaddingRight = UDim.new(0, 12)
+	pad.Parent = f
+	UI.List(f, 4, Enum.FillDirection.Horizontal, nil, Enum.VerticalAlignment.Center)
+	local icHolder = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(h, h), LayoutOrder = 1, ZIndex = 5, Parent = f })
+	local ic = require(script.Parent.Icons2D).New(icHolder, glyph, h - 4, { ZIndex = 5, Shadow = false })
+	ic.AnchorPoint = Vector2.new(0.5, 0.5)
+	ic.Position = UDim2.fromScale(0.5, 0.5)
+	local l = UI.Text(f, "", { Size = UDim2.fromOffset(0, h - 8), AutomaticSize = Enum.AutomaticSize.X, TextScaled = false, TextSize = math.floor(h * 0.62), MaxText = math.floor(h * 0.62), LayoutOrder = 2, ZIndex = 5, StrokeThickness = 1.6 })
+	l.Size = UDim2.fromOffset(0, h - 8)
+	return f, l
+end
+
+-- слот: лучи и круглая подложка за питомцем (подложка — фон самого ViewportFrame, всегда ПОД питомцем),
+-- ниже имя, плашка редкости и чипы урона/продажи
 local function slotFrame(i, n)
 	local compact = n > 3
 	local w = (n == 1) and 460 or (compact and 270 or 340)
-	local h = compact and 262 or 470
-	local vpH = compact and 190 or 360
+	local h = compact and 270 or 480
+	local vpH = compact and 180 or 340
 	local f = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(w, h), LayoutOrder = i, Parent = row })
-	-- круглая подложка = фон самого ViewportFrame: он гарантированно рисуется ПОД питомцем
+	local center = UI.new("Frame", { Name = "Center", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0, vpH / 2), Size = UDim2.fromOffset(vpH, vpH), ZIndex = 2, Parent = f })
+	local raysHolder, rays = makeRays(center, math.floor(vpH * 1.55), 2)
 	local vp = UI.new("ViewportFrame", {
 		BackgroundColor3 = Color3.new(1, 1, 1),
 		BackgroundTransparency = 1,
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.fromScale(0.5, 0),
-		Size = UDim2.fromOffset(vpH, vpH),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromScale(1, 1),
 		Ambient = Color3.fromRGB(190, 186, 206),
 		LightColor = Color3.fromRGB(255, 252, 245),
 		LightDirection = Vector3.new(-0.3, -1, -0.5),
 		ZIndex = 3,
-		Parent = f,
+		Parent = center,
 	})
 	UI.Corner(vp, UDim.new(1, 0))
-	local ring = UI.Stroke(vp, 6, Color3.new(1, 1, 1), true)
+	local ring = UI.Stroke(vp, compact and 4 or 6, Color3.new(1, 1, 1), true)
 	ring.Transparency = 1
-	local glow = vp
 	local cam = Instance.new("Camera")
 	cam.FieldOfView = 34
 	cam.Parent = vp
 	vp.CurrentCamera = cam
-	local name = UI.Text(f, "", { Size = UDim2.new(1, 0, 0, compact and 30 or 42), Position = UDim2.fromOffset(0, vpH + 2), MaxText = compact and 26 or 36, TextTransparency = 1, ZIndex = 4 })
-	local pillF = UI.new("Frame", { BackgroundColor3 = UI.Colors.Gray, BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, vpH + (compact and 34 or 48)), Size = UDim2.new(0.92, 0, 0, compact and 24 or 30), ZIndex = 4, Parent = f })
+	local y = vpH + (compact and 4 or 10)
+	local name = UI.Text(f, "", { Size = UDim2.new(1, 0, 0, compact and 28 or 40), Position = UDim2.fromOffset(0, y), MaxText = compact and 24 or 34, TextTransparency = 1, ZIndex = 4, StrokeThickness = compact and 2.2 or 3 })
+	y = y + (compact and 30 or 44)
+	local pillF = UI.new("Frame", { BackgroundColor3 = UI.Colors.Gray, BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, y), Size = UDim2.fromOffset(compact and 150 or 200, compact and 24 or 30), ZIndex = 4, Parent = f })
 	UI.Corner(pillF, UDim.new(1, 0))
-	local sub = UI.Text(pillF, "", { Size = UDim2.new(1, -12, 1, -4), Position = UDim2.fromOffset(6, 2), MaxText = compact and 16 or 20, TextTransparency = 1, ZIndex = 5, StrokeThickness = 1.5 })
-	return { frame = f, vp = vp, cam = cam, glow = glow, ring = ring, name = name, sub = sub, pill = pillF }
+	local pillGrad = UI.Candy(pillF, UI.Colors.Gray)
+	local pillStroke = UI.Stroke(pillF, 2.5, Color3.new(1, 1, 1), true)
+	pillStroke.Transparency = 1
+	local sub = UI.Text(pillF, "", { Size = UDim2.new(1, -12, 1, -6), Position = UDim2.fromOffset(6, 3), MaxText = compact and 15 or 19, TextTransparency = 1, ZIndex = 5, StrokeThickness = 1.6 })
+	y = y + (compact and 30 or 38)
+	local stats = UI.new("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, y), Size = UDim2.new(1, 0, 0, compact and 28 or 34), Visible = false, ZIndex = 4, Parent = f })
+	UI.List(stats, 8, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center)
+	local _, dmgL = statChip(stats, "Pickaxe", 1, compact and 26 or 32)
+	local _, sellL = statChip(stats, "Coin", 2, compact and 26 or 32)
+	return {
+		frame = f, center = center, size = vpH, vp = vp, cam = cam, glow = vp, ring = ring, rays = rays, raysHolder = raysHolder,
+		name = name, sub = sub, pill = pillF, pillGrad = pillGrad, pillStroke = pillStroke, stats = stats, dmgL = dmgL, sellL = sellL,
+	}
 end
 
 local function showTexts(slot, petId, mult, tier, deleted)
-	local def = PetsData.ById[petId]
-	local r = def and PetsData.Rarity[def.Rarity]
-	local rc = r and Color3.fromRGB(r.Color[1], r.Color[2], r.Color[3]) or Color3.fromRGB(150, 148, 170)
+	local def, r, rc = rarityOf(petId, tier)
 	slot.name.Text = def and def.Name or petId
 	local pw = (mult or (def and def.P) or 0) * ((tier == 6) and 5.6 or 1)
 	local dm = 1 + pw * (def and def.DmgF or 1)
 	local sm = 1 + pw * (def and def.SellF or 1)
 	if tier == 6 then
-		slot.name.Text = "✦ " .. slot.name.Text .. " · ШАЙНИ ✦"
-		slot.name.TextColor3 = Color3.fromRGB(150, 240, 255)
-		rc = Color3.fromRGB(90, 210, 255)
+		slot.name.Text = "✦ " .. slot.name.Text .. " ✦"
+		slot.name.TextColor3 = Color3.fromRGB(170, 245, 255)
 	end
 	if deleted then
 		slot.sub.Text = "Автоудалён"
-		slot.pill.BackgroundColor3 = Color3.fromRGB(120, 116, 140)
+		slot.pillGrad.Color = UI.CandySeq(Color3.fromRGB(120, 116, 140))
 	else
-		slot.sub.Text = (r and r.Name or "") .. "  ·  урон x" .. string.format("%.2f", dm) .. "  ·  продажа x" .. string.format("%.2f", sm)
-		slot.pill.BackgroundColor3 = rc
+		slot.sub.Text = tier == 6 and "Шайни" or (r and r.Name or "")
+		slot.pillGrad.Color = UI.CandySeq(rc)
+		slot.dmgL.Text = "x" .. string.format("%.2f", dm)
+		slot.sellL.Text = "x" .. string.format("%.2f", sm)
+		slot.stats.Visible = true
+		UI.Pop(slot.stats, 0.6)
+	end
+	local ss = slot.sub:FindFirstChildOfClass("UIStroke")
+	if ss then
+		ss.Color = UI.Darker(deleted and Color3.fromRGB(120, 116, 140) or rc, 0.55)
 	end
 	TweenService:Create(slot.name, TweenInfo.new(0.3), { TextTransparency = deleted and 0.45 or 0 }):Play()
 	TweenService:Create(slot.sub, TweenInfo.new(0.3), { TextTransparency = 0 }):Play()
-	TweenService:Create(slot.pill, TweenInfo.new(0.3), { BackgroundTransparency = 0.05 }):Play()
+	TweenService:Create(slot.pill, TweenInfo.new(0.3), { BackgroundTransparency = 0 }):Play()
+	TweenService:Create(slot.pillStroke, TweenInfo.new(0.3), { Transparency = 0.2 }):Play()
 	UI.Pop(slot.name, 0.6)
+	UI.Pop(slot.pill, 0.5)
 	-- подложка окрашивается в цвет редкости (под питомцем, не поверх)
 	slot.glow.BackgroundColor3 = deleted and Color3.fromRGB(90, 86, 110) or rc
-	slot.ring.Color = deleted and Color3.fromRGB(120, 116, 140) or UI.Lighter(rc, 0.3)
-	TweenService:Create(slot.glow, TweenInfo.new(0.35), { BackgroundTransparency = 0.72 }):Play()
-	TweenService:Create(slot.ring, TweenInfo.new(0.35), { Transparency = 0.25 }):Play()
+	slot.ring.Color = deleted and Color3.fromRGB(120, 116, 140) or UI.Lighter(rc, 0.35)
+	TweenService:Create(slot.glow, TweenInfo.new(0.35), { BackgroundTransparency = 0.68 }):Play()
+	TweenService:Create(slot.ring, TweenInfo.new(0.35), { Transparency = 0.15 }):Play()
 end
 
--- яйцо плавно покачивается -> сжимается -> исчезает с «пуфом», питомец мягко вырастает
+-- яйцо «заряжается» (раскачка с нарастанием, подпрыгивания, пульс кольца) -> вспышка, волна, искры ->
+-- питомец влетает с разворотом и пружинкой, за ним вращаются лучи цвета редкости
 local function animateSlot(slot, eggModel, petId, mult, delayStart, tier, fast, deleted)
 	local vp, cam = slot.vp, slot.cam
 	local k = fast and 0.55 or 1
+	local _, _, rc, rIndex = rarityOf(petId, tier)
+	local strength = math.clamp(rIndex - 1, 0, 4) + ((tier == 6) and 2 or 0)
 	eggModel.Parent = vp
 	eggModel:PivotTo(CFrame.new(0, 0, 0))
 	local pet = ctxRef.PetModel(petId, tier or 0)
@@ -163,59 +272,84 @@ local function animateSlot(slot, eggModel, petId, mult, delayStart, tier, fast, 
 	local near = CFrame.lookAt(Vector3.new(2, 1.6, -13.5), Vector3.new(0, 0.2, 0))
 	local far = CFrame.lookAt(Vector3.new(3, 2.6, -19), Vector3.new(0, 0, 0))
 	cam.CFrame = far
+	-- лучи медленно крутятся всё время, пока открыт слот
+	local raySpin = 0
+	local raySpeed = 14
+	local rayConn = RunService.RenderStepped:Connect(function(dt)
+		raySpin = raySpin + dt * raySpeed
+		slot.raysHolder.Rotation = raySpin
+	end)
+	setRays(slot.rays, Color3.new(1, 1, 1), 0.92, 0)
 	task.wait(delayStart)
 	-- плавный наезд камеры
 	animate(0.45 * k, function(a)
 		cam.CFrame = far:Lerp(near, a)
 	end, Enum.EasingStyle.Sine)
-	-- покачивания с нарастающей амплитудой — одна непрерывная кривая
+	-- «зарядка»: раскачка с нарастающей амплитудой и подпрыгиваниями, кольцо пульсирует, лучи разгораются
 	ctxRef.Sound.Play("EggShake", 0.1)
+	slot.ring.Color = Color3.new(1, 1, 1)
 	local wobble = 1.25 * k
 	animate(wobble, function(a)
-		local amp = math.rad(6 + 20 * a)
+		local amp = math.rad(6 + 22 * a)
 		local ang = math.sin(a * math.pi * 6) * amp
-		local hop = math.abs(math.sin(a * math.pi * 6)) * 0.25 * a
+		local hop = math.abs(math.sin(a * math.pi * 6)) * 0.3 * a
 		eggModel:PivotTo(CFrame.new(0, hop, 0) * CFrame.Angles(0, 0, ang))
+		slot.ring.Transparency = 1 - (0.25 + 0.5 * math.abs(math.sin(a * math.pi * 6))) * a
+		raySpeed = 14 + 60 * a
+		for _, ray in ipairs(slot.rays) do
+			ray.BackgroundTransparency = 0.92 - 0.3 * a
+		end
 	end, Enum.EasingStyle.Linear)
-	-- сжатие перед «пуфом»
+	-- сжатие перед взрывом
 	local eggScale = eggModel:GetScale()
 	animate(0.14 * k, function(a)
-		eggModel:ScaleTo(eggScale * (1 - 0.12 * a))
+		eggModel:ScaleTo(eggScale * (1 - 0.14 * a))
 		eggModel:PivotTo(CFrame.new(0, 0, 0))
 	end, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 	ctxRef.Sound.Play("EggCrack", 0.05)
-	-- локальная вспышка-кольцо за питомцем (не на весь экран)
+	-- вспышка в круге + волна + искры
 	slot.glow.BackgroundColor3 = Color3.new(1, 1, 1)
-	slot.glow.BackgroundTransparency = 0.25
+	slot.glow.BackgroundTransparency = 0.1
 	task.spawn(function()
 		animate(0.35, function(a)
-			slot.glow.BackgroundTransparency = 0.25 + 0.7 * a
+			slot.glow.BackgroundTransparency = 0.1 + 0.8 * a
 		end)
 	end)
+	if not deleted then
+		slotBurst(slot, rc, strength)
+	end
+	-- лучи: цвет редкости, чем реже — тем ярче и шире
+	setRays(slot.rays, deleted and Color3.fromRGB(120, 116, 140) or rc, deleted and 0.9 or math.max(0.35, 0.78 - strength * 0.1), 0.25)
+	raySpeed = 10 + strength * 6
+	slot.raysHolder.Size = UDim2.fromOffset(math.floor(slot.size * (1.35 + strength * 0.08)), math.floor(slot.size * (1.35 + strength * 0.08)))
+	UI.Pop(slot.raysHolder, 0.6)
 	-- яйцо раздувается и тает
 	task.spawn(function()
 		animate(0.25, function(a)
-			eggModel:ScaleTo(eggScale * (0.88 + 0.5 * a))
+			eggModel:ScaleTo(eggScale * (0.86 + 0.55 * a))
 			eggModel:PivotTo(CFrame.new(0, 0, 0))
 		end)
 		eggModel.Parent = nil
 	end)
 	fadeModel(eggModel, 0.22)
-	-- питомец мягко вырастает (Back.Out) и плавно покачивается
+	-- питомец влетает с разворотом (Back.Out) и потом плавно покачивается
 	pet.Parent = vp
 	local fit = 4.3 / math.max(petSize.X, petSize.Y, petSize.Z, 1)
 	local target = fit * (pet:GetAttribute("Scale") or 1)
 	pet:ScaleTo(0.05)
 	local spin = 0
+	local introTurn = math.pi * 2
 	local conn = RunService.RenderStepped:Connect(function(dt)
 		spin = spin + dt
-		pet:PivotTo(CFrame.new(0, -0.5 + math.sin(spin * 2) * 0.12, 0) * CFrame.Angles(0, math.pi + math.sin(spin * 0.9) * 0.5, 0))
+		pet:PivotTo(CFrame.new(0, -0.5 + math.sin(spin * 2) * 0.12, 0) * CFrame.Angles(0, math.pi + introTurn + math.sin(spin * 0.9) * 0.5, 0))
 	end)
 	ctxRef.Sound.Play("Reveal", 0.05)
 	task.spawn(function()
-		animate(0.5, function(a)
+		animate(0.55, function(a)
 			pet:ScaleTo(math.max(0.05, target * a))
+			introTurn = math.pi * 2 * (1 - math.min(1, a))
 		end, Enum.EasingStyle.Back)
+		introTurn = 0
 	end)
 	task.wait(0.2)
 	showTexts(slot, petId, mult, tier, deleted)
@@ -227,6 +361,7 @@ local function animateSlot(slot, eggModel, petId, mult, delayStart, tier, fast, 
 	end
 	return function()
 		conn:Disconnect()
+		rayConn:Disconnect()
 	end
 end
 
@@ -552,6 +687,15 @@ local function play(eggModels, pets, opts)
 	local limit = fast and 0.9 or 3.2
 	if not fast then
 		TweenService:Create(hint, TweenInfo.new(0.3), { TextTransparency = 0 }):Play()
+		task.spawn(function()
+			local hs = hint:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
+			hs.Parent = hint
+			while not clicked and gui.Enabled do
+				hs.Scale = 1 + math.sin(os.clock() * 5) * 0.04
+				RunService.RenderStepped:Wait()
+			end
+			hs.Scale = 1
+		end)
 	end
 	local waited = 0
 	while not clicked and waited < limit do
@@ -590,6 +734,11 @@ function EggOpening.Build(ctx)
 	gui = UI.new("ScreenGui", { Name = "EggOpeningGui", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 20, Enabled = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, Parent = ctx.PlayerGui })
 	-- однотонный мягкий фон (без лучей и узоров)
 	overlay = UI.new("Frame", { BackgroundColor3 = Color3.fromRGB(18, 14, 38), BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = gui })
+	-- виньетка: края темнее центра
+	local vig = Instance.new("UIGradient")
+	vig.Rotation = 90
+	vig.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.5, 0.45), NumberSequenceKeypoint.new(1, 0) })
+	vig.Parent = overlay
 	local catch = UI.new("TextButton", { Name = "Catch", BackgroundTransparency = 1, Text = "", Size = UDim2.fromScale(1, 1), ZIndex = 50, Parent = overlay })
 	row = UI.new("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(1200, 540), Parent = overlay })
 	UI.List(row, 10, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center)
