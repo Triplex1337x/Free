@@ -5,3 +5,4 @@ claude_workdir/
 __pycache__/
 .venv/
 venv/
+.remember/
