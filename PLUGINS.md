@@ -38,7 +38,7 @@
 | `claude-code-setup` | смотрит проект и советует, какие ещё хуки, навыки и плагины подключить |
 | `math-proof` | сложные задачи по математике с доказательством; `/math-proof:siege` штурмует задачу часами |
 
-**Roblox** (каталог [afrxo/roblox-agent-skills](https://github.com/afrxo/roblox-agent-skills), сообщество, MIT):
+**Roblox:** навыки в `.claude/skills/` из [afrxo/roblox-agent-skills](https://github.com/afrxo/roblox-agent-skills) (сообщество, MIT). Скопирована проверенная версия `ff50be7`, чтобы автор не мог незаметно поменять содержимое. Обновлять вручную, после проверки.
 
 | Навык | Зачем |
 |---|---|
