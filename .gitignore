@@ -1,5 +1,6 @@
 .env
-sessions.json
+*.session
+*.session-journal
 claude_workdir/
 __pycache__/
 .venv/
