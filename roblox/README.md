@@ -104,6 +104,11 @@ src/
   client/              -> StarterPlayerScripts.Client
     Animation/         процедурный аниматор + хореография ударов
     Vfx.luau           библиотека эффектов (частицы, волны, молнии, экран)
+assets/
+  textures/            текстуры эффектов (+ source/ исходные листы из Figma)
+  marketing/           иконка и тамбнейл
+tools/
+  process_textures.py  нарезка листов Figma в игровые текстуры
     Controllers/       ввод, HUD, гача, магазин, эффекты стихий
 ```
 
@@ -145,30 +150,38 @@ src/
 
 Снаряды получают шлейф своей стихии автоматически.
 
-### Свои текстуры эффектов (`assets/textures`)
+### Текстуры эффектов (`assets/textures`)
 
-12 текстур сгенерированы кодом (`tools/make_textures.py`), поэтому они полностью твои. Все белые с прозрачностью, а цвет стихии игра подставляет сама.
+16 текстур нарисованы ИИ Figma: 4 листа по 4 спрайта, исходники лежат в `assets/textures/source/`. Скрипт `tools/process_textures.py` нарезал листы, перевёл чёрный фон в прозрачность и выровнял спрайты. Все текстуры белые, цвет стихии игра подставляет сама.
 
 | Файл | Где используется |
 |---|---|
 | `flash_star.png` | вспышка-звезда на каждом попадании, блёстки |
-| `impact_burst.png` | аниме-шипы удара |
-| `flame_flipbook_4x4.png` | анимированное пламя (16 кадров) |
-| `spark_streak.png` | искры, вытянутые по направлению полёта |
+| `impact_burst.png` | аниме-взрыв удара |
+| `flame.png` | языки пламени |
 | `smoke_puff.png` | дым, пыль, туман |
-| `ground_crack.png` | трещины на земле от мощных ударов |
+| `water_splash.png` | всплески у Water |
+| `wind_swirl.png` | вихри у Wind |
+| `sunburst.png` | солнечные вспышки у Light |
+| `ember_cluster.png` | угли и искры |
+| `spark_streak.png` | искры, вытянутые по направлению полёта |
+| `ground_crack.png` | светящиеся трещины на земле от мощных ударов |
 | `shockwave_ring.png` | кольцо ударной волны по земле |
 | `lightning_strip.png` | текстурная молния (Beam) |
-| `energy_orb.png` | вращающаяся сфера при заряде способности |
+| `energy_orb.png` | вращающаяся воронка при заряде способности |
 | `petal.png` | лепестки над картой |
 | `flash_soft.png`, `slash_arc.png` | запас для своих эффектов |
 
 **Как подключить:**
-1. В Studio открой **View → Asset Manager → Bulk Import** и выбери PNG из `assets/textures` (или загрузи их как Decal в Creator Hub).
+1. В Studio открой **View → Asset Manager → Bulk Import** и выбери PNG из `assets/textures` (папку `source` не нужно).
 2. Скопируй ID каждой картинки и вставь его в `src/shared/Config/Textures.luau`.
 3. Готово. Пока ID равен 0, игра использует встроенные текстуры Roblox, так что ничего не сломается.
 
-Хочешь другой вид: поменяй параметры в `tools/make_textures.py` и запусти `python3 tools/make_textures.py` (нужны `numpy` и `pillow`).
+Если перегенерируешь листы в Figma, положи их в `assets/textures/source/` с теми же именами и запусти `python3 tools/process_textures.py` (нужны `numpy` и `pillow`).
+
+### Иконка и тамбнейл (`assets/marketing`)
+
+`icon_1024.png` и `thumbnail_1536x864.png` сделаны в Figma, исходники в файле Figma «Rift Battlegrounds — Icon & Thumbnails». Загрузка: Creator Dashboard → игра → **Places → Icon / Thumbnails**.
 
 ### Карта
 

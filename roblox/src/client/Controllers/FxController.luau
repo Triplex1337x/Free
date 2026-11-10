@@ -149,6 +149,7 @@ Elements.Water = {
 	Hit = function(pos, color)
 		Vfx.Debris(pos, 6, color, { Shape = Enum.PartType.Ball, Material = Enum.Material.Glass, Size = 0.45, Speed = 32, Life = 0.7, Transparency = 0.25 })
 		Vfx.Emit(pos, "Mist", 4, color)
+		Vfx.Emit(pos, "Splash", 1, color)
 	end,
 	Swing = function(pos, color)
 		Vfx.Emit(pos, "Mist", 3, color)
@@ -168,6 +169,7 @@ Elements.Water = {
 		Vfx.Pillar(d.Pos - Vector3.new(0, 3, 0), d.Color, d.Radius * 0.3, d.Radius * 1.4, 0.7)
 		Vfx.Debris(d.Pos, 14, d.Color, { Shape = Enum.PartType.Ball, Material = Enum.Material.Glass, Size = 0.7, Speed = 55, Life = 1, Transparency = 0.2 })
 		Vfx.Emit(d.Pos, "Mist", 18, d.Color)
+		Vfx.Emit(d.Pos, "Splash", 2, d.Color)
 	end,
 	Projectile = function(ball, color)
 		Vfx.Attach(ball, "Mist", 30, color)
@@ -178,6 +180,7 @@ Elements.Water = {
 Elements.Wind = {
 	Hit = function(pos, color)
 		Vfx.Ring(CFrame.new(pos) * CFrame.Angles(rng:NextNumber(-1, 1), 0, rng:NextNumber(-1, 1)), 0.5, 4, color, 0.25, 0.3, 14)
+		Vfx.Emit(pos, "Swirl", 1, color)
 	end,
 	Swing = function(pos, color)
 		Vfx.Emit(pos, "Glitter", 3, color)
@@ -199,6 +202,7 @@ Elements.Wind = {
 	Burst = function(d)
 		tornado(d.Pos, d.Radius, d.Color, 0.5)
 		Vfx.Emit(d.Pos, "Glitter", 20, WHITE)
+		Vfx.Emit(d.Pos, "Swirl", 3, d.Color)
 	end,
 	Projectile = function(ball, color)
 		Vfx.Attach(ball, "Glitter", 25, color)
@@ -306,6 +310,7 @@ Elements.Light = {
 	Hit = function(pos, color)
 		Vfx.Emit(pos, "Glitter", 8, Theme.Gold)
 		Vfx.Rays(pos, color, 5, 4, 0.25)
+		Vfx.Emit(pos, "Sunburst", 1, Theme.Gold)
 	end,
 	Swing = function(pos)
 		Vfx.Emit(pos, "Glitter", 3, Theme.Gold)
@@ -323,6 +328,7 @@ Elements.Light = {
 		Vfx.Pillar(d.Pos - Vector3.new(0, 3, 0), d.Color, d.Radius * 0.35, 80, 0.9)
 		Vfx.Rays(d.Pos, Theme.Gold, 14, d.Radius * 1.1, 0.5)
 		Vfx.Emit(d.Pos, "Glitter", 30, Theme.Gold)
+		Vfx.Emit(d.Pos, "Sunburst", 2, Theme.Gold)
 	end,
 	Projectile = function(ball)
 		Vfx.Attach(ball, "Glitter", 30, Theme.Gold)

@@ -164,7 +164,7 @@ local PRESETS = {
 }
 
 -- Presets that only make sense with our custom textures.
-local OPTIONAL = { Flash = true, Impact = true }
+local OPTIONAL = { Flash = true, Impact = true, Splash = true, Swirl = true, Sunburst = true }
 PRESETS.Flash = {
 	LightEmission = 1,
 	Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 7), NumberSequenceKeypoint.new(1, 2) }),
@@ -181,6 +181,31 @@ PRESETS.Impact = {
 	Speed = NumberRange.new(0, 0),
 	Rotation = NumberRange.new(0, 360),
 }
+PRESETS.Splash = {
+	LightEmission = 0.6,
+	Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2), NumberSequenceKeypoint.new(1, 6) }),
+	Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) }),
+	Lifetime = NumberRange.new(0.3, 0.4),
+	Speed = NumberRange.new(0, 0),
+}
+PRESETS.Swirl = {
+	LightEmission = 0.8,
+	Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2), NumberSequenceKeypoint.new(1, 8) }),
+	Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(1, 1) }),
+	Lifetime = NumberRange.new(0.3, 0.45),
+	Speed = NumberRange.new(0, 0),
+	Rotation = NumberRange.new(0, 360),
+	RotSpeed = NumberRange.new(-540, -360),
+}
+PRESETS.Sunburst = {
+	LightEmission = 1,
+	Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 3), NumberSequenceKeypoint.new(1, 11) }),
+	Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) }),
+	Lifetime = NumberRange.new(0.2, 0.3),
+	Speed = NumberRange.new(0, 0),
+	Rotation = NumberRange.new(0, 360),
+	RotSpeed = NumberRange.new(-60, 60),
+}
 
 -- Swap in the uploaded textures (Config/Textures) where available.
 do
@@ -190,15 +215,18 @@ do
 		PRESETS.Sparks.Orientation = Enum.ParticleOrientation.VelocityParallel
 		PRESETS.Sparks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.6), NumberSequenceKeypoint.new(1, 0) })
 	end
-	local flame = Textures.Get("FlameFlipbook")
+	local flame = Textures.Get("Flame")
 	if flame then
 		local p = PRESETS.Flame
 		p.Texture = flame
-		p.FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4
-		p.FlipbookMode = Enum.ParticleFlipbookMode.OneShot
-		p.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 3), NumberSequenceKeypoint.new(1, 1.5) })
-		p.Rotation = NumberRange.new(-10, 10)
-		p.RotSpeed = NumberRange.new(0, 0)
+		p.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2.6), NumberSequenceKeypoint.new(0.4, 3.2), NumberSequenceKeypoint.new(1, 0.8) })
+		p.Rotation = NumberRange.new(-15, 15)
+		p.RotSpeed = NumberRange.new(-20, 20)
+	end
+	local embers = Textures.Get("EmberCluster")
+	if embers then
+		PRESETS.Embers.Texture = embers
+		PRESETS.Embers.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.4), NumberSequenceKeypoint.new(1, 0) })
 	end
 	local smoke = Textures.Get("SmokePuff")
 	if smoke then
@@ -211,6 +239,9 @@ do
 		PRESETS.Flash.Texture = star
 	end
 	PRESETS.Impact.Texture = Textures.Get("ImpactBurst")
+	PRESETS.Splash.Texture = Textures.Get("WaterSplash")
+	PRESETS.Swirl.Texture = Textures.Get("WindSwirl")
+	PRESETS.Sunburst.Texture = Textures.Get("Sunburst")
 end
 
 Vfx.Presets = PRESETS
