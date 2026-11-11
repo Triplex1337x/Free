@@ -30,6 +30,7 @@ local TEMPLATE = {
 	Stats = { Strength = 0, Vitality = 0, Agility = 0, Spirit = 0 },
 	StatPoints = 0,
 	Mastery = {},
+	Quests = { Day = 0, List = {}, Bonus = false },
 	RollsSincePity = 0,
 	TotalRolls = 0,
 	RedeemedCodes = {},
@@ -209,6 +210,7 @@ function DataService:BuildSnapshot(player: Player)
 		Stats = d.Stats,
 		StatPoints = d.StatPoints,
 		Mastery = d.Mastery,
+		Quests = d.Quests,
 	}
 end
 

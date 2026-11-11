@@ -27,6 +27,8 @@ local lastCombat = {} :: { [Player]: number }
 local pendingXp = {} :: { [Player]: number }
 local pendingMastery = {} :: { [Player]: number }
 local lockNotified = {} :: { [Player]: number }
+local pvpRewardAt = {} :: { [string]: number } -- "killer:victim" -> last rewarded time
+local PVP_REWARD_COOLDOWN = 300
 
 local projectileFolder = Instance.new("Folder")
 projectileFolder.Name = "Projectiles"
@@ -216,9 +218,22 @@ function CombatService:AddAwakening(player: Player, amount: number)
 	player:SetAttribute("Awakening", math.min(max, current + amount))
 end
 
+-- PvP needs: a PvP zone, both fighters at the newbie level or above, and
+-- neither standing in a hub safe area (spawns, portals, training grounds).
 function CombatService:CanPvp(player: Player): boolean
-	local zone = Zones.Get(player:GetAttribute("Zone") or "Hub")
-	return zone ~= nil and zone.Pvp == true
+	local zoneId = player:GetAttribute("Zone") or "Hub"
+	local zone = Zones.Get(zoneId)
+	if not zone or not zone.Pvp then
+		return false
+	end
+	if self.Services.ProgressionService:GetLevel(player) < Zones.HubSafe.NewbieLevel then
+		return false
+	end
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if zoneId == "Hub" and self.MapFolder:GetAttribute("Generated") and root and Zones.IsHubSafe(root.Position) then
+		return false
+	end
+	return true
 end
 
 function CombatService:InCombat(player: Player): boolean
@@ -629,6 +644,7 @@ function CombatService:HandleAbility(player: Player, payload)
 			return
 		end
 		player:SetAttribute("Awakening", 0)
+		self.Services.QuestService:Progress(player, "Ultimate", 1)
 	else
 		if t < (s.Cooldowns[key] or 0) then
 			return
@@ -722,11 +738,20 @@ function CombatService:OnPlayerDied(player: Player, character: Model)
 	local killer = self:GetKiller(character)
 	if killer and killer ~= player then
 		local killerProfile = DataService:Get(killer)
-		if killerProfile then
+		-- Anti-farm: the same killer/victim pair only pays out once per 5 minutes.
+		local pairKey = killer.UserId .. ":" .. player.UserId
+		local rewarded = os.clock() - (pvpRewardAt[pairKey] or -math.huge) >= PVP_REWARD_COOLDOWN
+		if killerProfile and not rewarded then
+			killerProfile.Data.Kills += 1
+			DataService:Sync(killer)
+			Remotes.Notify:FireClient(killer, "You defeated " .. player.DisplayName .. " (no reward — same rival recently)", "kill")
+		elseif killerProfile then
+			pvpRewardAt[pairKey] = os.clock()
 			killerProfile.Data.Kills += 1
 			Progression:AddShards(killer, Rewards.PlayerKillShards, true)
 			Progression:AddXp(killer, Rewards.PlayerKillXp)
 			Progression:AddMasteryXp(killer, Prog.Mastery.XpPerKill)
+			self.Services.QuestService:Progress(killer, "PvpKill", 1)
 			Remotes.Notify:FireClient(killer, "You defeated " .. player.DisplayName, "kill")
 		end
 		fx("KillFeed", { Killer = killer.DisplayName, Victim = player.DisplayName })
@@ -830,6 +855,7 @@ function CombatService:Start()
 			pendingMastery[player] = nil
 			if player.Parent then
 				self.Services.ProgressionService:AddMasteryXp(player, amount)
+				self.Services.QuestService:Progress(player, "Damage", amount / Prog.Mastery.XpPerDamage)
 			end
 		end
 	end

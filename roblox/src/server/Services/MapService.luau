@@ -302,8 +302,8 @@ local function buildArena(folder: Folder)
 	local dummySpawns = Instance.new("Folder")
 	dummySpawns.Name = "DummySpawns"
 	dummySpawns.Parent = folder
-	for i = 1, 6 do
-		local x = -30 + (i - 1) * 12
+	for i = 1, 10 do
+		local x = -45 + (i - 1) * 10
 		part({
 			Name = "DummySpawn",
 			Size = Vector3.new(4, 0.2, 4),
@@ -335,6 +335,7 @@ function MapService:Init()
 		folder.Name = "Arena"
 		buildArena(folder)
 		buildDecor(folder)
+		folder:SetAttribute("Generated", true) -- hub safe zones only apply to the generated layout
 		folder.Parent = workspace
 		buildLighting()
 	end

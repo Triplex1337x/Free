@@ -1,5 +1,11 @@
 -- Zone mobs and bosses: spawning, a lightweight shared AI loop (wander,
 -- aggro, chase, melee combos, element abilities, leash), loot and respawn.
+--
+-- Tuned for 12-player servers:
+--   * mob population per zone scales with the players in that zone
+--   * everyone who did >= LootShare of a mob's damage gets the full reward
+--   * boss HP scales with the players around it
+--   * AI sleeps in zones with nobody in them
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -19,6 +25,8 @@ local TICK = 0.2
 local npcFolder: Folder
 local mobs = {} :: { [Model]: any }
 local rng = Random.new()
+local population = {} :: { [string]: { Alive: number, Deaths: { number } } } -- key = zoneId .. "/" .. defId
+local playersInZone = {} :: { [string]: number }
 
 -- Element -> the style whose skills mobs of that element borrow.
 local styleByElement = {}
@@ -99,19 +107,32 @@ function MobService:Spawn(zoneId: string, def, home: CFrame, isBoss: boolean)
 	mobs[model] = mob
 
 	if isBoss then
+		mob.BaseHealth = health
+		mob.ScaledFor = 1
+		self:ScaleBoss(mob)
 		Remotes.Announce:FireAllClients(("%s (Lv.%d) has appeared in %s!"):format(def.Name, def.Level, Zones.Get(zoneId).Name))
+	else
+		local pop = population[zoneId .. "/" .. def.Id]
+		pop.Alive += 1
 	end
 
 	humanoid.Died:Connect(function()
 		mobs[model] = nil
 		self:OnDeath(mob, shards, xp)
+		if not isBoss then
+			local pop = population[zoneId .. "/" .. def.Id]
+			pop.Alive -= 1
+			table.insert(pop.Deaths, os.clock())
+		end
 		task.delay(if isBoss then 5 else 3, function()
 			Combat:CleanupModel(model)
 			model:Destroy()
 		end)
-		task.delay(if isBoss then (def.Respawn or 180) else M.Respawn, function()
-			self:Spawn(zoneId, def, home, isBoss)
-		end)
+		if isBoss then
+			task.delay(def.Respawn or 180, function()
+				self:Spawn(zoneId, def, home, true)
+			end)
+		end
 	end)
 	return model
 end
@@ -119,14 +140,11 @@ end
 function MobService:OnDeath(mob, shards: number, xp: number)
 	local Combat = self.Services.CombatService
 	local Progression = self.Services.ProgressionService
-	local winners
-	if mob.Boss then
-		winners = Combat:GetContributors(mob.Model, M.BossContributionShare)
-	else
-		local killer = Combat:GetKiller(mob.Model)
-		winners = if killer then { killer } else {}
-	end
+	-- Shared tagging: no kill stealing, groups are never punished.
+	local winners = Combat:GetContributors(mob.Model, if mob.Boss then M.BossContributionShare else M.LootShare)
+	local Quests = self.Services.QuestService
 	for _, player in winners do
+		Quests:Progress(player, if mob.Boss then "BossKill" else "MobKill", 1)
 		Progression:AddShards(player, shards, true)
 		Progression:AddXp(player, xp)
 		Progression:AddMasteryXp(player, if mob.Boss then Prog.Mastery.XpPerKill * 10 else Prog.Mastery.XpPerKill)
@@ -225,7 +243,7 @@ function MobService:Think(mob, now: number)
 
 	-- Leash: too far from home -> run back and heal.
 	local fromHome = (root.Position - mob.Home.Position) * Vector3.new(1, 0, 1)
-	if fromHome.Magnitude > M.LeashRange then
+	if fromHome.Magnitude > (mob.Def.Leash or M.LeashRange) then
 		mob.Target = nil
 		mob.Humanoid:MoveTo(mob.Home.Position)
 		mob.Humanoid.Health = math.min(mob.Humanoid.MaxHealth, mob.Humanoid.Health + mob.Humanoid.MaxHealth * 0.1)
@@ -264,20 +282,69 @@ function MobService:Think(mob, now: number)
 	end
 end
 
+-- Boss HP grows with the crowd (never shrinks mid-fight).
+function MobService:ScaleBoss(mob)
+	local n = math.max(1, playersInZone[mob.Zone] or 0)
+	if n <= mob.ScaledFor then
+		return
+	end
+	mob.ScaledFor = n
+	local humanoid = mob.Humanoid
+	local ratio = humanoid.Health / math.max(1, humanoid.MaxHealth)
+	humanoid.MaxHealth = math.floor(mob.BaseHealth * (1 + M.BossHealthPerPlayer * (n - 1)))
+	humanoid.Health = humanoid.MaxHealth * ratio
+end
+
+local function countPlayers()
+	table.clear(playersInZone)
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if humanoid and humanoid.Health > 0 then
+			local zone = player:GetAttribute("Zone") or "Hub"
+			playersInZone[zone] = (playersInZone[zone] or 0) + 1
+		end
+	end
+end
+
+-- Keeps each zone's mob count proportional to the players in it.
+function MobService:Populate()
+	local ZoneService = self.Services.ZoneService
+	local now = os.clock()
+	for _, zoneId in Zones.Order do
+		local zone = Zones.Get(zoneId)
+		local n = playersInZone[zoneId] or 0
+		local spawns = ZoneService:GetMobSpawns(zoneId)
+		if n > 0 and #spawns > 0 then
+			for _, def in zone.Mobs or {} do
+				local pop = population[zoneId .. "/" .. def.Id]
+				for i = #pop.Deaths, 1, -1 do
+					if now - pop.Deaths[i] > M.Respawn then
+						table.remove(pop.Deaths, i)
+					end
+				end
+				local factor = math.min(M.PopulationMax, M.PopulationBase + M.PopulationPerPlayer * n)
+				local desired = math.ceil(def.Count * factor)
+				local missing = desired - pop.Alive - #pop.Deaths
+				for _ = 1, math.min(missing, 3) do -- spread spawns over ticks
+					local base = spawns[rng:NextInteger(1, #spawns)]
+					local home = base + Vector3.new(rng:NextNumber(-10, 10), 0, rng:NextNumber(-10, 10))
+					task.spawn(self.Spawn, self, zoneId, def, home, false)
+					-- Short reservation so the next tick doesn't double-spawn while the
+					-- rig is being built (Spawn bumps Alive once it exists).
+					table.insert(pop.Deaths, now - M.Respawn + 2.5)
+				end
+			end
+		end
+	end
+end
+
 function MobService:Start()
 	local ZoneService = self.Services.ZoneService
 	for _, zoneId in Zones.Order do
 		local zone = Zones.Get(zoneId)
-		local spawns = ZoneService:GetMobSpawns(zoneId)
-		local i = 0
 		for _, def in zone.Mobs or {} do
-			for _ = 1, def.Count do
-				i += 1
-				local home = spawns[(i - 1) % math.max(1, #spawns) + 1]
-				if home then
-					task.spawn(self.Spawn, self, zoneId, def, home, false)
-				end
-			end
+			population[zoneId .. "/" .. def.Id] = { Alive = 0, Deaths = {} }
 		end
 		if zone.Boss then
 			local bossSpawn = ZoneService:GetBossSpawn(zoneId)
@@ -289,13 +356,26 @@ function MobService:Start()
 		end
 	end
 
+	local lastPopulate = 0
 	while true do
 		task.wait(TICK)
 		local now = os.clock()
+		countPlayers()
+		if now - lastPopulate > 2 then
+			lastPopulate = now
+			self:Populate()
+		end
 		for _, mob in mobs do
-			local ok, err = pcall(self.Think, self, mob, now)
-			if not ok then
-				warn("[Mob] " .. tostring(err))
+			-- AI sleeps where nobody is around (saves server time with 12 players
+			-- spread across five zones).
+			if (playersInZone[mob.Zone] or 0) > 0 then
+				if mob.Boss then
+					self:ScaleBoss(mob)
+				end
+				local ok, err = pcall(self.Think, self, mob, now)
+				if not ok then
+					warn("[Mob] " .. tostring(err))
+				end
 			end
 		end
 	end

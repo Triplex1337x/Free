@@ -12,7 +12,7 @@ Zones.List = {
 		MinLevel = 1,
 		Pvp = true,
 		Color = Color3.fromRGB(255, 80, 150),
-		Boss = { Id = "RiftWarden", Name = "Rift Warden", Level = 12, Element = "Void", Outfit = "Warden", Scale = 1.9, Respawn = 180 },
+		Boss = { Id = "RiftWarden", Name = "Rift Warden", Level = 12, Element = "Void", Outfit = "Warden", Scale = 1.9, Respawn = 180, Leash = 45 },
 	},
 
 	Ember = {
@@ -114,8 +114,8 @@ Zones.Mob = {
 	HealthPerLevel = 22,
 	DamageBase = 5,
 	DamagePerLevel = 0.6,
-	ShardsBase = 4,
-	ShardsPerLevel = 0.8,
+	ShardsBase = 5,
+	ShardsPerLevel = 0.5,
 	XpBase = 12,
 	XpPerLevel = 4,
 	Respawn = 8,
@@ -128,7 +128,43 @@ Zones.Mob = {
 	BossDamageMult = 2.2,
 	BossRewardMult = 25,
 	BossContributionShare = 0.05,
+
+	-- Built for 12-player servers:
+	LootShare = 0.2, -- anyone with >= 20% of a mob's damage gets the full reward (no kill stealing)
+	PopulationBase = 0.5, -- mobs alive = Count * (Base + PerPlayer * players in zone), capped at Max
+	PopulationPerPlayer = 0.25,
+	PopulationMax = 2,
+	BossHealthPerPlayer = 0.35, -- +35% boss HP per extra player in the zone
 }
+
+-- Hub safety (matches the generated arena layout in MapService).
+Zones.HubSafe = {
+	NewbieLevel = 5, -- players below this level can't fight or be fought in PvP
+	SpawnRadius = 18,
+	PortalRadius = 16,
+	TrainingCenter = Vector3.new(0, 0, -55),
+	TrainingHalfSize = Vector2.new(58, 14),
+}
+
+-- True if a hub position is inside a no-PvP area: spawns, portals, training grounds.
+function Zones.IsHubSafe(pos: Vector3): boolean
+	local cfg = Zones.HubSafe
+	local flat = Vector3.new(pos.X, 0, pos.Z)
+	for i = 1, 6 do
+		local a = (i / 6) * math.pi * 2 + math.pi / 6
+		if (flat - Vector3.new(math.cos(a) * 110, 0, math.sin(a) * 110)).Magnitude < cfg.SpawnRadius then
+			return true
+		end
+	end
+	for i = 0, 3 do
+		local a = i * math.pi / 2 + math.pi / 4
+		if (flat - Vector3.new(math.cos(a) * 118, 0, math.sin(a) * 118)).Magnitude < cfg.PortalRadius then
+			return true
+		end
+	end
+	local d = flat - cfg.TrainingCenter
+	return math.abs(d.X) < cfg.TrainingHalfSize.X and math.abs(d.Z) < cfg.TrainingHalfSize.Y
+end
 
 function Zones.Get(id: string)
 	return Zones.List[id]

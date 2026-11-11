@@ -98,6 +98,11 @@ def build() -> str:
     b.open_item("Workspace", "Workspace")
     b.close_item()
 
+    # 12-player servers (the published server size is set on the Creator
+    # Dashboard -> Places -> Server Size; this matches it for Studio tests).
+    b.open_item("Players", "Players", extra='<int name="MaxPlayers">12</int><int name="PreferredPlayers">12</int>')
+    b.close_item()
+
     b.open_item("ReplicatedStorage", "ReplicatedStorage")
     b.add_path(os.path.join(SRC, "shared"), "Shared")
     b.close_item()

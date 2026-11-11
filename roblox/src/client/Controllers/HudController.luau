@@ -155,7 +155,7 @@ function Hud:CloseAll()
 	end
 end
 
-local MENU_ICONS = { Roll = "✦", Arts = "⚔", Stats = "▲", Map = "◈", Shop = "$", Codes = "#" }
+local MENU_ICONS = { Roll = "✦", Arts = "⚔", Stats = "▲", Map = "◈", Quests = "!", Shop = "$", Codes = "#" }
 
 function Hud:AddMenuButton(text: string, color: Color3, order: number, onClick: () -> ())
 	local button = UI.button({
@@ -346,14 +346,58 @@ function Hud:BuildPlayerCard()
 		Parent = self.Gui,
 	})
 	local function updateZone()
-		local zone = Zones.Get(player:GetAttribute("Zone") or "Hub")
-		if zone then
-			zoneTag.Text = ("◈ %s%s"):format(string.upper(zone.Name), if zone.Pvp then "  •  PVP" else "")
-			zoneTag.TextColor3 = zone.Color
+		local zoneId = player:GetAttribute("Zone") or "Hub"
+		local zone = Zones.Get(zoneId)
+		if not zone then
+			return
 		end
+		local tag = ""
+		if zone.Pvp then
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			local generated = workspace:FindFirstChild("Arena") and workspace.Arena:GetAttribute("Generated")
+			if State.Data and State.Data.Level < Zones.HubSafe.NewbieLevel then
+				tag = ("  •  SAFE UNTIL LV.%d"):format(Zones.HubSafe.NewbieLevel)
+			elseif generated and root and Zones.IsHubSafe(root.Position) then
+				tag = "  •  SAFE ZONE"
+			else
+				tag = "  •  ⚔ PVP"
+			end
+		else
+			tag = "  •  PVE"
+		end
+		zoneTag.Text = "◈ " .. string.upper(zone.Name) .. tag
+		zoneTag.TextColor3 = zone.Color
 	end
-	player:GetAttributeChangedSignal("Zone"):Connect(updateZone)
-	updateZone()
+	task.spawn(function()
+		while true do
+			updateZone()
+			task.wait(0.4)
+		end
+	end)
+
+	-- Playtime gift countdown.
+	local gift = UI.label({
+		Text = "",
+		Font = Theme.FontHeavy,
+		TextColor3 = Theme.Gold,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		MaxTextSize = 16,
+		Position = UDim2.fromOffset(22, 196),
+		Size = UDim2.fromOffset(320, 20),
+		Parent = self.Gui,
+	})
+	task.spawn(function()
+		while true do
+			local at = player:GetAttribute("NextGiftAt")
+			if at then
+				local left = math.max(0, math.floor(at - workspace:GetServerTimeNow()))
+				gift.Text = ("🎁 GIFT IN %d:%02d — %s"):format(left // 60, left % 60, player:GetAttribute("NextGiftText") or "")
+			else
+				gift.Text = ""
+			end
+			task.wait(1)
+		end
+	end)
 
 	State.Observe(function(d)
 		levelText.Text = tostring(d.Level)
@@ -669,7 +713,7 @@ function Hud:Init()
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 14, 0.56, 0),
-		Size = UDim2.fromOffset(if isTouch then 120 else 150, 330),
+		Size = UDim2.fromOffset(if isTouch then 120 else 150, 400),
 		Parent = self.Gui,
 	}, { UI.new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
 

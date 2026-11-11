@@ -8,6 +8,7 @@ local ORDER = {
 	"RollController",
 	"StatsController",
 	"ZoneController",
+	"QuestController",
 	"ShopController",
 	"FxController",
 	"MenuController",

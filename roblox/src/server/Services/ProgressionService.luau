@@ -182,6 +182,7 @@ function ProgressionService:AddMasteryXp(player: Player, amount: number)
 		return
 	end
 	entry.Xp += math.floor(amount + 0.5)
+	self.Services.QuestService:Progress(player, "Mastery", amount)
 	local style = Styles.Get(styleId)
 	while entry.Level < Prog.Mastery.MaxLevel and entry.Xp >= Prog.MasteryXpFor(entry.Level) do
 		entry.Xp -= Prog.MasteryXpFor(entry.Level)

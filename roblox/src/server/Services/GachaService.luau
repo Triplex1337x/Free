@@ -95,6 +95,7 @@ function GachaService:Roll(player: Player, count: number)
 	end
 
 	self.Services.DataService:Sync(player)
+	self.Services.QuestService:Progress(player, "Roll", count)
 	return { Ok = true, Results = results, Luck = luck }
 end
 

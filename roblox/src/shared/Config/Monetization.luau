@@ -62,12 +62,12 @@ return {
 			PaidRandom = true,
 			Order = 2,
 		},
-		Shards5k = {
+		Shards3k = {
 			Id = 0,
-			Name = "5,000 Shards",
-			Description = "Shards can be spent on rolls when you are out of spins.",
-			Price = 129,
-			Grant = { Shards = 5000 },
+			Name = "3,000 Shards",
+			Description = "Worth 10 rolls — or a stat reset and more. Same value as 10 Spins.",
+			Price = 99,
+			Grant = { Shards = 3000 },
 			PaidRandom = true,
 			Order = 3,
 		},
