@@ -116,7 +116,7 @@ function MobService:Spawn(zoneId: string, def, home: CFrame, isBoss: boolean)
 		mob.BaseHealth = health
 		mob.ScaledFor = 1
 		self:ScaleBoss(mob)
-		Remotes.Announce:FireAllClients(("%s (Lv.%d) has appeared in %s!"):format(def.Name, def.Level, Zones.Get(zoneId).Name))
+		Remotes.Announce:FireAllClients(("%s (ур. %d) появился: %s!"):format(def.Name, def.Level, Zones.Get(zoneId).Name))
 	else
 		local pop = population[zoneId .. "/" .. def.Id]
 		pop.Alive += 1
@@ -159,11 +159,11 @@ function MobService:OnDeath(mob, shards: number, xp: number)
 		Progression:AddXp(player, xp)
 		Progression:AddMasteryXp(player, if mob.Boss then Prog.Mastery.XpPerKill * 10 else Prog.Mastery.XpPerKill)
 		if mob.Boss then
-			Remotes.Notify:FireClient(player, ("%s defeated! +%d Shards  +%d XP"):format(mob.Def.Name, shards, xp), "level")
+			Remotes.Notify:FireClient(player, ("%s повержен! +%d ◆  +%d опыта"):format(mob.Def.Name, shards, xp), "level")
 		end
 	end
 	if mob.Boss then
-		Remotes.Announce:FireAllClients(("%s was defeated by %d fighter(s)!"):format(mob.Def.Name, #winners))
+		Remotes.Announce:FireAllClients(("%s повержен! Участников: %d"):format(mob.Def.Name, #winners))
 	end
 end
 

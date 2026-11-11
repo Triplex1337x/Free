@@ -17,8 +17,9 @@ UI.Theme = {
 	Bad = Color3.fromRGB(255, 80, 90),
 	Text = Color3.fromRGB(255, 252, 245),
 	SubText = Color3.fromRGB(185, 175, 215),
-	Font = Enum.Font.FredokaOne,
-	FontHeavy = Enum.Font.LuckiestGuy,
+	-- Cyrillic-capable fonts (the comic Latin fonts have no Russian letters).
+	Font = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold),
+	FontHeavy = Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold),
 }
 
 local Theme = UI.Theme
@@ -29,6 +30,8 @@ function UI.new(className: string, props: { [string]: any }?, children: { Instan
 	for key, value in props or {} do
 		if key == "Parent" then
 			parent = value
+		elseif key == "Font" and typeof(value) == "Font" then
+			(inst :: any).FontFace = value
 		else
 			(inst :: any)[key] = value
 		end

@@ -7,19 +7,19 @@ Zones.Order = { "Hub", "Ember", "Tidal", "Storm", "Void" }
 
 Zones.List = {
 	Hub = {
-		Name = "Rift Arena",
-		Subtitle = "PvP arena • Training grounds",
+		Name = "Арена Разлома",
+		Subtitle = "PvP-арена • Тренировка • Небесный остров",
 		MinLevel = 1,
 		Pvp = true,
 		Color = Color3.fromRGB(255, 80, 150),
-		Boss = { Id = "RiftWarden", Name = "Rift Warden", Level = 12, Element = "Void", Outfit = "Warden", Scale = 1.9, Respawn = 180, Leash = 45 },
-		SkyMobs = { { Id = "RiftSprite", Name = "Rift Sprite", Level = 4, Count = 5, Element = "Light", Outfit = "Sprite", Scale = 0.8, Leash = 20 } },
+		Boss = { Id = "RiftWarden", Name = "Страж Разлома", Level = 12, Element = "Void", Outfit = "Warden", Scale = 1.9, Respawn = 180, Leash = 45 },
+		SkyMobs = { { Id = "RiftSprite", Name = "Дух Разлома", Level = 4, Count = 5, Element = "Light", Outfit = "Sprite", Scale = 0.8, Leash = 20 } },
 		SkyCenter = Vector3.new(-88, 0, 22),
 	},
 
 	Ember = {
-		Name = "Ember Wastes",
-		Subtitle = "Lv. 1+ • Volcanic badlands",
+		Name = "Пепельные Пустоши",
+		Subtitle = "Ур. 1+ • Вулканические земли",
 		MinLevel = 1,
 		Origin = Vector3.new(2400, 0, 0),
 		Theme = "Ember",
@@ -34,16 +34,16 @@ Zones.List = {
 			Saturation = 0.25,
 		},
 		Mobs = {
-			{ Id = "CinderImp", Name = "Cinder Imp", Level = 3, Count = 7, Element = "Fire", Outfit = "Imp", Scale = 0.85 },
-			{ Id = "AshBrute", Name = "Ash Brute", Level = 9, Count = 4, Element = "Fire", Outfit = "Brute", Scale = 1.3 },
+			{ Id = "CinderImp", Name = "Пепельный бес", Level = 3, Count = 7, Element = "Fire", Outfit = "Imp", Scale = 0.85 },
+			{ Id = "AshBrute", Name = "Пепельный громила", Level = 9, Count = 4, Element = "Fire", Outfit = "Brute", Scale = 1.3 },
 		},
-		SkyMobs = { { Id = "InfernoImp", Name = "Elite Inferno Imp", Level = 14, Count = 5, Element = "Fire", Outfit = "Imp", Scale = 1, Elite = true, Leash = 20 } },
-		Boss = { Id = "MagmaTyrant", Name = "Magma Tyrant", Level = 15, Element = "Fire", Outfit = "Tyrant", Scale = 2.2, Respawn = 150 },
+		SkyMobs = { { Id = "InfernoImp", Name = "Элитный адский бес", Level = 14, Count = 5, Element = "Fire", Outfit = "Imp", Scale = 1, Elite = true, Leash = 20 } },
+		Boss = { Id = "MagmaTyrant", Name = "Магмовый Тиран", Level = 15, Element = "Fire", Outfit = "Tyrant", Scale = 2.2, Respawn = 150 },
 	},
 
 	Tidal = {
-		Name = "Tidal Shrine",
-		Subtitle = "Lv. 15+ • Drowned temple",
+		Name = "Храм Прилива",
+		Subtitle = "Ур. 15+ • Затонувший храм",
 		MinLevel = 15,
 		Origin = Vector3.new(-2400, 0, 0),
 		Theme = "Tidal",
@@ -58,16 +58,16 @@ Zones.List = {
 			Saturation = 0.2,
 		},
 		Mobs = {
-			{ Id = "ReefStalker", Name = "Reef Stalker", Level = 18, Count = 7, Element = "Water", Outfit = "Stalker", Scale = 1 },
-			{ Id = "TideSentinel", Name = "Tide Sentinel", Level = 26, Count = 4, Element = "Water", Outfit = "Sentinel", Scale = 1.35 },
+			{ Id = "ReefStalker", Name = "Рифовый охотник", Level = 18, Count = 7, Element = "Water", Outfit = "Stalker", Scale = 1 },
+			{ Id = "TideSentinel", Name = "Страж прилива", Level = 26, Count = 4, Element = "Water", Outfit = "Sentinel", Scale = 1.35 },
 		},
-		SkyMobs = { { Id = "EliteSentinel", Name = "Elite Tide Sentinel", Level = 32, Count = 5, Element = "Water", Outfit = "Sentinel", Scale = 1.2, Elite = true, Leash = 20 } },
-		Boss = { Id = "LeviathanKnight", Name = "Leviathan Knight", Level = 35, Element = "Water", Outfit = "Leviathan", Scale = 2.3, Respawn = 180 },
+		SkyMobs = { { Id = "EliteSentinel", Name = "Элитный страж прилива", Level = 32, Count = 5, Element = "Water", Outfit = "Sentinel", Scale = 1.2, Elite = true, Leash = 20 } },
+		Boss = { Id = "LeviathanKnight", Name = "Рыцарь Левиафана", Level = 35, Element = "Water", Outfit = "Leviathan", Scale = 2.3, Respawn = 180 },
 	},
 
 	Storm = {
-		Name = "Storm Peaks",
-		Subtitle = "Lv. 40+ • Thunder mountains",
+		Name = "Грозовые Пики",
+		Subtitle = "Ур. 40+ • Горы грома",
 		MinLevel = 40,
 		Origin = Vector3.new(0, 0, 2400),
 		Theme = "Storm",
@@ -82,16 +82,16 @@ Zones.List = {
 			Saturation = 0.05,
 		},
 		Mobs = {
-			{ Id = "StormAcolyte", Name = "Storm Acolyte", Level = 45, Count = 7, Element = "Lightning", Outfit = "Acolyte", Scale = 1 },
-			{ Id = "GaleRonin", Name = "Gale Ronin", Level = 58, Count = 4, Element = "Wind", Outfit = "Ronin", Scale = 1.15 },
+			{ Id = "StormAcolyte", Name = "Послушник бури", Level = 45, Count = 7, Element = "Lightning", Outfit = "Acolyte", Scale = 1 },
+			{ Id = "GaleRonin", Name = "Ронин урагана", Level = 58, Count = 4, Element = "Wind", Outfit = "Ronin", Scale = 1.15 },
 		},
-		SkyMobs = { { Id = "EliteRonin", Name = "Elite Gale Ronin", Level = 66, Count = 5, Element = "Wind", Outfit = "Ronin", Scale = 1.15, Elite = true, Leash = 20 } },
-		Boss = { Id = "ThunderShogun", Name = "Thunder Shogun", Level = 72, Element = "Lightning", Outfit = "Shogun", Scale = 2.3, Respawn = 210 },
+		SkyMobs = { { Id = "EliteRonin", Name = "Элитный ронин урагана", Level = 66, Count = 5, Element = "Wind", Outfit = "Ronin", Scale = 1.15, Elite = true, Leash = 20 } },
+		Boss = { Id = "ThunderShogun", Name = "Громовой Сёгун", Level = 72, Element = "Lightning", Outfit = "Shogun", Scale = 2.3, Respawn = 210 },
 	},
 
 	Void = {
-		Name = "Void Abyss",
-		Subtitle = "Lv. 80+ • Beyond the Rift",
+		Name = "Бездна Пустоты",
+		Subtitle = "Ур. 80+ • За гранью Разлома",
 		MinLevel = 80,
 		Origin = Vector3.new(0, 0, -2400),
 		Theme = "Void",
@@ -106,11 +106,11 @@ Zones.List = {
 			Saturation = 0.3,
 		},
 		Mobs = {
-			{ Id = "HollowWraith", Name = "Hollow Wraith", Level = 85, Count = 7, Element = "Void", Outfit = "Wraith", Scale = 1.05 },
-			{ Id = "RiftHorror", Name = "Rift Horror", Level = 100, Count = 4, Element = "Void", Outfit = "Horror", Scale = 1.45 },
+			{ Id = "HollowWraith", Name = "Призрак пустоты", Level = 85, Count = 7, Element = "Void", Outfit = "Wraith", Scale = 1.05 },
+			{ Id = "RiftHorror", Name = "Ужас Разлома", Level = 100, Count = 4, Element = "Void", Outfit = "Horror", Scale = 1.45 },
 		},
-		SkyMobs = { { Id = "EliteHorror", Name = "Elite Rift Horror", Level = 115, Count = 5, Element = "Void", Outfit = "Horror", Scale = 1.4, Elite = true, Leash = 20 } },
-		Boss = { Id = "RiftSovereign", Name = "Rift Sovereign", Level = 130, Element = "Light", Outfit = "Sovereign", Scale = 2.5, Respawn = 240 },
+		SkyMobs = { { Id = "EliteHorror", Name = "Элитный ужас Разлома", Level = 115, Count = 5, Element = "Void", Outfit = "Horror", Scale = 1.4, Elite = true, Leash = 20 } },
+		Boss = { Id = "RiftSovereign", Name = "Владыка Разлома", Level = 130, Element = "Light", Outfit = "Sovereign", Scale = 2.5, Respawn = 240 },
 	},
 }
 

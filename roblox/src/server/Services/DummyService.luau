@@ -46,7 +46,7 @@ function DummyService:SpawnDummy(cf: CFrame)
 			pcall(p.SetNetworkOwner, p, nil)
 		end
 	end
-	NpcFactory.Overhead(model, "Training Dummy", nil, Color3.fromRGB(240, 220, 160), false)
+	NpcFactory.Overhead(model, "Манекен", nil, Color3.fromRGB(240, 220, 160), false)
 
 	-- Dummies slowly heal so you can practise combos on them.
 	task.spawn(function()

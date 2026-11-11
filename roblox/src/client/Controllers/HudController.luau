@@ -156,10 +156,11 @@ function Hud:CloseAll()
 end
 
 local MENU_ICONS = { Roll = "✦", Arts = "⚔", Stats = "▲", Map = "◈", Quests = "!", Items = "♥", Shop = "$", Codes = "#", Admin = "⚙" }
+local MENU_LABELS = { Roll = "РОЛЛ", Arts = "СТИЛИ", Stats = "СТАТЫ", Map = "КАРТА", Quests = "КВЕСТЫ", Items = "ЗЕЛЬЯ", Shop = "МАГАЗИН", Codes = "КОДЫ", Admin = "АДМИН" }
 
 function Hud:AddMenuButton(text: string, color: Color3, order: number, onClick: () -> ())
 	local button = UI.button({
-		Text = (MENU_ICONS[text] or "•") .. " " .. string.upper(text),
+		Text = (MENU_ICONS[text] or "•") .. " " .. (MENU_LABELS[text] or string.upper(text)),
 		Color = color,
 		LayoutOrder = order,
 		Rotation = -3,
@@ -234,7 +235,7 @@ function Hud:AddHit(damage: number)
 	local token = comboToken
 	local label = self.Combo
 	label.Visible = true
-	label.Text = ("%d HITS"):format(comboCount)
+	label.Text = ("%d УДАРОВ"):format(comboCount)
 	label.TextColor3 = if comboCount >= 20 then Theme.Accent elseif comboCount >= 10 then Theme.Gold else Theme.Text
 	label.Rotation = math.random(-8, 4)
 	self.ComboScale.Scale = 1.5
@@ -351,21 +352,26 @@ function Hud:BuildPlayerCard()
 			return
 		end
 		local tag = ""
-		if zone.Pvp then
-			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-			local generated = workspace:FindFirstChild("Arena") and workspace.Arena:GetAttribute("Generated")
-			if State.Data and State.Data.Level < Zones.HubSafe.NewbieLevel then
-				tag = ("  •  SAFE UNTIL LV.%d"):format(Zones.HubSafe.NewbieLevel)
-			elseif generated and root and Zones.IsHubSafe(root.Position) then
-				tag = "  •  SAFE ZONE"
-			else
-				tag = "  •  ⚔ PVP"
-			end
-		else
-			tag = "  •  PVE"
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		local area = root and Zones.AreaAt(zoneId, root.Position)
+		if area == "Pvp" and State.Data and State.Data.Level < Zones.HubSafe.NewbieLevel then
+			tag = ("  •  ЗАЩИТА НОВИЧКА ДО %d УР."):format(Zones.HubSafe.NewbieLevel)
+		elseif root then
+			tag = if area == "Safe" then "  •  🛡 БЕЗОПАСНО" elseif area == "Pvp" then "  •  ⚔ PVP-ЗОНА" else "  •  PVE"
 		end
 		zoneTag.Text = "◈ " .. string.upper(zone.Name) .. tag
 		zoneTag.TextColor3 = zone.Color
+		-- Announce crossing into a different area.
+		if area and area ~= self.LastArea then
+			if self.LastArea ~= nil then
+				if area == "Pvp" then
+					self:Toast("⚔ ТЫ ВОШЁЛ В PVP-ЗОНУ — здесь атакуют игроки и босс!", "error")
+				elseif area == "Safe" then
+					self:Toast("🛡 БЕЗОПАСНАЯ ЗОНА — здесь тебя не тронут", "success")
+				end
+			end
+			self.LastArea = area
+		end
 	end
 	task.spawn(function()
 		while true do
@@ -390,7 +396,7 @@ function Hud:BuildPlayerCard()
 			local at = player:GetAttribute("NextGiftAt")
 			if at then
 				local left = math.max(0, math.floor(at - workspace:GetServerTimeNow()))
-				gift.Text = ("🎁 GIFT IN %d:%02d — %s"):format(left // 60, left % 60, player:GetAttribute("NextGiftText") or "")
+				gift.Text = ("🎁 ПОДАРОК ЧЕРЕЗ %d:%02d — %s"):format(left // 60, left % 60, player:GetAttribute("NextGiftText") or "")
 			else
 				gift.Text = ""
 			end
@@ -404,7 +410,7 @@ function Hud:BuildPlayerCard()
 		shards.Text = "◆ " .. formatNumber(d.Shards)
 		spins.Text = "✦ " .. tostring(d.Spins)
 		points.Visible = (d.StatPoints or 0) > 0
-		points.Text = ("▲ %d STAT POINTS!"):format(d.StatPoints or 0)
+		points.Text = ("▲ %d ОЧКОВ СТАТОВ!"):format(d.StatPoints or 0)
 	end)
 end
 
@@ -419,7 +425,7 @@ function Hud:BuildCombat()
 
 	local hpFrame, setHealth, healthFill = UI.bar({ Color = Theme.Good, Size = UDim2.new(1, -40, 0, 26), Position = UDim2.fromOffset(20, 0), MaxTextSize = 18, Parent = bottom })
 	hpFrame.Rotation = -1.5
-	UI.label({ Text = "HP", Font = Theme.FontHeavy, MaxTextSize = 24, Outline = 3, Size = UDim2.fromOffset(40, 30), Position = UDim2.fromOffset(-22, -2), TextColor3 = Theme.Good, ZIndex = 4, Parent = hpFrame })
+	UI.label({ Text = "ХП", Font = Theme.FontHeavy, MaxTextSize = 24, Outline = 3, Size = UDim2.fromOffset(40, 30), Position = UDim2.fromOffset(-22, -2), TextColor3 = Theme.Good, ZIndex = 4, Parent = hpFrame })
 	local awFrame, setAwaken, awakenFill = UI.bar({ Color = Theme.Accent, Size = UDim2.new(1, -80, 0, 14), Position = UDim2.fromOffset(40, 32), MaxTextSize = 12, Parent = bottom })
 	awFrame.Rotation = -1.5
 	local shimmer = UI.new("UIGradient", {
@@ -513,7 +519,7 @@ function Hud:BuildCombat()
 			slot.Gradient.Color = if key == "G" then ColorSequence.new(Theme.Gold, Color3.fromRGB(150, 60, 20)) else ColorSequence.new(style.Color, dark)
 			local unlocked = Prog.IsUnlocked(d, d.EquippedStyle, key)
 			slot.Lock.Visible = not unlocked
-			slot.LockText.Text = ("🔒\nMASTERY %d"):format(Prog.Mastery.Unlocks[key])
+			slot.LockText.Text = ("🔒\nМАСТЕРСТВО %d"):format(Prog.Mastery.Unlocks[key])
 		end
 		awakenFill.BackgroundColor3 = style.Color
 	end)
@@ -539,7 +545,7 @@ function Hud:BuildCombat()
 		local max = GameConfig.Awakening.Max
 		local ready = value >= max
 		local percent = math.floor(value / max * 100)
-		setAwaken(value / max, if ready then "★ AWAKENING READY — PRESS G ★" else ("AWAKENING %d%%"):format(percent))
+		setAwaken(value / max, if ready then "★ ПРОБУЖДЕНИЕ ГОТОВО — ЖМИ G ★" else ("ПРОБУЖДЕНИЕ %d%%"):format(percent))
 		local g = slots.G
 		g.Overlay.Size = UDim2.fromScale(1, 1 - value / max)
 		g.Timer.Text = if ready then "" else ("%d%%"):format(percent)
@@ -601,7 +607,7 @@ end
 
 function Hud:BuildTouchButtons()
 	local attack = UI.button({
-		Text = "HIT",
+		Text = "УДАР",
 		Color = Theme.Accent,
 		Radius = 50,
 		Size = UDim2.fromOffset(100, 100),
@@ -621,7 +627,7 @@ function Hud:BuildTouchButtons()
 	end)
 
 	local block = UI.button({
-		Text = "BLOCK",
+		Text = "БЛОК",
 		Color = Theme.Accent2,
 		Radius = 40,
 		Size = UDim2.fromOffset(78, 78),
@@ -660,7 +666,7 @@ function Hud:BuildServerLuck()
 			local remaining = math.floor((workspace:GetAttribute("ServerLuckUntil") or 0) - workspace:GetServerTimeNow())
 			if remaining > 0 then
 				banner.Visible = true
-				text.Text = ("★ x2 SERVER LUCK  %d:%02d ★"):format(remaining // 60, remaining % 60)
+				text.Text = ("★ x2 УДАЧА СЕРВЕРА  %d:%02d ★"):format(remaining // 60, remaining % 60)
 			else
 				banner.Visible = false
 			end

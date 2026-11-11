@@ -7,10 +7,10 @@ Progression.PointsPerLevel = 3
 Progression.ResetCostShards = 2500
 
 Progression.Stats = {
-	{ Id = "Strength", Name = "Strength", Short = "STR", Description = "+2% damage per point", Color = Color3.fromRGB(255, 90, 90) },
-	{ Id = "Vitality", Name = "Vitality", Short = "VIT", Description = "+5 max HP per point", Color = Color3.fromRGB(90, 230, 140) },
-	{ Id = "Agility", Name = "Agility", Short = "AGI", Description = "-0.5% cooldowns, +0.04 run speed per point", Color = Color3.fromRGB(90, 200, 255) },
-	{ Id = "Spirit", Name = "Spirit", Short = "SPI", Description = "+2% Awakening gain per point", Color = Color3.fromRGB(190, 110, 255) },
+	{ Id = "Strength", Name = "Сила", Short = "СИЛ", Description = "+2% урона за очко", Color = Color3.fromRGB(255, 90, 90) },
+	{ Id = "Vitality", Name = "Живучесть", Short = "ЖИВ", Description = "+5 к макс. ХП за очко", Color = Color3.fromRGB(90, 230, 140) },
+	{ Id = "Agility", Name = "Ловкость", Short = "ЛОВ", Description = "-0.5% перезарядки и +0.04 скорости за очко", Color = Color3.fromRGB(90, 200, 255) },
+	{ Id = "Spirit", Name = "Дух", Short = "ДУХ", Description = "+2% к набору пробуждения за очко", Color = Color3.fromRGB(190, 110, 255) },
 }
 
 Progression.StrengthDamage = 0.02

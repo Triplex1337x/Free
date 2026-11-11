@@ -630,7 +630,7 @@ function CombatService:HandleAbility(player: Player, payload)
 			lockNotified[player] = t
 			Remotes.Notify:FireClient(
 				player,
-				("%s unlocks at %s Mastery %d. Keep fighting with this Art!"):format(ability.Name, style.Name, Prog.Mastery.Unlocks[key]),
+				("%s откроется на %d мастерства стиля «%s». Сражайся этим стилем!"):format(ability.Name, Prog.Mastery.Unlocks[key], style.Name),
 				"info"
 			)
 		end
@@ -741,7 +741,7 @@ function CombatService:OnPlayerDied(player: Player, character: Model)
 		if killerProfile and not rewarded then
 			killerProfile.Data.Kills += 1
 			DataService:Sync(killer)
-			Remotes.Notify:FireClient(killer, "You defeated " .. player.DisplayName .. " (no reward — same rival recently)", "kill")
+			Remotes.Notify:FireClient(killer, "Ты победил " .. player.DisplayName .. " (без награды — этот соперник был недавно)", "kill")
 		elseif killerProfile then
 			pvpRewardAt[pairKey] = os.clock()
 			killerProfile.Data.Kills += 1
@@ -749,7 +749,7 @@ function CombatService:OnPlayerDied(player: Player, character: Model)
 			Progression:AddXp(killer, Rewards.PlayerKillXp)
 			Progression:AddMasteryXp(killer, Prog.Mastery.XpPerKill)
 			self.Services.QuestService:Progress(killer, "PvpKill", 1)
-			Remotes.Notify:FireClient(killer, "You defeated " .. player.DisplayName, "kill")
+			Remotes.Notify:FireClient(killer, "Ты победил " .. player.DisplayName, "kill")
 		end
 		fx("KillFeed", { Killer = killer.DisplayName, Victim = player.DisplayName })
 	end

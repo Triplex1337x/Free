@@ -62,7 +62,7 @@ function MenuController:Start()
 	UI.new("UIGradient", { Color = ColorSequence.new(Color3.new(1, 1, 1), Theme.Accent2), Rotation = 90, Parent = bg })
 
 	UI.ribbon({
-		Text = "7 ELEMENTAL ARTS  •  5 REALMS  •  RAID BOSSES",
+		Text = "7 СТИХИЙНЫХ СТИЛЕЙ  •  5 ЛОКАЦИЙ  •  РЕЙД-БОССЫ",
 		Size = UDim2.fromOffset(560, 44),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.58),
@@ -72,7 +72,7 @@ function MenuController:Start()
 	})
 
 	local play = UI.button({
-		Text = "PLAY",
+		Text = "ИГРАТЬ",
 		Color = Theme.Accent,
 		Size = UDim2.fromOffset(280, 80),
 		AnchorPoint = Vector2.new(0.5, 0.5),
@@ -81,7 +81,7 @@ function MenuController:Start()
 		MaxTextSize = 52,
 		Parent = root,
 	})
-	UI.label({ Text = "Click PLAY to enter the Rift", TextColor3 = Theme.SubText, MaxTextSize = 18, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0.82), Size = UDim2.fromOffset(400, 26), Parent = root })
+	UI.label({ Text = "Нажми «ИГРАТЬ», чтобы войти в Разлом", TextColor3 = Theme.SubText, MaxTextSize = 18, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0.82), Size = UDim2.fromOffset(400, 26), Parent = root })
 
 	-- Logo pulse + title camera orbit.
 	local logoScale = UI.new("UIScale", { Parent = logo })

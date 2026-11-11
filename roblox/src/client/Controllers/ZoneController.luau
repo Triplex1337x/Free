@@ -112,7 +112,7 @@ local function titleCard(zone)
 end
 
 function ZoneController:BuildMap()
-	local panel = Hud:CreatePanel("World Map", Vector2.new(900, 560))
+	local panel = Hud:CreatePanel("Карта мира", Vector2.new(900, 560))
 	local grid = UI.new("ScrollingFrame", {
 		BackgroundTransparency = 1,
 		Size = UDim2.fromScale(1, 1),
@@ -139,10 +139,10 @@ function ZoneController:BuildMap()
 		})
 		UI.label({ Text = string.upper(zone.Name), Font = Theme.FontHeavy, TextColor3 = Theme.Text, MaxTextSize = 30, Outline = 3, TextXAlignment = Enum.TextXAlignment.Left, Size = UDim2.new(1, -24, 0, 40), Position = UDim2.fromOffset(14, 10), Parent = card })
 		UI.label({ Text = zone.Subtitle, TextColor3 = zone.Color, Font = Theme.FontHeavy, MaxTextSize = 18, TextXAlignment = Enum.TextXAlignment.Left, Size = UDim2.new(1, -24, 0, 24), Position = UDim2.fromOffset(14, 50), Parent = card })
-		local boss = zone.Boss and ("BOSS: %s (Lv.%d)"):format(zone.Boss.Name, zone.Boss.Level) or ""
+		local boss = zone.Boss and ("БОСС: %s (%d ур.)"):format(zone.Boss.Name, zone.Boss.Level) or ""
 		UI.label({ Text = boss, TextColor3 = Theme.SubText, MaxTextSize = 15, Outline = false, TextXAlignment = Enum.TextXAlignment.Left, Size = UDim2.new(1, -150, 0, 22), Position = UDim2.fromOffset(14, 82), Parent = card })
 		local button = UI.button({
-			Text = "TRAVEL",
+			Text = "ПЕРЕЙТИ",
 			Color = zone.Color,
 			Size = UDim2.fromOffset(130, 46),
 			Position = UDim2.new(1, -144, 1, -58),
@@ -167,7 +167,7 @@ function ZoneController:BuildMap()
 		local current = player:GetAttribute("Zone") or "Hub"
 		for id, c in cards do
 			local locked = d and d.Level < c.Zone.MinLevel
-			c.Button.Text = if id == current then "YOU'RE HERE" elseif locked then ("🔒 LV.%d"):format(c.Zone.MinLevel) else "TRAVEL"
+			c.Button.Text = if id == current then "ТЫ ЗДЕСЬ" elseif locked then ("🔒 %d УР."):format(c.Zone.MinLevel) else "ПЕРЕЙТИ"
 		end
 	end
 	State.Observe(refresh)

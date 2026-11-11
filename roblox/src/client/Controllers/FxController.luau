@@ -358,7 +358,7 @@ local function damageNumber(d, color: Color3)
 	gui.Adornee = anchor
 	gui.Parent = anchor
 	local big = (d.Damage or 0) >= 20
-	local text = if d.Parried then "PARRY!" elseif d.Blocked then ("BLOCK %d"):format(d.Damage or 0) else tostring(d.Damage or "")
+	local text = if d.Parried then "ПАРИРОВАНИЕ!" elseif d.Blocked then ("БЛОК %d"):format(d.Damage or 0) else tostring(d.Damage or "")
 	local label = UI.label({
 		Text = text,
 		Font = Theme.FontHeavy,
@@ -733,7 +733,7 @@ local function systemMessage(text: string)
 		local channels = TextChatService:FindFirstChild("TextChannels")
 		local general = channels and channels:FindFirstChild("RBXGeneral")
 		if general then
-			general:DisplaySystemMessage('<font color="#FFD23C">[Rift] ' .. text .. "</font>")
+			general:DisplaySystemMessage('<font color="#FFD23C">[Разлом] ' .. text .. "</font>")
 		end
 	end)
 end

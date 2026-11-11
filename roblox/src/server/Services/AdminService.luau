@@ -55,12 +55,12 @@ local Commands = {}
 
 function Commands.Shards(self, target, d, amount)
 	d.Shards = math.max(0, d.Shards + amount)
-	return ("Shards: %d"):format(d.Shards)
+	return ("Осколки: %d"):format(d.Shards)
 end
 
 function Commands.Spins(self, target, d, amount)
 	d.Spins = math.max(0, d.Spins + amount)
-	return ("Spins: %d"):format(d.Spins)
+	return ("Спины: %d"):format(d.Spins)
 end
 
 function Commands.SetLevel(self, target, d, amount)

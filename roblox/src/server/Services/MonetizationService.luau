@@ -113,7 +113,7 @@ local function grant(self, player: Player, product)
 	if g.ServerLuckMinutes then
 		local base = math.max(workspace:GetAttribute("ServerLuckUntil") or 0, now())
 		workspace:SetAttribute("ServerLuckUntil", base + g.ServerLuckMinutes * 60)
-		self:Announce(("%s activated x%d Server Luck for everyone! (+%d min)"):format(
+		self:Announce(("%s включил удачу сервера x%d для всех! (+%d мин)"):format(
 			player.DisplayName,
 			Config.ServerLuckMultiplier,
 			g.ServerLuckMinutes
@@ -154,7 +154,7 @@ local function processReceipt(self, info)
 	if not DataService:SaveNow(player) then
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
-	Remotes.Notify:FireClient(player, "Purchase complete: " .. entry.Product.Name, "success")
+	Remotes.Notify:FireClient(player, "Покупка завершена: " .. entry.Product.Name, "success")
 	return Enum.ProductPurchaseDecision.PurchaseGranted
 end
 
@@ -166,22 +166,22 @@ local function onBuy(self, player: Player, payload)
 	if kind == "Pass" then
 		local pass = Config.GamePasses[key]
 		if not pass or pass.Id == 0 then
-			Remotes.Notify:FireClient(player, "This pass isn't available yet.", "error")
+			Remotes.Notify:FireClient(player, "Этот пропуск пока недоступен.", "error")
 			return
 		end
 		if self:HasPass(player, key) then
-			Remotes.Notify:FireClient(player, "You already own " .. pass.Name, "info")
+			Remotes.Notify:FireClient(player, "У тебя уже есть: " .. pass.Name, "info")
 			return
 		end
 		MarketplaceService:PromptGamePassPurchase(player, pass.Id)
 	elseif kind == "Product" then
 		local product = Config.Products[key]
 		if not product or product.Id == 0 then
-			Remotes.Notify:FireClient(player, "This item isn't available yet.", "error")
+			Remotes.Notify:FireClient(player, "Этот товар пока недоступен.", "error")
 			return
 		end
 		if product.PaidRandom and player:GetAttribute("PaidRandomRestricted") ~= false then
-			Remotes.Notify:FireClient(player, "This item isn't available in your region.", "error")
+			Remotes.Notify:FireClient(player, "Этот товар недоступен в твоём регионе.", "error")
 			return
 		end
 		MarketplaceService:PromptProductPurchase(player, product.Id)
@@ -197,7 +197,7 @@ function MonetizationService:Start()
 		local key = passesById[passId]
 		if purchased and key then
 			self:SetPass(player, key)
-			Remotes.Notify:FireClient(player, "Unlocked " .. Config.GamePasses[key].Name .. "!", "success")
+			Remotes.Notify:FireClient(player, "Открыто: " .. Config.GamePasses[key].Name .. "!", "success")
 			self.Services.DataService:Sync(player)
 		end
 	end)

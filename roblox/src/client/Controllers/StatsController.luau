@@ -18,14 +18,14 @@ local StatsController = {}
 local function allocate(statId: string, amount: number)
 	local ok, result = pcall(Remotes.AllocateStat.InvokeServer, Remotes.AllocateStat, statId, amount)
 	if not ok or type(result) ~= "table" then
-		Hud:Toast("Couldn't spend points, try again.", "error")
+		Hud:Toast("Не удалось вложить очки, попробуй ещё раз.", "error")
 	elseif not result.Ok then
 		Hud:Toast(result.Error, "error")
 	end
 end
 
 function StatsController:Init()
-	local panel = Hud:CreatePanel("Stats", Vector2.new(760, 560))
+	local panel = Hud:CreatePanel("Статы", Vector2.new(760, 560))
 	local content = panel.Content
 
 	local header = UI.label({
@@ -90,7 +90,7 @@ function StatsController:Init()
 		Parent = content,
 	})
 	UI.button({
-		Text = ("RESET (%d ◆)"):format(Prog.ResetCostShards),
+		Text = ("СБРОС (%d ◆)"):format(Prog.ResetCostShards),
 		Color = Theme.Bad,
 		Size = UDim2.fromOffset(200, 48),
 		Position = UDim2.new(1, -204, 1, -70),
@@ -99,19 +99,19 @@ function StatsController:Init()
 		OnClick = function()
 			local ok, result = pcall(Remotes.ResetStats.InvokeServer, Remotes.ResetStats)
 			if ok and type(result) == "table" then
-				Hud:Toast(if result.Ok then "Stats reset — points refunded!" else result.Error, if result.Ok then "success" else "error")
+				Hud:Toast(if result.Ok then "Статы сброшены — очки возвращены!" else result.Error, if result.Ok then "success" else "error")
 			end
 		end,
 	})
 
 	State.Observe(function(d)
 		local stats = d.Stats or {}
-		header.Text = if (d.StatPoints or 0) > 0 then ("▲ %d POINTS TO SPEND ▲"):format(d.StatPoints) else "LEVEL UP TO EARN POINTS (+3 PER LEVEL)"
+		header.Text = if (d.StatPoints or 0) > 0 then ("▲ МОЖНО ВЛОЖИТЬ ОЧКОВ: %d ▲"):format(d.StatPoints) else "ПОВЫШАЙ УРОВЕНЬ, ЧТОБЫ ПОЛУЧИТЬ ОЧКИ (+3 ЗА УРОВЕНЬ)"
 		for id, label in rows do
 			label.Text = tostring(stats[id] or 0)
 		end
 		local str, vit, agi, spi = stats.Strength or 0, stats.Vitality or 0, stats.Agility or 0, stats.Spirit or 0
-		summary.Text = ('<font color="#FF5A5A">+%d%% DMG</font>   <font color="#5AEB8C">+%d HP</font>   <font color="#5AC8FF">-%d%% CD</font>   <font color="#BE6EFF">+%d%% AWAKEN</font>'):format(
+		summary.Text = ('<font color="#FF5A5A">+%d%% УРОН</font>   <font color="#5AEB8C">+%d ХП</font>   <font color="#5AC8FF">-%d%% ПЕРЕЗАРЯДКА</font>   <font color="#BE6EFF">+%d%% ПРОБУЖДЕНИЕ</font>'):format(
 			math.floor(str * Prog.StrengthDamage * 100),
 			vit * Prog.VitalityHealth,
 			math.floor(math.min(Prog.AgilityCooldownCap, agi * Prog.AgilityCooldown) * 100),

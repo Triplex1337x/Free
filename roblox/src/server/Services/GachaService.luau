@@ -33,23 +33,23 @@ function GachaService:Roll(player: Player, count: number)
 	local Monetization = self.Services.MonetizationService
 
 	if count == 10 and not Monetization:HasPass(player, "QuickRoll") then
-		return fail("x10 rolls need the Quick Roll pass.")
+		return fail("Для ролла x10 нужен пропуск «Быстрый ролл».")
 	end
 	local t = os.clock()
 	if t - (lastRoll[player] or 0) < Config.MinRollInterval then
-		return fail("Slow down!")
+		return fail("Не так быстро!")
 	end
 	lastRoll[player] = t
 
 	local profile = self.Services.DataService:Get(player)
 	if not profile then
-		return fail("Data is still loading.")
+		return fail("Данные ещё загружаются.")
 	end
 	local data = profile.Data
 
 	local affordable = data.Spins + math.floor(data.Shards / Config.RollCostShards)
 	if affordable < count then
-		return fail(("Not enough spins. Each roll costs 1 Spin or %d Shards."):format(Config.RollCostShards))
+		return fail(("Не хватает спинов. Ролл стоит 1 ✦ или %d ◆."):format(Config.RollCostShards))
 	end
 	for _ = 1, count do
 		if data.Spins > 0 then
@@ -83,7 +83,7 @@ function GachaService:Roll(player: Player, count: number)
 		table.insert(results, { Style = styleId, Rarity = rarity.Id, New = isNew, Refund = refund })
 
 		if rarityIndex >= Config.AnnounceFromIndex then
-			Monetization:Announce(("%s pulled %s %s!"):format(player.DisplayName, rarity.Id:upper(), Styles.Get(styleId).Name))
+			Monetization:Announce(("%s выбил %s стиль «%s»!"):format(player.DisplayName, string.upper(rarity.Name), Styles.Get(styleId).Name))
 		end
 		if rarityIndex >= Config.GlobalAnnounceFromIndex then
 			task.spawn(pcall, MessagingService.PublishAsync, MessagingService, GLOBAL_TOPIC, {
@@ -101,24 +101,24 @@ end
 
 function GachaService:Equip(player: Player, styleId)
 	if type(styleId) ~= "string" or not Styles.Get(styleId) then
-		return fail("Unknown Art.")
+		return fail("Неизвестный стиль.")
 	end
 	local profile = self.Services.DataService:Get(player)
 	if not profile then
-		return fail("Data is still loading.")
+		return fail("Данные ещё загружаются.")
 	end
 	if not profile.Data.OwnedStyles[styleId] then
-		return fail("You don't own this Art.")
+		return fail("У тебя нет этого стиля.")
 	end
 	if profile.Data.EquippedStyle == styleId then
 		return { Ok = true }
 	end
 	if self.Services.CombatService:InCombat(player) then
-		return fail("Can't switch Arts mid-fight.")
+		return fail("Нельзя менять стиль во время боя.")
 	end
 	local t = os.clock()
 	if t - (lastEquip[player] or 0) < EQUIP_COOLDOWN then
-		return fail("Wait a moment before switching again.")
+		return fail("Подожди немного перед сменой стиля.")
 	end
 	lastEquip[player] = t
 
@@ -152,7 +152,7 @@ function GachaService:Start()
 			end
 			local style = Styles.Get(d.Style)
 			if style and type(d.Name) == "string" then
-				self.Services.MonetizationService:Announce(("[GLOBAL] %s pulled MYTHIC %s!"):format(d.Name, style.Name))
+				self.Services.MonetizationService:Announce(("[ВСЕ СЕРВЕРА] %s выбил МИФИЧЕСКИЙ стиль «%s»!"):format(d.Name, style.Name))
 			end
 		end)
 	end)

@@ -385,7 +385,7 @@ function ZoneService:CreatePortal(parent: Instance, base: CFrame, targetId: stri
 	local title = Instance.new("TextLabel")
 	title.BackgroundTransparency = 1
 	title.Size = UDim2.fromScale(1, 0.6)
-	title.Font = Enum.Font.LuckiestGuy
+	title.FontFace = SIGN_FONT
 	title.TextScaled = true
 	title.TextColor3 = target.Color
 	title.TextStrokeTransparency = 0
@@ -395,7 +395,7 @@ function ZoneService:CreatePortal(parent: Instance, base: CFrame, targetId: stri
 	sub.BackgroundTransparency = 1
 	sub.Position = UDim2.fromScale(0, 0.6)
 	sub.Size = UDim2.fromScale(1, 0.4)
-	sub.Font = Enum.Font.FredokaOne
+	sub.FontFace = SIGN_FONT
 	sub.TextScaled = true
 	sub.TextColor3 = Color3.new(1, 1, 1)
 	sub.TextStrokeTransparency = 0.2
@@ -404,7 +404,7 @@ function ZoneService:CreatePortal(parent: Instance, base: CFrame, targetId: stri
 	gui.Parent = inner
 
 	local prompt = Instance.new("ProximityPrompt")
-	prompt.ActionText = "Travel"
+	prompt.ActionText = "Перейти"
 	prompt.ObjectText = target.Name
 	prompt.KeyboardKeyCode = Enum.KeyCode.T
 	prompt.HoldDuration = 0.3
@@ -444,25 +444,25 @@ end
 function ZoneService:Travel(player: Player, zoneId)
 	local zone = type(zoneId) == "string" and Zones.Get(zoneId)
 	if not zone then
-		return { Ok = false, Error = "Unknown destination." }
+		return { Ok = false, Error = "Неизвестная локация." }
 	end
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if not humanoid or humanoid.Health <= 0 then
-		return { Ok = false, Error = "You can't travel right now." }
+		return { Ok = false, Error = "Сейчас нельзя перемещаться." }
 	end
 	if (player:GetAttribute("Zone") or "Hub") == zoneId then
-		return { Ok = false, Error = "You are already there." }
+		return { Ok = false, Error = "Ты уже здесь." }
 	end
 	if self.Services.ProgressionService:GetLevel(player) < zone.MinLevel then
-		return { Ok = false, Error = ("%s requires Lv. %d."):format(zone.Name, zone.MinLevel) }
+		return { Ok = false, Error = ("Для локации «%s» нужен %d уровень."):format(zone.Name, zone.MinLevel) }
 	end
 	if self.Services.CombatService:InCombat(player) then
-		return { Ok = false, Error = "Can't travel mid-fight!" }
+		return { Ok = false, Error = "Нельзя перемещаться во время боя!" }
 	end
 	local t = os.clock()
 	if t - (lastTravel[player] or 0) < TRAVEL_COOLDOWN then
-		return { Ok = false, Error = "Portal is recharging..." }
+		return { Ok = false, Error = "Портал перезаряжается..." }
 	end
 	lastTravel[player] = t
 

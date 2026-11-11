@@ -342,11 +342,11 @@ function NpcFactory.Overhead(model: Model, name: string, level: number?, color: 
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.new(1, 0, 0.55, 0)
-	label.Font = Enum.Font.LuckiestGuy
+	label.FontFace = Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold)
 	label.TextScaled = true
 	label.TextColor3 = color
 	label.TextStrokeTransparency = 0
-	label.Text = if level then ("%s  Lv.%d"):format(name, level) else name
+	label.Text = if level then ("%s  %d ур."):format(name, level) else name
 	label.Parent = gui
 
 	local bar = Instance.new("Frame")

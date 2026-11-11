@@ -13,6 +13,8 @@ local Remotes = require(Shared.Remotes)
 
 local QuestService = {}
 
+local PERIOD_NAMES = { Daily = "ежедневный", Weekly = "еженедельный", Monthly = "ежемесячный" }
+
 local session = {} :: { [Player]: { Start: number, Claimed: { [number]: boolean } } }
 
 local potionNames = {}
@@ -110,7 +112,7 @@ function QuestService:CheckChain(player: Player)
 			break
 		end
 		self:Grant(player, quest.Reward)
-		Remotes.Notify:FireClient(player, ("STORY COMPLETE: %s  •  %s"):format(quest.Text:format(quest.Goal), Economy.DescribeReward(quest.Reward, d.Level, potionNames)), "level")
+		Remotes.Notify:FireClient(player, ("ГЛАВА ИСТОРИИ ПРОЙДЕНА: %s  •  %s"):format(quest.Text:format(quest.Goal), Economy.DescribeReward(quest.Reward, d.Level, potionNames)), "level")
 		chain.Step += 1
 		chain.Progress = 0
 	end
@@ -145,7 +147,7 @@ function QuestService:Progress(player: Player, kind: string, amount: number, zon
 				if advance(entry, quest, kind, amount) then
 					entry.Done = true
 					self:Grant(player, quest.Reward)
-					Remotes.Notify:FireClient(player, ("%s QUEST DONE: %s  •  %s"):format(string.upper(periodKind), quest.Text:format(quest.Goal), Economy.DescribeReward(quest.Reward, d.Level, potionNames)), "level")
+					Remotes.Notify:FireClient(player, ("КВЕСТ ВЫПОЛНЕН (%s): %s  •  %s"):format(PERIOD_NAMES[periodKind], quest.Text:format(quest.Goal), Economy.DescribeReward(quest.Reward, d.Level, potionNames)), "level")
 				end
 			end
 		end
@@ -158,7 +160,7 @@ function QuestService:Progress(player: Player, kind: string, amount: number, zon
 				set.Bonus = true
 				local bonus = Economy.Periods[periodKind].Bonus
 				self:Grant(player, bonus)
-				Remotes.Notify:FireClient(player, ("ALL %s QUESTS DONE!  Bonus: %s"):format(string.upper(periodKind), Economy.DescribeReward(bonus, d.Level, potionNames)), "level")
+				Remotes.Notify:FireClient(player, ("ВСЕ КВЕСТЫ (%s) ВЫПОЛНЕНЫ!  Бонус: %s"):format(PERIOD_NAMES[periodKind], Economy.DescribeReward(bonus, d.Level, potionNames)), "level")
 			end
 		end
 	end
@@ -203,7 +205,7 @@ function QuestService:Start()
 					if not s.Claimed[i] and minutes >= gift.Minutes then
 						s.Claimed[i] = true
 						self:Grant(player, gift.Reward)
-						Remotes.Notify:FireClient(player, ("PLAYTIME GIFT (%d min): %s"):format(gift.Minutes, Economy.DescribeReward(gift.Reward, nil, potionNames)), "success")
+						Remotes.Notify:FireClient(player, ("ПОДАРОК ЗА ИГРУ (%d мин): %s"):format(gift.Minutes, Economy.DescribeReward(gift.Reward, nil, potionNames)), "success")
 						self:UpdateGiftAttributes(player)
 					end
 				end

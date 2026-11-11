@@ -250,7 +250,7 @@ local function onPlayerAdded(player: Player)
 		return
 	end
 	if not data then
-		player:Kick("Could not load your data. Please rejoin in a minute — nothing was lost.")
+		player:Kick("Не удалось загрузить данные. Перезайди через минуту — ничего не потеряно.")
 		return
 	end
 	if data.FirstJoin == 0 then

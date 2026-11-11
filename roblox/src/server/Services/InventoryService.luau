@@ -63,14 +63,14 @@ function InventoryService:UsePotion(player: Player, id)
 	local d = data(self, player)
 	local potion = type(id) == "string" and Potions.Get(id)
 	if not d or not potion then
-		return { Ok = false, Error = "Unknown potion." }
+		return { Ok = false, Error = "Неизвестное зелье." }
 	end
 	if (d.Inventory[id] or 0) <= 0 then
-		return { Ok = false, Error = "You don't have that potion." }
+		return { Ok = false, Error = "У тебя нет этого зелья." }
 	end
 	local t = os.clock()
 	if t - (lastUse[player] or 0) < 0.5 then
-		return { Ok = false, Error = "Slow down!" }
+		return { Ok = false, Error = "Не так быстро!" }
 	end
 	lastUse[player] = t
 
@@ -95,12 +95,12 @@ function InventoryService:BuyPotion(player: Player, id, amount)
 	local d = data(self, player)
 	local potion = type(id) == "string" and Potions.Get(id)
 	if not d or not potion then
-		return { Ok = false, Error = "Unknown potion." }
+		return { Ok = false, Error = "Неизвестное зелье." }
 	end
 	amount = math.clamp(math.floor(tonumber(amount) or 1), 1, 10)
 	local cost = potion.Price * amount
 	if d.Shards < cost then
-		return { Ok = false, Error = ("Not enough Shards (%d needed)."):format(cost) }
+		return { Ok = false, Error = ("Не хватает осколков (нужно %d ◆)."):format(cost) }
 	end
 	d.Shards -= cost
 	self:AddPotion(player, id, amount, true)
@@ -147,7 +147,7 @@ function InventoryService:Start()
 							speedEnded = true
 						end
 						if potion then
-							Remotes.Notify:FireClient(player, potion.Name .. " wore off.", "info")
+							Remotes.Notify:FireClient(player, "Закончилось действие: " .. potion.Name, "info")
 						end
 					end
 				end

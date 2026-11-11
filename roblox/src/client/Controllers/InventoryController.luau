@@ -41,7 +41,7 @@ end
 local function invoke(remote, ...)
 	local ok, result = pcall(remote.InvokeServer, remote, ...)
 	if not ok or type(result) ~= "table" then
-		Hud:Toast("Something went wrong, try again.", "error")
+		Hud:Toast("Что-то пошло не так, попробуй ещё раз.", "error")
 		return false
 	elseif not result.Ok then
 		Hud:Toast(result.Error, "error")
@@ -156,7 +156,7 @@ function InventoryController:BuildBuffBar()
 				any = true
 			end
 			if tipTarget == e.Id then
-				tipTime.Text = "TIME LEFT: " .. clock(left)
+				tipTime.Text = "ОСТАЛОСЬ: " .. clock(left)
 			end
 		end
 		if any then
@@ -170,7 +170,7 @@ end
 ---------------------------------------------------------------------------
 
 function InventoryController:BuildPanel()
-	local panel = Hud:CreatePanel("Inventory", Vector2.new(880, 580))
+	local panel = Hud:CreatePanel("Зелья", Vector2.new(880, 580))
 	local content = panel.Content
 
 	local tabs = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 46), Position = UDim2.fromOffset(0, 6), Parent = content }, {
@@ -199,14 +199,14 @@ function InventoryController:BuildPanel()
 			tabButtons[n].BackgroundTransparency = if n == name then 0 else 0.45
 		end
 	end
-	for i, name in { "MY POTIONS", "POTION SHOP" } do
+	for i, name in { "МОИ ЗЕЛЬЯ", "МАГАЗИН ЗЕЛИЙ" } do
 		pages[name] = page()
 		local button = UI.button({ Text = name, Color = if i == 1 then Theme.Accent2 else Theme.Gold, Size = UDim2.fromOffset(200, 42), Rotation = -2, MaxTextSize = 20, LayoutOrder = i, Parent = tabs, OnClick = function()
 			select(name)
 		end })
 		tabButtons[name] = button
 	end
-	select("MY POTIONS")
+	select("МОИ ЗЕЛЬЯ")
 
 	local function card(parent, potion, order)
 		local frame = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), LayoutOrder = order, Parent = parent }, {
@@ -217,12 +217,12 @@ function InventoryController:BuildPanel()
 		local icon = UI.potionIcon(potion, 84, frame)
 		icon.Position = UDim2.fromOffset(10, 18)
 		UI.label({ Text = string.upper(potion.Name), Font = Theme.FontHeavy, TextColor3 = potion.Color, MaxTextSize = 20, TextXAlignment = Enum.TextXAlignment.Left, Size = UDim2.new(1, -110, 0, 26), Position = UDim2.fromOffset(104, 10), Parent = frame })
-		UI.label({ Text = ("%s  •  %d min"):format(potion.Description, potion.Minutes), MaxTextSize = 15, TextXAlignment = Enum.TextXAlignment.Left, TextWrapped = true, Size = UDim2.new(1, -110, 0, 36), Position = UDim2.fromOffset(104, 36), Parent = frame })
+		UI.label({ Text = ("%s  •  %d мин"):format(potion.Description, potion.Minutes), MaxTextSize = 15, TextXAlignment = Enum.TextXAlignment.Left, TextWrapped = true, Size = UDim2.new(1, -110, 0, 36), Position = UDim2.fromOffset(104, 36), Parent = frame })
 		return frame
 	end
 
-	local mine = pages["MY POTIONS"]
-	local empty = UI.label({ Text = "No potions yet — earn them from quests, bosses and playtime gifts, or buy them in the shop!", TextColor3 = Theme.SubText, TextWrapped = true, MaxTextSize = 20, Size = UDim2.new(1, -40, 0, 80), Position = UDim2.fromOffset(20, 120), Visible = false, Parent = content })
+	local mine = pages["МОИ ЗЕЛЬЯ"]
+	local empty = UI.label({ Text = "Зелий пока нет — получай их за квесты, боссов и время в игре или купи в магазине!", TextColor3 = Theme.SubText, TextWrapped = true, MaxTextSize = 20, Size = UDim2.new(1, -40, 0, 80), Position = UDim2.fromOffset(20, 120), Visible = false, Parent = content })
 
 	State.Observe(function(d)
 		for _, child in mine:GetChildren() do
@@ -238,9 +238,9 @@ function InventoryController:BuildPanel()
 				local potion = Potions.Get(id)
 				local frame = card(mine, potion, i)
 				UI.label({ Text = "x" .. have, Font = Theme.FontHeavy, TextColor3 = Theme.Gold, MaxTextSize = 24, Outline = 3, Size = UDim2.fromOffset(60, 30), Position = UDim2.fromOffset(52, 84), Parent = frame })
-				UI.button({ Text = "DRINK", Color = potion.Color, Size = UDim2.fromOffset(120, 40), Position = UDim2.new(1, -132, 1, -50), MaxTextSize = 18, Parent = frame, OnClick = function()
+				UI.button({ Text = "ВЫПИТЬ", Color = potion.Color, Size = UDim2.fromOffset(120, 40), Position = UDim2.new(1, -132, 1, -50), MaxTextSize = 18, Parent = frame, OnClick = function()
 					if invoke(Remotes.UsePotion, id) then
-						Hud:Toast(potion.Name .. " active!", "success")
+						Hud:Toast("Действует: " .. potion.Name, "success")
 					end
 				end })
 			end
@@ -256,13 +256,13 @@ function InventoryController:BuildPanel()
 		empty.Visible = mine.Visible and count == 0
 	end)
 
-	local shop = pages["POTION SHOP"]
+	local shop = pages["МАГАЗИН ЗЕЛИЙ"]
 	for i, id in Potions.Order do
 		local potion = Potions.Get(id)
 		local frame = card(shop, potion, i)
 		UI.button({ Text = ("◆ %d"):format(potion.Price), Color = Theme.Gold, Size = UDim2.fromOffset(130, 40), Position = UDim2.new(1, -142, 1, -50), MaxTextSize = 18, Parent = frame, OnClick = function()
 			if invoke(Remotes.BuyPotion, id, 1) then
-				Hud:Toast("Bought " .. potion.Name, "success")
+				Hud:Toast("Куплено: " .. potion.Name, "success")
 			end
 		end })
 	end

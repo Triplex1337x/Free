@@ -40,7 +40,7 @@ local function fetchPrice(item, infoType: Enum.InfoType, label: TextButton, owne
 end
 
 function ShopController:BuildShop()
-	local panel = Hud:CreatePanel("Shop", Vector2.new(860, 560))
+	local panel = Hud:CreatePanel("Магазин", Vector2.new(860, 560))
 	local scroll = UI.new("ScrollingFrame", {
 		BackgroundTransparency = 1,
 		Size = UDim2.fromScale(1, 1),
@@ -79,7 +79,7 @@ function ShopController:BuildShop()
 
 	local passes = sorted(Config.GamePasses)
 	if #passes > 0 then
-		header("Game Passes — forever")
+		header("Пропуски — навсегда")
 		local g = grid()
 		for _, entry in passes do
 			local frame = card(g, entry.Item, Theme.Gold)
@@ -92,12 +92,12 @@ function ShopController:BuildShop()
 			end
 			player:GetAttributeChangedSignal(attr):Connect(function()
 				if owned() then
-					button.Text = "Owned"
+					button.Text = "Куплено"
 					button.BackgroundColor3 = Theme.PanelLight
 				end
 			end)
 			if owned() then
-				button.Text = "Owned"
+				button.Text = "Куплено"
 				button.BackgroundColor3 = Theme.PanelLight
 			else
 				fetchPrice(entry.Item, Enum.InfoType.GamePass, button, owned)
@@ -107,9 +107,9 @@ function ShopController:BuildShop()
 
 	local products = sorted(Config.Products)
 	if #products > 0 then
-		header("Boosts & Spins")
+		header("Бусты и спины")
 		UI.label({
-			Text = "Spins and Shards give random Arts — check exact odds in the Roll menu before buying.",
+			Text = "Спины и осколки дают случайные стили — точные шансы смотри в меню «Ролл» перед покупкой.",
 			TextColor3 = Theme.SubText,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
@@ -142,15 +142,15 @@ function ShopController:BuildShop()
 	end
 
 	if #passes == 0 and #products == 0 then
-		UI.label({ Text = "Shop items aren't configured yet (see Config/Monetization).", TextColor3 = Theme.SubText, Size = UDim2.new(1, 0, 0, 30), MaxTextSize = 18, Parent = scroll })
+		UI.label({ Text = "Товары ещё не настроены (см. Config/Monetization).", TextColor3 = Theme.SubText, Size = UDim2.new(1, 0, 0, 30), MaxTextSize = 18, Parent = scroll })
 	end
 	return panel
 end
 
 function ShopController:BuildCodes()
-	local panel = Hud:CreatePanel("Codes", Vector2.new(480, 260))
+	local panel = Hud:CreatePanel("Коды", Vector2.new(480, 260))
 	local box = UI.new("TextBox", {
-		PlaceholderText = "Enter code...",
+		PlaceholderText = "Введи код...",
 		Text = "",
 		ClearTextOnFocus = false,
 		Font = Theme.FontHeavy,
@@ -163,7 +163,7 @@ function ShopController:BuildCodes()
 	}, { UI.corner(10), UI.stroke(Theme.Accent2, 2, 0.2), UI.padding(10), UI.new("UITextSizeConstraint", { MaxTextSize = 24 }) })
 
 	local busy = false
-	UI.button({ Text = "Redeem", Color = Theme.Accent, Size = UDim2.new(1, 0, 0, 50), Position = UDim2.fromOffset(0, 70), Parent = panel.Content, OnClick = function()
+	UI.button({ Text = "АКТИВИРОВАТЬ", Color = Theme.Accent, Size = UDim2.new(1, 0, 0, 50), Position = UDim2.fromOffset(0, 70), Parent = panel.Content, OnClick = function()
 		if busy or box.Text == "" then
 			return
 		end
@@ -175,11 +175,11 @@ function ShopController:BuildCodes()
 				box.Text = ""
 			end
 		else
-			Hud:Toast("Couldn't redeem, try again.", "error")
+			Hud:Toast("Не удалось активировать, попробуй ещё раз.", "error")
 		end
 		busy = false
 	end })
-	UI.label({ Text = "Follow the group for new codes every update!", TextColor3 = Theme.SubText, Size = UDim2.new(1, 0, 0, 22), Position = UDim2.fromOffset(0, 134), MaxTextSize = 15, Parent = panel.Content })
+	UI.label({ Text = "Новые коды — в группе после каждого обновления!", TextColor3 = Theme.SubText, Size = UDim2.new(1, 0, 0, 22), Position = UDim2.fromOffset(0, 134), MaxTextSize = 15, Parent = panel.Content })
 	return panel
 end
 

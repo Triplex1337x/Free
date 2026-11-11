@@ -136,12 +136,12 @@ end
 function ProgressionService:AllocateStat(player: Player, statId, amount)
 	local d = data(self, player)
 	if not d or type(statId) ~= "string" or d.Stats[statId] == nil then
-		return { Ok = false, Error = "Unknown stat." }
+		return { Ok = false, Error = "Неизвестный стат." }
 	end
 	amount = math.clamp(math.floor(tonumber(amount) or 1), 1, 1000)
 	amount = math.min(amount, d.StatPoints)
 	if amount <= 0 then
-		return { Ok = false, Error = "No stat points left. Level up to earn more!" }
+		return { Ok = false, Error = "Очков не осталось. Повышай уровень, чтобы получить ещё!" }
 	end
 	d.Stats[statId] += amount
 	d.StatPoints -= amount
@@ -153,10 +153,10 @@ end
 function ProgressionService:ResetStats(player: Player)
 	local d = data(self, player)
 	if not d then
-		return { Ok = false, Error = "Data is still loading." }
+		return { Ok = false, Error = "Данные ещё загружаются." }
 	end
 	if d.Shards < Prog.ResetCostShards then
-		return { Ok = false, Error = ("Resetting stats costs %d Shards."):format(Prog.ResetCostShards) }
+		return { Ok = false, Error = ("Сброс статов стоит %d ◆."):format(Prog.ResetCostShards) }
 	end
 	d.Shards -= Prog.ResetCostShards
 	for _, stat in Prog.Stats do
@@ -198,14 +198,14 @@ function ProgressionService:AddMasteryXp(player: Player, amount: number)
 		end
 		self.Services.QuestService:Progress(player, "MasteryLevel", entry.Level)
 		if unlocked then
-			Remotes.Notify:FireClient(player, ("%s Mastery %d — NEW SKILL: %s!"):format(style.Name, entry.Level, unlocked.Name), "level")
+			Remotes.Notify:FireClient(player, ("%s: мастерство %d — НОВЫЙ НАВЫК: %s!"):format(style.Name, entry.Level, unlocked.Name), "level")
 		else
-			Remotes.Notify:FireClient(player, ("%s Mastery %d (+%d%% damage)"):format(style.Name, entry.Level, (entry.Level - 1)), "success")
+			Remotes.Notify:FireClient(player, ("%s: мастерство %d (+%d%% урона)"):format(style.Name, entry.Level, (entry.Level - 1)), "success")
 		end
 	end
 	if entry.Level >= Prog.Mastery.MaxLevel then
 		entry.Xp = 0
-		Remotes.Notify:FireClient(player, style.Name .. " MASTERED!", "level")
+		Remotes.Notify:FireClient(player, style.Name .. ": МАСТЕРСТВО ДОСТИГНУТО!", "level")
 	end
 	self.Services.DataService:Sync(player)
 end
@@ -236,6 +236,7 @@ function ProgressionService:AddXp(player: Player, amount: number)
 	d.Xp += math.floor(amount + 0.5)
 
 	local leveled = false
+	local before = d.Level
 	while d.Level < GameConfig.Level.Max and d.Xp >= GameConfig.XpForLevel(d.Level) do
 		d.Xp -= GameConfig.XpForLevel(d.Level)
 		d.Level += 1
@@ -249,7 +250,12 @@ function ProgressionService:AddXp(player: Player, amount: number)
 	if leveled then
 		self:ApplyCharacterStats(player)
 		self:RefreshOverhead(player)
-		Remotes.Notify:FireClient(player, ("LEVEL UP! Lv. %d  •  +%d stat points"):format(d.Level, Prog.PointsPerLevel), "level")
+		Remotes.Notify:FireClient(player, ("НОВЫЙ УРОВЕНЬ! %d ур.  •  +%d очка статов"):format(d.Level, Prog.PointsPerLevel), "level")
+		if before < 15 and d.Level >= 15 then
+			Remotes.Notify:FireClient(player, "ОТКРЫТ ТРОЙНОЙ ПРЫЖОК! Доберись до Небесного острова", "level")
+		elseif before < 10 and d.Level >= 10 then
+			Remotes.Notify:FireClient(player, "ОТКРЫТ ДВОЙНОЙ ПРЫЖОК! Жми прыжок ещё раз в воздухе", "level")
+		end
 		Remotes.Fx:FireAllClients("LevelUp", { Character = player.Character })
 		self.Services.QuestService:Progress(player, "Level", d.Level)
 	end
@@ -289,10 +295,10 @@ end
 function ProgressionService:DescribeReward(reward): string
 	local parts = {}
 	if reward.Spins then
-		table.insert(parts, reward.Spins .. " Spins")
+		table.insert(parts, reward.Spins .. " ✦")
 	end
 	if reward.Shards then
-		table.insert(parts, reward.Shards .. " Shards")
+		table.insert(parts, reward.Shards .. " ◆")
 	end
 	return table.concat(parts, " + ")
 end
@@ -316,7 +322,7 @@ function ProgressionService:CheckDaily(player: Player, profile)
 		if player.Parent then
 			Remotes.Notify:FireClient(
 				player,
-				("Daily reward — day %d: %s"):format(d.DailyStreak, self:DescribeReward(reward)),
+				("Ежедневная награда — день %d: %s"):format(d.DailyStreak, self:DescribeReward(reward)),
 				"success"
 			)
 		end
@@ -348,7 +354,7 @@ function ProgressionService:RefreshOverhead(player: Player)
 		name.Name = "NameLabel"
 		name.BackgroundTransparency = 1
 		name.Size = UDim2.new(1, 0, 0.55, 0)
-		name.Font = Enum.Font.GothamBlack
+		name.FontFace = Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold)
 		name.TextScaled = true
 		name.TextStrokeTransparency = 0.4
 		name.Parent = gui
@@ -358,7 +364,7 @@ function ProgressionService:RefreshOverhead(player: Player)
 		sub.BackgroundTransparency = 1
 		sub.Position = UDim2.fromScale(0, 0.55)
 		sub.Size = UDim2.new(1, 0, 0.45, 0)
-		sub.Font = Enum.Font.GothamBold
+		sub.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
 		sub.TextScaled = true
 		sub.TextStrokeTransparency = 0.5
 		sub.Parent = gui
@@ -372,7 +378,7 @@ function ProgressionService:RefreshOverhead(player: Player)
 
 	gui.NameLabel.Text = (vip and "[VIP] " or "") .. player.DisplayName
 	gui.NameLabel.TextColor3 = vip and Color3.fromRGB(255, 215, 60) or Color3.new(1, 1, 1)
-	gui.SubLabel.Text = ("Lv. %d • %s"):format(d.Level, style.Name)
+	gui.SubLabel.Text = ("%d ур. • %s"):format(d.Level, style.Name)
 	gui.SubLabel.TextColor3 = rarity.Color
 end
 

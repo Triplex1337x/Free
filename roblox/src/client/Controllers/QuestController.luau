@@ -21,6 +21,7 @@ local TAB_COLORS = {
 	MONTHLY = Color3.fromRGB(180, 110, 255),
 }
 local TAB_ORDER = { "STORY", "DAILY", "WEEKLY", "MONTHLY" }
+local TAB_LABELS = { STORY = "ИСТОРИЯ", DAILY = "ДЕНЬ", WEEKLY = "НЕДЕЛЯ", MONTHLY = "МЕСЯЦ" }
 
 local potionNames = {}
 for id, potion in Potions.List do
@@ -31,9 +32,9 @@ local function countdown(seconds: number): string
 	seconds = math.max(0, math.floor(seconds))
 	local days = seconds // 86400
 	if days > 0 then
-		return ("%dd %dh"):format(days, (seconds % 86400) // 3600)
+		return ("%dд %dч"):format(days, (seconds % 86400) // 3600)
 	end
-	return ("%dh %02dm"):format(seconds // 3600, (seconds % 3600) // 60)
+	return ("%dч %02dм"):format(seconds // 3600, (seconds % 3600) // 60)
 end
 
 local function rewardRow(parent: Instance, reward, level: number, position: UDim2)
@@ -96,7 +97,7 @@ local function questCard(parent: Instance, quest, progress: number, done: boolea
 end
 
 function QuestController:Init()
-	local panel = Hud:CreatePanel("Quests", Vector2.new(860, 600))
+	local panel = Hud:CreatePanel("Квесты", Vector2.new(860, 600))
 	local content = panel.Content
 
 	local tabs = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 46), Position = UDim2.fromOffset(0, 6), Parent = content }, {
@@ -121,7 +122,7 @@ function QuestController:Init()
 	local render
 
 	for i, name in TAB_ORDER do
-		buttons[name] = UI.button({ Text = name, Color = TAB_COLORS[name], Size = UDim2.fromOffset(150, 42), Rotation = -2, MaxTextSize = 20, LayoutOrder = i, Parent = tabs, OnClick = function()
+		buttons[name] = UI.button({ Text = TAB_LABELS[name], Color = TAB_COLORS[name], Size = UDim2.fromOffset(150, 42), Rotation = -2, MaxTextSize = 20, LayoutOrder = i, Parent = tabs, OnClick = function()
 			current = name
 			render()
 		end })
@@ -145,13 +146,13 @@ function QuestController:Init()
 			local step = d.Quests.Chain.Step
 			local quest = Economy.ChainQuest(step)
 			local isBounty = step > #Economy.Chain
-			header.Text = if isBounty then "STORY COMPLETE — ENDLESS BOUNTIES" else ("CHAPTER %d / %d  •  the next quest unlocks when this one is done"):format(step, #Economy.Chain)
+			header.Text = if isBounty then "ИСТОРИЯ ПРОЙДЕНА — БЕСКОНЕЧНЫЕ ОХОТЫ" else ("ГЛАВА %d / %d  •  следующая откроется после выполнения этой"):format(step, #Economy.Chain)
 			header.TextColor3 = color
 			questCard(list, quest, d.Quests.Chain.Progress, false, d.Level, color, 1, if isBounty then nil else ("#%d"):format(step))
 			-- Teaser of what comes next.
 			local nextQuest = Economy.ChainQuest(step + 1)
 			local teaser = UI.new("Frame", { BackgroundColor3 = Theme.Ink, BackgroundTransparency = 0.3, Size = UDim2.new(1, -10, 0, 54), LayoutOrder = 2, Parent = list }, { UI.corner(10), UI.stroke(Theme.Ink, 2) })
-			UI.label({ Text = "🔒 NEXT: " .. string.upper(nextQuest.Text:format(nextQuest.Goal)), Font = Theme.FontHeavy, TextColor3 = Theme.SubText, MaxTextSize = 17, TextXAlignment = Enum.TextXAlignment.Left, Size = UDim2.new(1, -24, 1, -10), Position = UDim2.fromOffset(12, 5), Parent = teaser })
+			UI.label({ Text = "🔒 ДАЛЕЕ: " .. string.upper(nextQuest.Text:format(nextQuest.Goal)), Font = Theme.FontHeavy, TextColor3 = Theme.SubText, MaxTextSize = 17, TextXAlignment = Enum.TextXAlignment.Left, Size = UDim2.new(1, -24, 1, -10), Position = UDim2.fromOffset(12, 5), Parent = teaser })
 			return
 		end
 
@@ -167,14 +168,14 @@ function QuestController:Init()
 				questCard(list, quest, entry.Progress, entry.Done, d.Level, color, i)
 			end
 		end
-		header.Text = ("%s  •  %d/%d DONE  •  RESETS IN %s"):format(current, done, #set.List, countdown(Economy.SecondsLeft(kind)))
+		header.Text = ("%s  •  ВЫПОЛНЕНО %d/%d  •  СБРОС ЧЕРЕЗ %s"):format(TAB_LABELS[current], done, #set.List, countdown(Economy.SecondsLeft(kind)))
 		header.TextColor3 = color
 		local bonus = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.new(1, -10, 0, 70), LayoutOrder = 99, Parent = list }, {
 			UI.corner(10),
 			UI.new("UIGradient", { Color = ColorSequence.new(if set.Bonus then Theme.Good else Theme.Gold, Theme.Background) }),
 			UI.stroke(Theme.Ink, 3),
 		})
-		UI.label({ Text = if set.Bonus then "★ BONUS CLAIMED ★" else "COMPLETE ALL FOR A BONUS:", Font = Theme.FontHeavy, MaxTextSize = 18, TextXAlignment = Enum.TextXAlignment.Left, Size = UDim2.new(0.45, 0, 1, 0), Position = UDim2.fromOffset(14, 0), Parent = bonus })
+		UI.label({ Text = if set.Bonus then "★ БОНУС ПОЛУЧЕН ★" else "ВЫПОЛНИ ВСЕ — ПОЛУЧИ БОНУС:", Font = Theme.FontHeavy, MaxTextSize = 18, TextXAlignment = Enum.TextXAlignment.Left, Size = UDim2.new(0.45, 0, 1, 0), Position = UDim2.fromOffset(14, 0), Parent = bonus })
 		rewardRow(bonus, Economy.Periods[kind].Bonus, d.Level, UDim2.new(0, 10, 0.5, -17))
 	end
 
