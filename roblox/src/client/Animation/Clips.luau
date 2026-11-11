@@ -324,6 +324,22 @@ Clips.Parry = {
 	},
 }
 
+-- Quick tucked flip for double / triple jumps.
+Clips.AirFlip = {
+	-- Root rotation advances < 180 degrees per key so CFrame interpolation
+	-- always spins forward.
+	Name = "AirFlip",
+	FadeIn = 0.03,
+	FadeOut = 0.1,
+	Keyframes = {
+		key(0, NEUTRAL),
+		key(0.08, merge(CROUCH, { Root = { -110, 0, 0, 0, 0.4, 0 }, Waist = { -25, 0, 0 }, Neck = { -20, 0, 0 }, RightShoulder = { 60, 0, 30 }, LeftShoulder = { 60, 0, -30 }, RightElbow = { 100, 0, 0 }, LeftElbow = { 100, 0, 0 } }), "Linear"),
+		key(0.17, merge(CROUCH, { Root = { -220, 0, 0, 0, 0.4, 0 }, Waist = { -25, 0, 0 }, RightShoulder = { 60, 0, 30 }, LeftShoulder = { 60, 0, -30 }, RightElbow = { 100, 0, 0 }, LeftElbow = { 100, 0, 0 } }), "Linear"),
+		key(0.26, merge(CROUCH, { Root = { -330, 0, 0, 0, 0.2, 0 }, RightShoulder = { 40, 0, 50 }, LeftShoulder = { 40, 0, -50 } }), "Linear"),
+		key(0.34, merge(STAND_LEGS, { Root = { 0, 0, 0 }, RightShoulder = { 20, 0, 60 }, LeftShoulder = { 20, 0, -60 } }), "Quad"),
+	},
+}
+
 Clips.LevelUp = {
 	Name = "LevelUp",
 	FadeIn = 0.08,

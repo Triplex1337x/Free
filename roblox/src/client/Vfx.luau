@@ -700,6 +700,32 @@ function Vfx.Aura(character: Model, color: Color3, element: string?)
 end
 
 ---------------------------------------------------------------------------
+-- Sounds
+---------------------------------------------------------------------------
+
+-- Plays a sound at a position (3D) or globally. `id` is an rbxasset:// path
+-- or an uploaded asset id number.
+function Vfx.Sound(id, pos: Vector3?, volume: number?, speed: number?)
+	if not id or id == 0 then
+		return
+	end
+	local sound = Instance.new("Sound")
+	sound.SoundId = if type(id) == "number" then "rbxassetid://" .. id else id
+	sound.Volume = volume or 0.6
+	sound.PlaybackSpeed = speed or 1
+	sound.RollOffMaxDistance = 120
+	local holder = nil
+	if pos then
+		holder = Vfx.Part({ Transparency = 1, Size = Vector3.one * 0.2, Position = pos })
+		sound.Parent = holder
+	else
+		sound.Parent = workspace.CurrentCamera
+	end
+	sound:Play()
+	Debris:AddItem(holder or sound, 3)
+end
+
+---------------------------------------------------------------------------
 -- Screen effects
 ---------------------------------------------------------------------------
 

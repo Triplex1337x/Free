@@ -15,7 +15,11 @@ local TRAVEL_COOLDOWN = 3
 
 local rng = Random.new(2024)
 local lastTravel = {} :: { [Player]: number }
-local zoneData = {} :: { [string]: { Spawn: CFrame, MobSpawns: { CFrame }, BossSpawn: CFrame } }
+local zoneData = {} :: { [string]: any }
+
+local SIGN_FONT = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.ExtraBold)
+local SAFE_COLOR = Color3.fromRGB(80, 235, 130)
+local PVP_COLOR = Color3.fromRGB(255, 60, 70)
 
 local function part(props)
 	local p = Instance.new(props.ClassName or "Part")
@@ -231,6 +235,129 @@ function Decor.Void(folder: Folder, origin: Vector3)
 end
 
 ---------------------------------------------------------------------------
+-- Area markers and sky platforms
+---------------------------------------------------------------------------
+
+local function sign(parent: Instance, pos: Vector3, title: string, sub: string?, color: Color3, size: number?)
+	local anchor = part({ Name = "Sign", Size = Vector3.one * 0.5, Position = pos, Transparency = 1, CanCollide = false, CanQuery = false, Parent = parent })
+	local gui = Instance.new("BillboardGui")
+	gui.Size = UDim2.fromOffset(size or 300, if sub then 70 else 44)
+	gui.MaxDistance = 140
+	gui.LightInfluence = 0
+	gui.Parent = anchor
+	local t = Instance.new("TextLabel")
+	t.BackgroundTransparency = 1
+	t.Size = UDim2.fromScale(1, if sub then 0.6 else 1)
+	t.FontFace = SIGN_FONT
+	t.TextScaled = true
+	t.TextColor3 = color
+	t.TextStrokeTransparency = 0
+	t.Text = title
+	t.Parent = gui
+	if sub then
+		local u = Instance.new("TextLabel")
+		u.BackgroundTransparency = 1
+		u.Position = UDim2.fromScale(0, 0.6)
+		u.Size = UDim2.fromScale(1, 0.4)
+		u.FontFace = SIGN_FONT
+		u.TextScaled = true
+		u.TextColor3 = Color3.new(1, 1, 1)
+		u.TextStrokeTransparency = 0.2
+		u.Text = sub
+		u.Parent = gui
+	end
+end
+
+-- Glowing ring on the ground marking an area border.
+local function ring(parent: Instance, center: Vector3, radius: number, color: Color3)
+	local n = math.max(16, math.floor(radius))
+	for i = 1, n do
+		local a = (i / n) * math.pi * 2
+		part({
+			Name = "AreaRing",
+			Size = Vector3.new(0.8, 0.3, 2 * math.pi * radius / n + 0.3),
+			CFrame = CFrame.new(center + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, a, 0) * CFrame.new(radius, 0, 0),
+			Material = Enum.Material.Neon,
+			Color = color,
+			CanCollide = false,
+			CanQuery = false,
+			Parent = parent,
+		})
+	end
+end
+
+function ZoneService:MarkIslandAreas(folder: Folder, origin: Vector3)
+	local areas = Zones.Areas.Island
+	local safe = origin + areas.Safe.Offset
+	local pvp = origin + areas.Pvp.Offset
+	ring(folder, safe, areas.Safe.Radius, SAFE_COLOR)
+	ring(folder, pvp, areas.Pvp.Radius, PVP_COLOR)
+	sign(folder, safe + Vector3.new(0, 14, -areas.Safe.Radius + 4), "БЕЗОПАСНАЯ ЗОНА", "Здесь никто не может тебя атаковать", SAFE_COLOR)
+	sign(folder, pvp + Vector3.new(0, 22, areas.Pvp.Radius - 4), "PVP-ЗОНА", "Босс и бои между игроками", PVP_COLOR)
+end
+
+function ZoneService:MarkHubAreas(folder: Instance)
+	ring(folder, Vector3.zero, Zones.Areas.HubPvpRadius, PVP_COLOR)
+	sign(folder, Vector3.new(0, 24, Zones.Areas.HubPvpRadius - 6), "PVP-ЗОНА", "Дуэли и Страж Разлома", PVP_COLOR)
+	sign(folder, Vector3.new(0, 24, -Zones.Areas.HubPvpRadius + 6), "PVP-ЗОНА", nil, PVP_COLOR, 220)
+	local cfg = Zones.HubSafe
+	for i = 1, 6 do
+		local a = (i / 6) * math.pi * 2 + math.pi / 6
+		ring(folder, Vector3.new(math.cos(a) * 110, 0, math.sin(a) * 110), cfg.SpawnRadius, SAFE_COLOR)
+	end
+	for i = 0, 3 do
+		local a = i * math.pi / 2 + math.pi / 4
+		ring(folder, Vector3.new(math.cos(a) * 118, 0, math.sin(a) * 118), cfg.PortalRadius, SAFE_COLOR)
+	end
+	local c, h = cfg.TrainingCenter, cfg.TrainingHalfSize
+	for _, edge in { { Vector3.new(0, 0, -h.Y), h.X * 2, 0 }, { Vector3.new(0, 0, h.Y), h.X * 2, 0 }, { Vector3.new(-h.X, 0, 0), h.Y * 2, 90 }, { Vector3.new(h.X, 0, 0), h.Y * 2, 90 } } do
+		part({ Name = "AreaRing", Size = Vector3.new(edge[2], 0.3, 0.8), CFrame = CFrame.new(c + edge[1] + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, math.rad(edge[3]), 0), Material = Enum.Material.Neon, Color = SAFE_COLOR, CanCollide = false, CanQuery = false, Parent = folder })
+	end
+	sign(folder, c + Vector3.new(0, 12, h.Y), "ТРЕНИРОВОЧНАЯ ПЛОЩАДКА", "Безопасная зона", SAFE_COLOR)
+end
+
+-- Tiered floating platforms: ground -> tier 1 (double jump) -> tier 2 ->
+-- top isle (triple jump). Returns spawn points for the elites on top.
+function ZoneService:BuildSky(parent: Instance, center: Vector3, accent: Color3, floorMaterial: Enum.Material, floorColor: Color3): { CFrame }
+	local sky = Zones.Sky
+	local cylinder = CFrame.Angles(0, 0, math.rad(90))
+	local function pad(pos: Vector3, radius: number)
+		part({ Name = "SkyPad", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2, radius * 2, radius * 2), CFrame = CFrame.new(pos + Vector3.new(0, -1, 0)) * cylinder, Material = floorMaterial, Color = floorColor, Parent = parent })
+		part({ Name = "SkyPadRim", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.6, radius * 2 + 1, radius * 2 + 1), CFrame = CFrame.new(pos + Vector3.new(0, -1.6, 0)) * cylinder, Material = Enum.Material.Neon, Color = accent, CanCollide = false, Parent = parent })
+	end
+	for i = 0, 2 do
+		local a = math.rad(i * 120)
+		pad(center + Vector3.new(math.cos(a) * 46, sky.Tier1Height, math.sin(a) * 46), 8)
+		local b = math.rad(60 + i * 120)
+		pad(center + Vector3.new(math.cos(b) * 33, sky.Tier2Height, math.sin(b) * 33), 7)
+	end
+	local top = center + Vector3.new(0, sky.TopHeight, 0)
+	pad(top, sky.TopRadius)
+	-- Rocky underside + crystals so it reads as a floating isle.
+	part({ Name = "SkyRock", ClassName = "WedgePart", Size = Vector3.new(sky.TopRadius * 1.4, 14, sky.TopRadius * 1.4), CFrame = CFrame.new(top + Vector3.new(0, -9, 0)) * CFrame.Angles(math.pi, 0, 0), Material = Enum.Material.Rock, Color = Color3.fromRGB(70, 60, 80), CanCollide = false, Parent = parent })
+	for i = 1, 5 do
+		local a = (i / 5) * math.pi * 2
+		local crystal = part({ Name = "SkyCrystal", Size = Vector3.new(2, 8, 2), CFrame = CFrame.new(top + Vector3.new(math.cos(a) * (sky.TopRadius - 3), 4, math.sin(a) * (sky.TopRadius - 3))) * CFrame.Angles(0.2, a, 0.15), Material = Enum.Material.Neon, Color = accent, CanCollide = false, Parent = parent })
+		light(crystal, accent, 16, 1.5)
+	end
+	sign(parent, top + Vector3.new(0, 12, 0), "НЕБЕСНЫЙ ОСТРОВ", "Элитные мобы • нужен тройной прыжок (15 ур.)", accent)
+	sign(parent, center + Vector3.new(math.cos(0) * 46, 6, 0), "↑ ПРЫЖКИ ВВЕРХ ↑", "Двойной — с 10 ур., тройной — с 15 ур.", accent)
+
+	local spawns = {}
+	for _ = 1, 8 do
+		local a = rng:NextNumber(0, math.pi * 2)
+		local r = rng:NextNumber(0, sky.TopRadius - 8)
+		table.insert(spawns, CFrame.new(top + Vector3.new(math.cos(a) * r, 4, math.sin(a) * r)))
+	end
+	return spawns
+end
+
+function ZoneService:GetSkySpawns(zoneId: string): { CFrame }
+	local z = zoneData[zoneId]
+	return z and z.SkySpawns or {}
+end
+
+---------------------------------------------------------------------------
 -- Portals
 ---------------------------------------------------------------------------
 
@@ -369,7 +496,9 @@ function ZoneService:Init(services)
 				Spawn = CFrame.lookAt(zone.Origin + Vector3.new(0, 1, 190), zone.Origin + Vector3.new(0, 1, 0)),
 				MobSpawns = spawns,
 				BossSpawn = CFrame.new(zone.Origin + Vector3.new(0, 6, -150)),
+				SkySpawns = self:BuildSky(folder, zone.Origin + Zones.Sky.IslandOffset, theme.Accent, theme.Floor, theme.FloorColor),
 			}
+			self:MarkIslandAreas(folder, zone.Origin)
 			-- Return portal behind the plaza.
 			self:CreatePortal(folder, CFrame.lookAt(zone.Origin + Vector3.new(0, 0, 215), zone.Origin), "Hub")
 		end
@@ -386,6 +515,17 @@ function ZoneService:Init(services)
 				self:CreatePortal(services.MapService:GetFolder(), slots[i], id)
 			end
 		end
+	end
+
+	-- Hub: sky platforms (if the generated arena is used) and area markers.
+	local hubFolder = services.MapService:GetFolder()
+	if hubFolder:GetAttribute("Generated") then
+		local hub = Zones.Get("Hub")
+		local skyFolder = Instance.new("Folder")
+		skyFolder.Name = "HubSky"
+		skyFolder.Parent = hubFolder
+		zoneData.Hub = { SkySpawns = self:BuildSky(skyFolder, hub.SkyCenter, Color3.fromRGB(90, 200, 255), Enum.Material.Marble, Color3.fromRGB(70, 66, 92)) }
+		self:MarkHubAreas(hubFolder)
 	end
 
 	-- Combat queries ignore all zone geometry (like the hub map).

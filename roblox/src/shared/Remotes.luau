@@ -23,6 +23,7 @@ local FUNCTIONS = {
 	"Travel",
 	"UsePotion",
 	"BuyPotion",
+	"Admin",
 }
 
 local Remotes = {}

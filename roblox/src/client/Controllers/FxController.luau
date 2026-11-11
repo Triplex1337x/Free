@@ -416,6 +416,7 @@ function Handlers.Hit(d)
 		Vfx.Emit(d.Pos, "Glitter", 14, Theme.Accent2)
 	end
 	damageNumber(d, color)
+	Vfx.Sound(GameConfig.Sounds.Hit, d.Pos, if big then 0.9 else 0.6, if d.Blocked then 0.8 elseif big then 1.2 else rng:NextNumber(1.5, 1.8))
 	if isLocal(d.Attacker) and not d.Parried and (d.Damage or 0) > 0 then
 		Hud:AddHit(d.Damage)
 	end
@@ -439,6 +440,7 @@ function Handlers.Swing(d)
 	if d.Character then
 		Vfx.LimbTrails(d.Character, color, 0.25)
 	end
+	Vfx.Sound(if d.Finisher then GameConfig.Sounds.Heavy else GameConfig.Sounds.Swing, d.CFrame.Position, if d.Finisher then 0.8 else 0.5, rng:NextNumber(1.05, 1.3))
 	local rolls = { 35, -35, 75, 0 }
 	task.delay(0.08, function()
 		local cf = d.CFrame * CFrame.new(0, 0.4, 0) * CFrame.Angles(0, 0, math.rad(rolls[index]))
@@ -461,6 +463,7 @@ function Handlers.Cast(d)
 	if not root then
 		return
 	end
+	Vfx.Sound(GameConfig.Sounds.Cast, root.Position, 0.6, rng:NextNumber(0.9, 1.1))
 	if d.Character then
 		Vfx.LimbTrails(d.Character, d.Color, (d.Windup or 0) + 0.4)
 	end
@@ -611,6 +614,21 @@ function Handlers.LevelUp(d)
 	Vfx.Rays(root.Position, Theme.Gold, 12, 7, 0.6)
 	Vfx.Emit(root.Position, "Glitter", 30, Theme.Gold)
 	Vfx.Ring(CFrame.new(root.Position - Vector3.new(0, 2.6, 0)), 1, 10, Theme.Gold, 0.6, 0.5, 28)
+end
+
+function Handlers.AirJump(d)
+	local root = rootOf(d.Character)
+	if not root then
+		return
+	end
+	local color = d.Character:GetAttribute("StyleColor") or Color3.new(1, 1, 1)
+	local pos = root.Position - Vector3.new(0, 2.5, 0)
+	Vfx.Ring(CFrame.new(pos), 0.5, if d.Count == 2 then 6 else 4.5, color, 0.3, 0.35, 20)
+	Vfx.Emit(pos, "Mist", 6, Color3.new(1, 1, 1))
+	if d.Count == 2 then
+		Vfx.Emit(pos, "Glitter", 10, color)
+	end
+	Animator.Play(d.Character, Clips.AirFlip)
 end
 
 function Handlers.Potion(d)

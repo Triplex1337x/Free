@@ -121,9 +121,13 @@ local function getRig(character: Model)
 		return rig
 	end
 	local motors = {}
+	-- Classic rigs use Motor6D joints; rigs converted by Roblox's avatar joint
+	-- upgrade use AnimationConstraint. Both expose the same Transform property.
 	for _, d in character:GetDescendants() do
-		if d:IsA("Motor6D") then
-			motors[d.Name] = d
+		if d:IsA("Motor6D") or d:IsA("AnimationConstraint") then
+			if not motors[d.Name] or d:IsA("AnimationConstraint") then
+				motors[d.Name] = d
+			end
 		end
 	end
 	local rigType

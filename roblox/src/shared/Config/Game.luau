@@ -85,6 +85,15 @@ Game.DailyRewards = {
 Game.DailyCooldownHours = 20
 Game.DailyStreakResetHours = 48
 
+-- Combat sounds. Defaults are sounds bundled with the Roblox client; put an
+-- uploaded sound id (number) here to replace any of them.
+Game.Sounds = {
+	Swing = "rbxasset://sounds/swordslash.wav",
+	Heavy = "rbxasset://sounds/swordlunge.wav",
+	Hit = "rbxasset://sounds/swordlunge.wav",
+	Cast = "rbxasset://sounds/unsheath.wav",
+}
+
 -- Optional uploaded animation asset ids. 0 = use the built-in procedural
 -- animations (client/Animation/Clips). Paste an id to override a move.
 Game.Animations = {

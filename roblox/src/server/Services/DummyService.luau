@@ -21,7 +21,8 @@ function DummyService:SpawnDummy(cf: CFrame)
 	local Progression = self.Services.ProgressionService
 	local Rewards = GameConfig.Rewards
 
-	local model = NpcFactory.Rig("Training Dummy", 1, "Dummy")
+	local outfits = { "Trainee1", "Trainee2", "Trainee3", "Trainee4" }
+	local model = NpcFactory.Rig("Training Dummy", 1, outfits[math.random(1, #outfits)])
 	local humanoid = model:FindFirstChildOfClass("Humanoid") :: Humanoid
 	humanoid.MaxHealth = DUMMY_HEALTH
 	humanoid.Health = DUMMY_HEALTH
@@ -31,7 +32,14 @@ function DummyService:SpawnDummy(cf: CFrame)
 	model:SetAttribute("BaseSpeed", 0)
 	model:SetAttribute("BaseJump", 0)
 	model:SetAttribute("Zone", "Hub")
-	model:PivotTo(cf)
+	model:SetAttribute("NoKnockback", true)
+	-- Face the arena centre so players see the front, and stay planted.
+	local pos = cf.Position
+	model:PivotTo(CFrame.lookAt(pos, Vector3.new(0, pos.Y, 0)))
+	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if root then
+		root.Anchored = true
+	end
 	model.Parent = workspace:FindFirstChild("NPCs")
 	for _, p in model:GetDescendants() do
 		if p:IsA("BasePart") and not p.Anchored then

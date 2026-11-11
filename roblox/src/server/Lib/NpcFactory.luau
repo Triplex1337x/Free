@@ -12,27 +12,34 @@ local SMOKE = "rbxasset://textures/particles/smoke_main.dds"
 
 local C = Color3.fromRGB
 
+-- Skin = head/hands colour; Torso / Arms / Legs = clothing colours.
 NpcFactory.Outfits = {
 	Dummy = { Skin = C(196, 160, 110), Material = Enum.Material.Wood, Hair = { Color = C(230, 200, 90), Style = "Straw" }, Target = true },
-	Imp = { Skin = C(120, 35, 30), Hair = { Color = C(255, 140, 40), Style = "Spiky", Neon = true }, Eyes = C(255, 230, 90), Horns = C(40, 20, 20), Belt = C(255, 120, 40) },
-	Brute = { Skin = C(55, 50, 50), Eyes = C(255, 120, 40), Pads = { Color = C(70, 60, 60), Material = Enum.Material.Basalt }, Cracks = C(255, 110, 30), Belt = C(255, 110, 30) },
+	-- Training-ground students in martial-arts gis.
+	Trainee1 = { Skin = C(255, 214, 180), Torso = C(245, 245, 245), Arms = C(245, 245, 245), Legs = C(40, 40, 50), Hair = { Color = C(30, 30, 40), Style = "Spiky" }, Eyes = C(60, 160, 255), Headband = C(220, 40, 50), Belt = C(30, 30, 30), Target = true },
+	Trainee2 = { Skin = C(232, 186, 150), Torso = C(255, 140, 40), Arms = C(255, 140, 40), Legs = C(30, 50, 120), Hair = { Color = C(255, 220, 90), Style = "Spiky" }, Eyes = C(80, 200, 255), Headband = C(30, 60, 160), Belt = C(30, 60, 160), Target = true },
+	Trainee3 = { Skin = C(190, 140, 105), Torso = C(40, 70, 160), Arms = C(40, 70, 160), Legs = C(20, 20, 30), Hair = { Color = C(230, 60, 80), Style = "Spiky" }, Eyes = C(255, 90, 120), Scarf = C(230, 60, 80), Belt = C(240, 240, 240), Target = true },
+	Trainee4 = { Skin = C(130, 90, 65), Torso = C(25, 25, 30), Arms = C(25, 25, 30), Legs = C(25, 25, 30), Hair = { Color = C(240, 240, 250), Style = "Spiky" }, Eyes = C(170, 110, 255), Headband = C(150, 80, 255), Belt = C(150, 80, 255), Target = true },
+	Sprite = { Skin = C(200, 230, 255), Torso = C(120, 80, 220), Legs = C(80, 50, 160), Hair = { Color = C(255, 120, 200), Style = "Spiky", Neon = true }, Eyes = C(255, 255, 255), Belt = C(255, 120, 200) },
+	Imp = { Skin = C(120, 35, 30), Torso = C(55, 20, 20), Legs = C(35, 15, 15), Hair = { Color = C(255, 140, 40), Style = "Spiky", Neon = true }, Eyes = C(255, 230, 90), Horns = C(40, 20, 20), Belt = C(255, 120, 40) },
+	Brute = { Skin = C(90, 70, 65), Torso = C(45, 40, 40), Legs = C(30, 28, 28), Eyes = C(255, 120, 40), Pads = { Color = C(70, 60, 60), Material = Enum.Material.Basalt }, Cracks = C(255, 110, 30), Belt = C(255, 110, 30) },
 	Tyrant = {
 		Skin = C(40, 25, 25), Eyes = C(255, 200, 60), Crown = C(255, 120, 30), Pads = { Color = C(60, 40, 35), Material = Enum.Material.Basalt },
 		Cape = { Color = C(150, 30, 20) }, Cracks = C(255, 110, 30), Aura = { Texture = FIRE, Color = C(255, 120, 40) }, Weapon = "Greatsword", WeaponColor = C(255, 110, 30),
 	},
-	Stalker = { Skin = C(40, 110, 120), Hair = { Color = C(80, 220, 230), Style = "Crest" }, Eyes = C(150, 255, 255), Belt = C(80, 220, 230) },
-	Sentinel = { Skin = C(200, 215, 230), Pads = { Color = C(40, 120, 170), Material = Enum.Material.Metal }, Eyes = C(120, 230, 255), Weapon = "Trident", WeaponColor = C(80, 220, 255), Belt = C(40, 120, 170) },
+	Stalker = { Skin = C(70, 150, 160), Torso = C(20, 70, 90), Legs = C(15, 45, 60), Hair = { Color = C(80, 220, 230), Style = "Crest" }, Eyes = C(150, 255, 255), Belt = C(80, 220, 230) },
+	Sentinel = { Skin = C(200, 215, 230), Torso = C(30, 90, 140), Legs = C(220, 225, 235), Pads = { Color = C(40, 120, 170), Material = Enum.Material.Metal }, Eyes = C(120, 230, 255), Weapon = "Trident", WeaponColor = C(80, 220, 255), Belt = C(40, 120, 170) },
 	Leviathan = {
 		Skin = C(20, 60, 90), Eyes = C(150, 255, 255), Crown = C(80, 220, 255), Pads = { Color = C(20, 90, 140), Material = Enum.Material.Metal },
 		Cape = { Color = C(20, 90, 140) }, Aura = { Texture = SMOKE, Color = C(90, 210, 255) }, Weapon = "Trident", WeaponColor = C(80, 220, 255),
 	},
-	Acolyte = { Skin = C(235, 235, 240), Hood = C(225, 225, 235), Eyes = C(255, 230, 80), Belt = C(255, 230, 80) },
-	Ronin = { Skin = C(60, 70, 90), Hat = C(200, 170, 110), Scarf = C(140, 255, 190), Eyes = C(140, 255, 190), Weapon = "Katana", WeaponColor = C(140, 255, 190) },
+	Acolyte = { Skin = C(240, 215, 190), Torso = C(235, 235, 240), Arms = C(235, 235, 240), Legs = C(60, 60, 80), Hood = C(225, 225, 235), Eyes = C(255, 230, 80), Belt = C(255, 230, 80) },
+	Ronin = { Skin = C(225, 190, 160), Torso = C(50, 60, 85), Arms = C(50, 60, 85), Legs = C(30, 35, 50), Hat = C(200, 170, 110), Scarf = C(140, 255, 190), Eyes = C(140, 255, 190), Weapon = "Katana", WeaponColor = C(140, 255, 190) },
 	Shogun = {
 		Skin = C(30, 30, 40), Eyes = C(255, 230, 80), Crown = C(255, 220, 70), Pads = { Color = C(150, 30, 30), Material = Enum.Material.Metal },
 		Cape = { Color = C(120, 20, 25) }, Aura = { Texture = SPARK, Color = C(255, 230, 80) }, Weapon = "Katana", WeaponColor = C(255, 230, 80),
 	},
-	Wraith = { Skin = C(20, 15, 30), Hood = C(30, 20, 45), Eyes = C(190, 110, 255), Cape = { Color = C(60, 30, 100), Material = Enum.Material.ForceField } },
+	Wraith = { Skin = C(60, 50, 80), Torso = C(20, 15, 30), Arms = C(20, 15, 30), Legs = C(15, 10, 25), Hood = C(30, 20, 45), Eyes = C(190, 110, 255), Cape = { Color = C(60, 30, 100), Material = Enum.Material.ForceField } },
 	Horror = { Skin = C(35, 20, 55), Eyes = C(220, 140, 255), Spikes = C(170, 80, 255), Pads = { Color = C(50, 30, 75), Material = Enum.Material.Slate }, Cracks = C(170, 80, 255) },
 	Sovereign = {
 		Skin = C(240, 230, 200), Eyes = C(255, 255, 255), Crown = C(255, 215, 90), Pads = { Color = C(230, 190, 90), Material = Enum.Material.Metal },
@@ -193,9 +200,12 @@ function NpcFactory.Rig(name: string, scale: number, outfitId: string): Model
 	description.WidthScale = scale
 	description.DepthScale = scale
 	description.HeadScale = scale
-	for _, prop in { "HeadColor", "TorsoColor", "LeftArmColor", "RightArmColor", "LeftLegColor", "RightLegColor" } do
-		(description :: any)[prop] = cfg.Skin
-	end
+	description.HeadColor = cfg.Skin
+	description.TorsoColor = cfg.Torso or cfg.Skin
+	description.LeftArmColor = cfg.Arms or cfg.Skin
+	description.RightArmColor = cfg.Arms or cfg.Skin
+	description.LeftLegColor = cfg.Legs or cfg.Skin
+	description.RightLegColor = cfg.Legs or cfg.Skin
 	local model = Players:CreateHumanoidModelFromDescription(description, Enum.HumanoidRigType.R15)
 	model.Name = name
 	if cfg.Material then
@@ -243,6 +253,15 @@ function NpcFactory.Dress(model: Model, cfg)
 		local hat = piece(model, head, "Part", Vector3.new(s.Y * 0.25, s.X * 2.6, s.X * 2.6), CFrame.new(0, s.Y * 0.55, 0) * CFrame.Angles(0, 0, math.rad(90)), { Color = cfg.Hat, Material = Enum.Material.Fabric })
 		hat.Shape = Enum.PartType.Cylinder
 		piece(model, head, "CornerWedgePart", Vector3.new(s.X * 0.7, s.Y * 0.35, s.Z * 0.7), CFrame.new(0, s.Y * 0.8, 0), { Color = cfg.Hat, Material = Enum.Material.Fabric })
+	end
+	if cfg.Headband then
+		local s = head.Size
+		piece(model, head, "Part", Vector3.new(s.X * 1.06, s.Y * 0.16, s.Z * 1.06), CFrame.new(0, s.Y * 0.22, 0), { Color = cfg.Headband, Material = Enum.Material.Fabric })
+		for _, side in { -1, 1 } do
+			piece(model, head, "Part", Vector3.new(0.08, s.Y * 0.14, s.Z * 0.7),
+				CFrame.new(side * s.X * 0.15, s.Y * 0.1, s.Z * 0.75) * CFrame.Angles(math.rad(-25), math.rad(side * 15), 0),
+				{ Color = cfg.Headband, Material = Enum.Material.Fabric })
+		end
 	end
 	if cfg.Scarf then
 		local s = upper.Size

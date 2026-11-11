@@ -13,6 +13,8 @@ Zones.List = {
 		Pvp = true,
 		Color = Color3.fromRGB(255, 80, 150),
 		Boss = { Id = "RiftWarden", Name = "Rift Warden", Level = 12, Element = "Void", Outfit = "Warden", Scale = 1.9, Respawn = 180, Leash = 45 },
+		SkyMobs = { { Id = "RiftSprite", Name = "Rift Sprite", Level = 4, Count = 5, Element = "Light", Outfit = "Sprite", Scale = 0.8, Leash = 20 } },
+		SkyCenter = Vector3.new(-88, 0, 22),
 	},
 
 	Ember = {
@@ -35,6 +37,7 @@ Zones.List = {
 			{ Id = "CinderImp", Name = "Cinder Imp", Level = 3, Count = 7, Element = "Fire", Outfit = "Imp", Scale = 0.85 },
 			{ Id = "AshBrute", Name = "Ash Brute", Level = 9, Count = 4, Element = "Fire", Outfit = "Brute", Scale = 1.3 },
 		},
+		SkyMobs = { { Id = "InfernoImp", Name = "Elite Inferno Imp", Level = 14, Count = 5, Element = "Fire", Outfit = "Imp", Scale = 1, Elite = true, Leash = 20 } },
 		Boss = { Id = "MagmaTyrant", Name = "Magma Tyrant", Level = 15, Element = "Fire", Outfit = "Tyrant", Scale = 2.2, Respawn = 150 },
 	},
 
@@ -58,6 +61,7 @@ Zones.List = {
 			{ Id = "ReefStalker", Name = "Reef Stalker", Level = 18, Count = 7, Element = "Water", Outfit = "Stalker", Scale = 1 },
 			{ Id = "TideSentinel", Name = "Tide Sentinel", Level = 26, Count = 4, Element = "Water", Outfit = "Sentinel", Scale = 1.35 },
 		},
+		SkyMobs = { { Id = "EliteSentinel", Name = "Elite Tide Sentinel", Level = 32, Count = 5, Element = "Water", Outfit = "Sentinel", Scale = 1.2, Elite = true, Leash = 20 } },
 		Boss = { Id = "LeviathanKnight", Name = "Leviathan Knight", Level = 35, Element = "Water", Outfit = "Leviathan", Scale = 2.3, Respawn = 180 },
 	},
 
@@ -81,6 +85,7 @@ Zones.List = {
 			{ Id = "StormAcolyte", Name = "Storm Acolyte", Level = 45, Count = 7, Element = "Lightning", Outfit = "Acolyte", Scale = 1 },
 			{ Id = "GaleRonin", Name = "Gale Ronin", Level = 58, Count = 4, Element = "Wind", Outfit = "Ronin", Scale = 1.15 },
 		},
+		SkyMobs = { { Id = "EliteRonin", Name = "Elite Gale Ronin", Level = 66, Count = 5, Element = "Wind", Outfit = "Ronin", Scale = 1.15, Elite = true, Leash = 20 } },
 		Boss = { Id = "ThunderShogun", Name = "Thunder Shogun", Level = 72, Element = "Lightning", Outfit = "Shogun", Scale = 2.3, Respawn = 210 },
 	},
 
@@ -104,6 +109,7 @@ Zones.List = {
 			{ Id = "HollowWraith", Name = "Hollow Wraith", Level = 85, Count = 7, Element = "Void", Outfit = "Wraith", Scale = 1.05 },
 			{ Id = "RiftHorror", Name = "Rift Horror", Level = 100, Count = 4, Element = "Void", Outfit = "Horror", Scale = 1.45 },
 		},
+		SkyMobs = { { Id = "EliteHorror", Name = "Elite Rift Horror", Level = 115, Count = 5, Element = "Void", Outfit = "Horror", Scale = 1.4, Elite = true, Leash = 20 } },
 		Boss = { Id = "RiftSovereign", Name = "Rift Sovereign", Level = 130, Element = "Light", Outfit = "Sovereign", Scale = 2.5, Respawn = 240 },
 	},
 }
@@ -135,7 +141,25 @@ Zones.Mob = {
 	PopulationPerPlayer = 0.25,
 	PopulationMax = 2,
 	BossHealthPerPlayer = 0.35, -- +35% boss HP per extra player in the zone
+	EliteHealthMult = 2,
+	EliteRewardMult = 2.5,
 }
+
+-- Floating platforms reachable with double (Lv 10) / triple (Lv 15) jumps.
+-- Heights are relative to the ground; elites live on the top isle.
+Zones.Sky = {
+	Tier1Height = 11, -- needs a double jump from the ground
+	Tier2Height = 21, -- double jump from tier 1
+	TopHeight = 37, -- triple jump from tier 2
+	TopRadius = 26,
+	IslandOffset = Vector3.new(120, 0, 30), -- sky area position inside PvE islands
+}
+
+Zones.Jumps = {
+	{ Level = 10, Extra = 1 }, -- double jump
+	{ Level = 15, Extra = 2 }, -- triple jump
+}
+Zones.AirJumpHeight = 7.5
 
 -- Hub safety (matches the generated arena layout in MapService).
 Zones.HubSafe = {
@@ -164,6 +188,42 @@ function Zones.IsHubSafe(pos: Vector3): boolean
 	end
 	local d = flat - cfg.TrainingCenter
 	return math.abs(d.X) < cfg.TrainingHalfSize.X and math.abs(d.Z) < cfg.TrainingHalfSize.Y
+end
+
+-- Areas inside every location:
+--   Safe  — around the spawn: no PvP, mobs won't attack you
+--   Pvp   — around the boss arena: fight the boss AND other players
+--   Pve   — everything else: farm mobs, no PvP
+Zones.Areas = {
+	Island = {
+		Safe = { Offset = Vector3.new(0, 0, 190), Radius = 36 },
+		Pvp = { Offset = Vector3.new(0, 0, -150), Radius = 52 },
+	},
+	HubPvpRadius = 70, -- centre of the Rift Arena (duel ring + Rift Warden)
+}
+
+function Zones.AreaAt(zoneId: string, pos: Vector3): string
+	local zone = Zones.List[zoneId]
+	if not zone then
+		return "Pve"
+	end
+	local flat = Vector3.new(pos.X, 0, pos.Z)
+	if zone.Origin then
+		local rel = flat - Vector3.new(zone.Origin.X, 0, zone.Origin.Z)
+		local areas = Zones.Areas.Island
+		if (rel - areas.Safe.Offset).Magnitude < areas.Safe.Radius then
+			return "Safe"
+		elseif (rel - areas.Pvp.Offset).Magnitude < areas.Pvp.Radius then
+			return "Pvp"
+		end
+		return "Pve"
+	end
+	if Zones.IsHubSafe(pos) then
+		return "Safe"
+	elseif flat.Magnitude < Zones.Areas.HubPvpRadius then
+		return "Pvp"
+	end
+	return "Pve"
 end
 
 function Zones.Get(id: string)

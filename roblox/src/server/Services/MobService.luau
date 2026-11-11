@@ -64,6 +64,11 @@ end
 function MobService:Spawn(zoneId: string, def, home: CFrame, isBoss: boolean)
 	local Combat = self.Services.CombatService
 	local health, damage, shards, xp = statsFor(def.Level, isBoss)
+	if def.Elite then
+		health = math.floor(health * M.EliteHealthMult)
+		shards = math.floor(shards * M.EliteRewardMult)
+		xp = math.floor(xp * M.EliteRewardMult)
+	end
 	local style = styleByElement[def.Element] or Styles.Get("Ember")
 
 	local model = NpcFactory.Rig(def.Name, def.Scale or 1, def.Outfit)
@@ -85,7 +90,7 @@ function MobService:Spawn(zoneId: string, def, home: CFrame, isBoss: boolean)
 			pcall(p.SetNetworkOwner, p, nil)
 		end
 	end
-	NpcFactory.Overhead(model, def.Name, def.Level, if isBoss then Color3.fromRGB(255, 90, 110) else style.Color, isBoss)
+	NpcFactory.Overhead(model, def.Name, def.Level, if isBoss then Color3.fromRGB(255, 90, 110) elseif def.Elite then Color3.fromRGB(255, 205, 60) else style.Color, isBoss)
 
 	local mob = {
 		Model = model,
@@ -129,7 +134,7 @@ function MobService:Spawn(zoneId: string, def, home: CFrame, isBoss: boolean)
 			Combat:CleanupModel(model)
 			model:Destroy()
 		end)
-		if isBoss then
+		if isBoss and not def.NoRespawn then
 			task.delay(def.Respawn or 180, function()
 				self:Spawn(zoneId, def, home, true)
 			end)
@@ -173,7 +178,8 @@ local function findTarget(mob)
 			local character = player.Character
 			local root = character and character:FindFirstChild("HumanoidRootPart")
 			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-			if root and humanoid and humanoid.Health > 0 and not character:FindFirstChildOfClass("ForceField") then
+			local safe = root and Zones.AreaAt(mob.Zone, root.Position) == "Safe"
+			if root and humanoid and humanoid.Health > 0 and not safe and not character:FindFirstChildOfClass("ForceField") then
 				local d = (root.Position - mob.Root.Position).Magnitude
 				if d < bestDist then
 					best, bestDist = character, d
@@ -246,6 +252,14 @@ function MobService:Think(mob, now: number)
 		return
 	end
 
+	-- Fell off a sky platform: put it back home.
+	if root.Position.Y < mob.Home.Position.Y - 12 then
+		mob.Target = nil
+		mob.Model:PivotTo(mob.Home + Vector3.new(0, 3, 0))
+		mob.Humanoid.Health = mob.Humanoid.MaxHealth
+		return
+	end
+
 	-- Leash: too far from home -> run back and heal.
 	local fromHome = (root.Position - mob.Home.Position) * Vector3.new(1, 0, 1)
 	if fromHome.Magnitude > (mob.Def.Leash or M.LeashRange) then
@@ -260,7 +274,8 @@ function MobService:Think(mob, now: number)
 	if not target then
 		if now > mob.NextWander then
 			mob.NextWander = now + rng:NextNumber(3, 7)
-			local offset = Vector3.new(rng:NextNumber(-18, 18), 0, rng:NextNumber(-18, 18))
+			local w = if mob.Def.Leash then mob.Def.Leash * 0.25 else 18 -- sky mobs stay near the middle
+			local offset = Vector3.new(rng:NextNumber(-w, w), 0, rng:NextNumber(-w, w))
 			mob.Humanoid:MoveTo(mob.Home.Position + offset)
 		end
 		return
@@ -285,6 +300,19 @@ function MobService:Think(mob, now: number)
 	else
 		mob.Humanoid:MoveTo(targetRoot.Position)
 	end
+end
+
+-- Admin: summon this zone's boss right now (in addition to the regular one).
+function MobService:SpawnBossNow(zoneId: string): boolean
+	local zone = Zones.Get(zoneId)
+	local spawn = zone and zone.Boss and self.Services.ZoneService:GetBossSpawn(zoneId)
+	if not spawn then
+		return false
+	end
+	local def = table.clone(zone.Boss)
+	def.NoRespawn = true -- admin-summoned bosses don't respawn
+	task.spawn(self.Spawn, self, zoneId, def, spawn, true)
+	return true
 end
 
 -- Boss HP grows with the crowd (never shrinks mid-fight).
@@ -319,9 +347,16 @@ function MobService:Populate()
 	for _, zoneId in Zones.Order do
 		local zone = Zones.Get(zoneId)
 		local n = playersInZone[zoneId] or 0
-		local spawns = ZoneService:GetMobSpawns(zoneId)
-		if n > 0 and #spawns > 0 then
-			for _, def in zone.Mobs or {} do
+		local groups = {
+			{ Defs = zone.Mobs or {}, Spawns = ZoneService:GetMobSpawns(zoneId), Jitter = 10 },
+			{ Defs = zone.SkyMobs or {}, Spawns = ZoneService:GetSkySpawns(zoneId), Jitter = 2 },
+		}
+		for _, group in groups do
+			local spawns = group.Spawns
+			if n == 0 or #spawns == 0 then
+				continue
+			end
+			for _, def in group.Defs do
 				local pop = population[zoneId .. "/" .. def.Id]
 				for i = #pop.Deaths, 1, -1 do
 					if now - pop.Deaths[i] > M.Respawn then
@@ -333,7 +368,8 @@ function MobService:Populate()
 				local missing = desired - pop.Alive - #pop.Deaths
 				for _ = 1, math.min(missing, 3) do -- spread spawns over ticks
 					local base = spawns[rng:NextInteger(1, #spawns)]
-					local home = base + Vector3.new(rng:NextNumber(-10, 10), 0, rng:NextNumber(-10, 10))
+					local j = group.Jitter
+					local home = base + Vector3.new(rng:NextNumber(-j, j), 0, rng:NextNumber(-j, j))
 					task.spawn(self.Spawn, self, zoneId, def, home, false)
 					-- Short reservation so the next tick doesn't double-spawn while the
 					-- rig is being built (Spawn bumps Alive once it exists).
@@ -349,6 +385,9 @@ function MobService:Start()
 	for _, zoneId in Zones.Order do
 		local zone = Zones.Get(zoneId)
 		for _, def in zone.Mobs or {} do
+			population[zoneId .. "/" .. def.Id] = { Alive = 0, Deaths = {} }
+		end
+		for _, def in zone.SkyMobs or {} do
 			population[zoneId .. "/" .. def.Id] = { Alive = 0, Deaths = {} }
 		end
 		if zone.Boss then

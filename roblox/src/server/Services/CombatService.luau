@@ -218,22 +218,17 @@ function CombatService:AddAwakening(player: Player, amount: number)
 	player:SetAttribute("Awakening", math.min(max, current + amount))
 end
 
--- PvP needs: a PvP zone, both fighters at the newbie level or above, and
--- neither standing in a hub safe area (spawns, portals, training grounds).
+-- PvP needs both fighters at the newbie level or above and both standing in
+-- the PvP area of their location (see Zones.AreaAt).
 function CombatService:CanPvp(player: Player): boolean
-	local zoneId = player:GetAttribute("Zone") or "Hub"
-	local zone = Zones.Get(zoneId)
-	if not zone or not zone.Pvp then
-		return false
-	end
 	if self.Services.ProgressionService:GetLevel(player) < Zones.HubSafe.NewbieLevel then
 		return false
 	end
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	if zoneId == "Hub" and self.MapFolder:GetAttribute("Generated") and root and Zones.IsHubSafe(root.Position) then
+	if not root then
 		return false
 	end
-	return true
+	return Zones.AreaAt(player:GetAttribute("Zone") or "Hub", root.Position) == "Pvp"
 end
 
 function CombatService:InCombat(player: Player): boolean
@@ -243,7 +238,7 @@ end
 
 function CombatService:ApplyKnockback(model: Model, velocity: Vector3)
 	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart?
-	if not root then
+	if not root or model:GetAttribute("NoKnockback") or root.Anchored then
 		return
 	end
 	local owner = Players:GetPlayerFromCharacter(model)
@@ -263,7 +258,7 @@ end
 function CombatService:Damage(attackerPlayer: Player?, attacker: Model?, target: Model, amount: number, opts)
 	opts = opts or {}
 	local humanoid = aliveHumanoid(target)
-	if not humanoid or target == attacker or target:FindFirstChildOfClass("ForceField") then
+	if not humanoid or target == attacker or target:FindFirstChildOfClass("ForceField") or target:GetAttribute("God") then
 		return false
 	end
 	local targetRoot = target:FindFirstChild("HumanoidRootPart") :: BasePart?
@@ -786,6 +781,7 @@ function CombatService:OnCharacterAdded(player: Player, character: Model)
 	player:SetAttribute("Awakening", player:GetAttribute("Awakening") or 0)
 
 	self:ApplyStyleAttributes(player)
+	character:SetAttribute("God", player:GetAttribute("God"))
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	humanoid.BreakJointsOnDeath = false
 	humanoid.Died:Connect(function()
@@ -830,6 +826,12 @@ function CombatService:Start()
 			self:HandleBlock(player, true)
 		elseif action == "BlockEnd" then
 			self:HandleBlock(player, false)
+		elseif action == "AirJump" then
+			-- Purely visual: other players see the air-jump burst.
+			local character = player.Character
+			if character and type(payload) == "number" then
+				fx("AirJump", { Character = character, Count = math.clamp(payload, 1, 2) })
+			end
 		end
 	end)
 

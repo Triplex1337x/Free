@@ -155,7 +155,7 @@ function Hud:CloseAll()
 	end
 end
 
-local MENU_ICONS = { Roll = "✦", Arts = "⚔", Stats = "▲", Map = "◈", Quests = "!", Items = "♥", Shop = "$", Codes = "#" }
+local MENU_ICONS = { Roll = "✦", Arts = "⚔", Stats = "▲", Map = "◈", Quests = "!", Items = "♥", Shop = "$", Codes = "#", Admin = "⚙" }
 
 function Hud:AddMenuButton(text: string, color: Color3, order: number, onClick: () -> ())
 	local button = UI.button({
@@ -713,7 +713,7 @@ function Hud:Init()
 	self.Menu = UI.new("Frame", {
 		BackgroundTransparency = 1,
 		Position = UDim2.fromOffset(16, 226),
-		Size = UDim2.fromOffset(240, 4 * 50),
+		Size = UDim2.fromOffset(240, 5 * 50),
 		Parent = self.Gui,
 	}, { UI.new("UIGridLayout", { CellSize = UDim2.fromOffset(114, 42), CellPadding = UDim2.fromOffset(8, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
 
