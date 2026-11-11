@@ -11,6 +11,7 @@ local ORDER = {
 	"QuestController",
 	"InventoryController",
 	"SettingsController",
+	"SkillsController",
 	"ShopController",
 	"FxController",
 	"JumpController",

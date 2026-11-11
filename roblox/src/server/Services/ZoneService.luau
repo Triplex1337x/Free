@@ -82,11 +82,8 @@ local THEMES = {
 
 local function buildIsland(folder: Folder, origin: Vector3, theme)
 	local cylinder = CFrame.Angles(0, 0, math.rad(90))
-	-- Terrain ground (proper PBR materials, smooth edges) on a rocky base, plus
-	-- an invisible safety floor a little below it.
-	Graphics.Disc(origin, RADIUS + 2, 12, theme.Terrain)
-	Graphics.Disc(origin - Vector3.new(0, 12, 0), RADIUS - 20, 12, Enum.Material.Rock)
-	part({ Name = "Floor", Shape = Enum.PartType.Cylinder, Size = Vector3.new(4, RADIUS * 2, RADIUS * 2), CFrame = CFrame.new(origin + Vector3.new(0, -8, 0)) * cylinder, Transparency = 1, Parent = folder })
+	-- Solid part floor with an exact top at y = 0 (everything is placed for it).
+	part({ Name = "Floor", Shape = Enum.PartType.Cylinder, Size = Vector3.new(6, RADIUS * 2, RADIUS * 2), CFrame = CFrame.new(origin + Vector3.new(0, -3, 0)) * cylinder, Material = theme.Floor, Color = theme.FloorColor, Parent = folder })
 
 	-- Rocky underside so the island looks like it floats.
 	for i = 1, 28 do
@@ -136,8 +133,9 @@ function Decor.Ember(folder: Folder, origin: Vector3)
 	for _ = 1, 15 do
 		local pos = randomSpot(origin, 30, 350)
 		local r = rng:NextNumber(10, 22)
-		Graphics.Disc(pos - Vector3.new(0, 1, 0), r, 3, Enum.Material.CrackedLava)
-		local pool = part({ Name = "LavaPool", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.2, r * 1.2, r * 1.2), CFrame = CFrame.new(pos + Vector3.new(0, -0.6, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Neon, Color = lava, Transparency = 0.45, CanCollide = false, CanQuery = false, Parent = folder })
+		-- Thin decal-like discs (no collision, no holes to fall into).
+		part({ Name = "LavaCrust", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.2, r * 2, r * 2), CFrame = CFrame.new(pos + Vector3.new(0, 0.04, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.CrackedLava, Color = Color3.fromRGB(240, 96, 32), CanCollide = false, CanQuery = false, Parent = folder })
+		local pool = part({ Name = "LavaPool", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.2, r * 1.2, r * 1.2), CFrame = CFrame.new(pos + Vector3.new(0, 0.07, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Neon, Color = lava, Transparency = 0.35, CanCollide = false, CanQuery = false, Parent = folder })
 		light(pool, lava, r * 2.5, 2)
 		emitter(pool, { Texture = "rbxasset://textures/particles/sparkles_main.dds", Color = ColorSequence.new(Color3.fromRGB(255, 200, 80), lava), LightEmission = 1, Rate = 6, Lifetime = NumberRange.new(1.5, 3), Speed = NumberRange.new(4, 9), Acceleration = Vector3.new(0, 5, 0), Size = NumberSequence.new(0.4, 0), SpreadAngle = Vector2.new(20, 20) })
 	end
@@ -161,12 +159,8 @@ function Decor.Tidal(folder: Folder, origin: Vector3)
 	for _ = 1, 16 do
 		local pos = randomSpot(origin, 30, 350)
 		local r = rng:NextNumber(12, 26)
-		-- Shallow real water: waves, refraction and reflections.
-		Graphics.Disc(pos - Vector3.new(0, 0.8, 0), r, 3.2, Enum.Material.Water)
-		Graphics.Disc(pos - Vector3.new(0, 4, 0), r, 4, Enum.Material.Sand)
-		if rng:NextNumber() > 0.5 then
-			Graphics.Disc(pos + Vector3.new(r * 0.9, 0, 0), r * 0.5, 4, Enum.Material.LeafyGrass)
-		end
+		-- Glossy water discs you walk over (no swimming / sinking in pools).
+		part({ Name = "Water", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.2, r * 2, r * 2), CFrame = CFrame.new(pos + Vector3.new(0, 0.05, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Glass, Color = Color3.fromRGB(60, 170, 230), Transparency = 0.25, Reflectance = 0.45, CanCollide = false, CanQuery = false, Parent = folder })
 	end
 	-- Shrine colonnade with teal roofs.
 	for i = 1, 12 do
@@ -202,7 +196,8 @@ function Decor.Storm(folder: Folder, origin: Vector3)
 	-- Glossy glacier patches in the snow.
 	for _ = 1, 14 do
 		local pos = randomSpot(origin, 30, 340)
-		Graphics.Disc(pos, rng:NextNumber(10, 24), 4, Enum.Material.Glacier)
+		local r = rng:NextNumber(10, 24)
+		part({ Name = "Glacier", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.2, r * 2, r * 2), CFrame = CFrame.new(pos + Vector3.new(0, 0.05, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Glacier, Color = Color3.fromRGB(150, 210, 255), Reflectance = 0.25, CanCollide = false, CanQuery = false, Parent = folder })
 	end
 	for i = 1, 6 do
 		local angle = (i / 6) * math.pi * 2
@@ -506,8 +501,9 @@ function ZoneService:Init(services)
 			Decor[zone.Theme](folder, zone.Origin)
 
 			local spawns = {}
-			for _ = 1, 30 do
-				table.insert(spawns, CFrame.new(randomSpot(zone.Origin, 50, 300) + Vector3.new(0, 4, 0)))
+			-- Many spread-out points so mobs roam the whole island, not a few clumps.
+			for _ = 1, 160 do
+				table.insert(spawns, CFrame.new(randomSpot(zone.Origin, 45, 345) + Vector3.new(0, 4, 0)))
 			end
 			zoneData[id] = {
 				Spawn = CFrame.lookAt(zone.Origin + Vector3.new(0, 1, 330), zone.Origin + Vector3.new(0, 1, 0)),

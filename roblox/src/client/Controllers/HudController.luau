@@ -155,8 +155,8 @@ function Hud:CloseAll()
 	end
 end
 
-local MENU_ICONS = { Roll = "✦", Arts = "⚔", Stats = "▲", Map = "◈", Quests = "!", Items = "♥", Shop = "$", Codes = "#", Admin = "⚙", Settings = "≡" }
-local MENU_LABELS = { Settings = "НАСТРОЙКИ", Roll = "РОЛЛ", Arts = "СТИЛИ", Stats = "СТАТЫ", Map = "КАРТА", Quests = "КВЕСТЫ", Items = "ЗЕЛЬЯ", Shop = "МАГАЗИН", Codes = "КОДЫ", Admin = "АДМИН" }
+local MENU_ICONS = { Roll = "✦", Arts = "⚔", Stats = "▲", Map = "◈", Quests = "!", Items = "♥", Shop = "$", Codes = "#", Admin = "⚙", Settings = "≡", Skills = "?" }
+local MENU_LABELS = { Settings = "НАСТРОЙКИ", Roll = "РОЛЛ", Arts = "СТИЛИ", Stats = "СТАТЫ", Map = "КАРТА", Quests = "КВЕСТЫ", Items = "ЗЕЛЬЯ", Shop = "МАГАЗИН", Codes = "КОДЫ", Admin = "АДМИН", Skills = "СКИЛЛЫ" }
 
 function Hud:AddMenuButton(text: string, color: Color3, order: number, onClick: () -> ())
 	local button = UI.button({
@@ -396,6 +396,103 @@ function Hud:BuildPlayerCard()
 	end)
 end
 
+---------------------------------------------------------------------------
+-- Ability tooltip: hover on PC, press-and-hold on phones / tablets.
+---------------------------------------------------------------------------
+
+local tip: Frame? = nil
+local tipTitle: TextLabel? = nil
+local tipAim: TextLabel? = nil
+local tipBody: TextLabel? = nil
+
+function Hud:BuildAbilityTip()
+	local frame = UI.new("Frame", {
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		AnchorPoint = if isTouch then Vector2.new(0.5, 0) else Vector2.new(0.5, 1),
+		Position = if isTouch then UDim2.new(0.5, 0, 0, 70) else UDim2.new(0.5, 0, 1, -196),
+		Size = UDim2.fromOffset(400, 190),
+		Visible = false,
+		ZIndex = 60,
+		Parent = self.Gui,
+	}, {
+		UI.corner(12),
+		UI.new("UIGradient", { Color = ColorSequence.new(Theme.PanelLight, Theme.Background), Rotation = 90 }),
+		UI.gradientStroke(Theme.Accent2, Theme.Accent, 3),
+	})
+	tipTitle = UI.label({ Text = "", Font = Theme.FontHeavy, MaxTextSize = 22, TextColor3 = Theme.Gold, TextXAlignment = Enum.TextXAlignment.Left, Size = UDim2.new(1, -24, 0, 28), Position = UDim2.fromOffset(12, 8), ZIndex = 61, Parent = frame })
+	tipAim = UI.label({ Text = "", Font = Theme.FontHeavy, MaxTextSize = 16, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, Size = UDim2.new(1, -24, 0, 40), Position = UDim2.fromOffset(12, 38), ZIndex = 61, Parent = frame })
+	tipBody = UI.label({ Text = "", MaxTextSize = 15, Outline = false, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Theme.SubText, Size = UDim2.new(1, -24, 1, -88), Position = UDim2.fromOffset(12, 80), ZIndex = 61, Parent = frame })
+	tip = frame
+end
+
+function Hud:ShowAbilityTip(key: string)
+	local d = State.Data
+	local ability = d and Styles.GetAbility(d.EquippedStyle, key)
+	if not tip or not ability then
+		return
+	end
+	local info = Styles.Describe(ability, key == "G")
+	;(tipTitle :: TextLabel).Text = ("[%s] %s"):format(if key == "G" then "УЛЬТА" else key, ability.Name)
+	;(tipAim :: TextLabel).Text = info.Aim
+	;(tipAim :: TextLabel).TextColor3 = if ability.Homing then Theme.Good elseif ability.Kind == "AoE" and not ability.Offset then Theme.Accent2 else Theme.Gold
+	;(tipBody :: TextLabel).Text = "• " .. table.concat(info.Lines, "\n• ")
+	tip.Size = UDim2.fromOffset(400, 92 + #info.Lines * 20)
+	tip.Visible = true
+end
+
+function Hud:HideAbilityTip()
+	if tip then
+		tip.Visible = false
+	end
+end
+
+-- Hooks a skill button: tap casts; on PC hovering shows the tooltip, on
+-- touch holding the button ~0.45 s shows it instead of casting.
+function Hud:BindAbilityButton(button: GuiButton, key: string, cast: () -> ())
+	if not isTouch then
+		button.MouseEnter:Connect(function()
+			self:ShowAbilityTip(key)
+		end)
+		button.MouseLeave:Connect(function()
+			self:HideAbilityTip()
+		end)
+		button.Activated:Connect(cast)
+		return
+	end
+	local pressId = 0
+	local held = false
+	local showedTip = false
+	button.MouseButton1Down:Connect(function()
+		pressId += 1
+		local id = pressId
+		held = true
+		showedTip = false
+		task.delay(0.45, function()
+			if held and id == pressId then
+				showedTip = true
+				self:ShowAbilityTip(key)
+			end
+		end)
+	end)
+	button.MouseButton1Up:Connect(function()
+		if not held then
+			return
+		end
+		held = false
+		if showedTip then
+			self:HideAbilityTip()
+		else
+			cast()
+		end
+	end)
+	button.MouseLeave:Connect(function()
+		held = false
+		if showedTip then
+			self:HideAbilityTip()
+		end
+	end)
+end
+
 function Hud:BuildCombat()
 	local bottom = UI.new("Frame", {
 		BackgroundTransparency = 1,
@@ -475,7 +572,7 @@ function Hud:BuildCombat()
 		local lock = UI.new("Frame", { BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.25, Size = UDim2.fromScale(1, 1), ZIndex = 7, Visible = false, Parent = slot })
 		local lockText = UI.label({ Text = "", Font = Theme.FontHeavy, MaxTextSize = 15, TextWrapped = true, TextColor3 = Theme.SubText, Size = UDim2.new(1, -8, 1, -8), Position = UDim2.fromOffset(4, 4), ZIndex = 8, Parent = lock })
 		local scale = UI.new("UIScale", { Parent = slot })
-		slot.Activated:Connect(function()
+		self:BindAbilityButton(slot, key, function()
 			UI.tween(scale, 0.05, { Scale = 0.9 })
 			task.delay(0.05, function()
 				UI.tween(scale, 0.15, { Scale = 1 }, Enum.EasingStyle.Back)
@@ -649,7 +746,7 @@ function Hud:BuildTouchButtons()
 	local touch = {}
 	for key, pos in positions do
 		local b, cd, shade = round(key, if key == "G" then Theme.Gold else Theme.Accent2, if key == "G" then 78 else 70, pos, 22)
-		b.Activated:Connect(function()
+		self:BindAbilityButton(b, key, function()
 			Input.Ability(key)
 		end)
 		touch[key] = { Button = b, Cd = cd, Shade = shade }
@@ -794,6 +891,7 @@ function Hud:Init()
 	rescale()
 
 	self:BuildPlayerCard()
+	self:BuildAbilityTip()
 	self:BuildCombat()
 	self:BuildCombo()
 	self:BuildServerLuck()

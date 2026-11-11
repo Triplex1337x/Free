@@ -19,7 +19,37 @@ local WorldController = {}
 
 local crystals = {} :: { BasePart }
 local pads = {} :: { BasePart }
+local skyPads = {} :: { BasePart }
 local lastLaunch = 0
+
+local function collectSkyPads(root: Instance?)
+	if not root then
+		return
+	end
+	for _, d in root:GetDescendants() do
+		if d:IsA("BasePart") and d.Name == "SkyPad" then
+			table.insert(skyPads, d)
+		end
+	end
+end
+
+-- Sky platforms are one-way: you jump up through them from below and land
+-- on top. Before, jumping into a platform from underneath could wedge the
+-- character inside it. Collision is toggled locally, which is what drives
+-- your own character's physics.
+local function updateSkyPads(root: BasePart, humanoid: Humanoid)
+	local feet = root.Position.Y - root.Size.Y / 2 - humanoid.HipHeight
+	for _, pad in skyPads do
+		local offset = root.Position - pad.Position
+		local radius = pad.Size.Y / 2 + 4
+		if math.abs(offset.X) < radius and math.abs(offset.Z) < radius then
+			local top = pad.Position.Y + pad.Size.X / 2
+			pad.CanCollide = feet >= top - 0.9
+		elseif not pad.CanCollide then
+			pad.CanCollide = true
+		end
+	end
+end
 
 local function scan(world: Instance)
 	for _, d in world:GetDescendants() do
@@ -54,6 +84,8 @@ function WorldController:Start()
 	if world then
 		scan(world)
 	end
+	collectSkyPads(workspace:FindFirstChild("Zones"))
+	collectSkyPads(workspace:FindFirstChild("Arena"))
 	State.Observe(refreshCrystals)
 
 	Remotes.OpenUI.OnClientEvent:Connect(function(what)
@@ -77,6 +109,10 @@ function WorldController:Start()
 		-- Jump pads: standing on one launches you up toward the sky isles.
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if root and humanoid then
+			updateSkyPads(root, humanoid)
+		end
 		if root and os.clock() - lastLaunch > 1 then
 			for _, pad in pads do
 				local offset = root.Position - pad.Position

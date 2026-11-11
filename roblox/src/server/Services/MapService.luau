@@ -204,40 +204,31 @@ local function buildArena(folder: Folder)
 
 	local cylinder = CFrame.Angles(0, 0, math.rad(90))
 
-	-- Terrain ground: grass meadow with animated blades, a sandy shore and a
-	-- reflective lake beyond the arena wall, a cobblestone duel plaza and paved
-	-- paths to the four portal gates.
+	-- The playable ground is made of parts with an exact top at y = 0 (props,
+	-- lanterns and chests are placed for that height). Terrain is only used
+	-- for scenery outside the wall: a grass meadow, a sandy shore, a lake with
+	-- real reflective water and hills on the horizon. It sits below y = 0 so it
+	-- can never cover anything in the arena.
 	local M = Enum.Material
-	Graphics.Disc(Vector3.new(0, 0, 0), 720, 16, M.Grass)
-	Graphics.Disc(Vector3.new(0, -1.2, 0), 285, 10, M.Water)
-	Graphics.Disc(Vector3.new(0, -11, 0), 285, 4, M.Sand)
-	Graphics.Disc(Vector3.new(0, 0, 0), 214, 8, M.Sand)
-	Graphics.Disc(Vector3.new(0, 0, 0), 200, 16, M.Grass)
+	part({ Name = "Floor", Shape = Enum.PartType.Cylinder, Size = Vector3.new(4, ARENA_RADIUS * 2 + 30, ARENA_RADIUS * 2 + 30), CFrame = CFrame.new(0, -2, 0) * cylinder, Material = M.Grass, Color = Color3.fromRGB(98, 168, 74), Parent = folder })
+	part({ Name = "Plaza", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.2, 156, 156), CFrame = CFrame.new(0, 0.02, 0) * cylinder, Material = M.Cobblestone, Color = Color3.fromRGB(150, 142, 160), CanCollide = false, CanQuery = false, Parent = folder })
 	for i = 0, 3 do
 		local angle = i * math.pi / 2 + math.pi / 4
-		local mid = Vector3.new(math.cos(angle) * 115, -2, math.sin(angle) * 115)
-		Graphics.Block(CFrame.lookAt(mid, Vector3.new(0, -2, 0)), Vector3.new(14, 4, 130), M.Pavement)
+		local mid = Vector3.new(math.cos(angle) * 125, 0.03, math.sin(angle) * 125)
+		part({ Name = "Path", Size = Vector3.new(14, 0.2, 100), CFrame = CFrame.lookAt(mid, Vector3.new(0, 0.03, 0)), Material = M.Pavement, Color = Color3.fromRGB(128, 122, 138), CanCollide = false, CanQuery = false, Parent = folder })
 	end
-	Graphics.Disc(Vector3.new(0, 0, 0), 78, 8, M.Cobblestone)
-	-- Grassy hills and rocks on the horizon.
+	Graphics.Disc(Vector3.new(0, -4, 0), 720, 12, M.Grass)
+	Graphics.Disc(Vector3.new(0, -5, 0), 280, 10, M.Water)
+	Graphics.Disc(Vector3.new(0, -15, 0), 280, 4, M.Sand)
+	Graphics.Disc(Vector3.new(0, -3, 0), 222, 12, M.Sand)
 	local hills = Random.new(77)
 	for i = 1, 22 do
 		local angle = (i / 22) * math.pi * 2 + hills:NextNumber(-0.1, 0.1)
-		local dist = hills:NextNumber(400, 640)
+		local dist = hills:NextNumber(410, 640)
 		local r = hills:NextNumber(50, 110)
-		local c = Vector3.new(math.cos(angle) * dist, -r * 0.45, math.sin(angle) * dist)
+		local c = Vector3.new(math.cos(angle) * dist, -r * 0.5, math.sin(angle) * dist)
 		Graphics.Ball(c, r, if i % 3 == 0 then M.Rock else M.LeafyGrass)
 	end
-	-- Invisible collision floor kept as a safety net under the terrain.
-	part({
-		Name = "Floor",
-		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(4, ARENA_RADIUS * 2, ARENA_RADIUS * 2),
-		CFrame = CFrame.new(0, -6, 0) * cylinder,
-		Transparency = 1,
-		Color = FLOOR_COLOR,
-		Parent = folder,
-	})
 	part({
 		Name = "Ring",
 		Shape = Enum.PartType.Cylinder,

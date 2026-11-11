@@ -205,8 +205,8 @@ local function findTarget(mob)
 			if root and humanoid and humanoid.Health > 0 and not safe and not character:FindFirstChildOfClass("ForceField") then
 				local d = (root.Position - mob.Root.Position).Magnitude
 				local allowed
-				if mob.Boss then
-					allowed = true
+				if mob.Boss and d <= M.BossProximityAggro then
+					allowed = true -- bosses guard their arena, but don't hunt the whole map
 				elseif provokerId == player.UserId and now - provokedAt < M.AggroMemory then
 					allowed = true -- you hit it
 				elseif mob.Target == character then
@@ -243,7 +243,7 @@ function MobService:Melee(mob, targetRoot: BasePart)
 		local reach = M.AttackRange * (mob.Def.Scale or 1) + 2
 		local box = CFrame.lookAt(root.Position, root.Position + aim) * CFrame.new(0, 0, -reach / 2)
 		for _, victim in Combat:QueryBox(box, Vector3.new(6 * (mob.Def.Scale or 1), 8, reach), mob.Model) do
-			Combat:Damage(nil, mob.Model, victim, mob.Damage * (if finisher then 1.8 else 1), {
+			Combat:Damage(nil, mob.Model, victim, mob.Damage * (if finisher then (if mob.Boss then 1.4 else 1.8) else 1), {
 				Stun = if finisher then 0.8 else 0.35,
 				Knockback = if finisher then 50 else 4,
 				GuardBreak = finisher and mob.Boss,
@@ -259,7 +259,7 @@ function MobService:UseAbility(mob, targetRoot: BasePart, ultimate: boolean)
 	local base = if ultimate then mob.Style.Ultimate else mob.Style.Abilities[keys[rng:NextInteger(1, #keys)]]
 	-- Copy and rescale the player skill for this mob's damage level.
 	local ability = table.clone(base)
-	ability.Damage = mob.Damage * (if ultimate then 2.5 else 1.4) / (ability.Hits or 1)
+	ability.Damage = mob.Damage * (if ultimate then 1.8 elseif mob.Boss then 1.15 else 1.4) / (ability.Hits or 1)
 	ability.Windup = math.max(ability.Windup or 0, if ultimate then 1.1 else 0.45) -- readable telegraph
 	local aim = (targetRoot.Position - mob.Root.Position) * Vector3.new(1, 0, 1)
 	aim = if aim.Magnitude > 0.1 then aim.Unit else mob.Root.CFrame.LookVector
@@ -307,6 +307,12 @@ function MobService:Think(mob, now: number)
 		return
 	end
 
+	-- Stuck far below the ground (e.g. pushed through a wall): reset home.
+	if root.Position.Y < -40 and mob.Home.Position.Y > -10 then
+		mob.Model:PivotTo(mob.Home + Vector3.new(0, 3, 0))
+		return
+	end
+
 	local target, dist = findTarget(mob)
 	mob.Target = target
 	if not target then
@@ -327,12 +333,12 @@ function MobService:Think(mob, now: number)
 		mob.NextUltimate = now + 16
 		self:UseAbility(mob, targetRoot, true)
 	elseif now > mob.NextAbility and dist < 32 then
-		mob.NextAbility = now + M.AbilityCooldown * (if mob.Boss then 0.6 else 1) + rng:NextNumber(0, 3)
+		mob.NextAbility = now + M.AbilityCooldown * (if mob.Boss then 0.85 else 1) + rng:NextNumber(0, 3)
 		self:UseAbility(mob, targetRoot, false)
 	elseif dist <= reach + 1 then
 		mob.Humanoid:MoveTo(root.Position)
 		if now > mob.NextAttack then
-			mob.NextAttack = now + M.AttackCooldown * (if mob.Boss then 0.75 else 1)
+			mob.NextAttack = now + M.AttackCooldown * (if mob.Boss then 0.95 else 1)
 			self:Melee(mob, targetRoot)
 		end
 	else
@@ -407,6 +413,21 @@ function MobService:Populate()
 				local to = math.max(from, math.floor(defIndex * #sorted / bands))
 				local band = { table.unpack(sorted, from, to) }
 				local pop = population[zoneId .. "/" .. def.Id]
+				-- Count living mobs directly instead of trusting a counter: a mob
+				-- that fell out of the world or got destroyed without dying used
+				-- to leave the counter stuck, so that type never respawned.
+				local alive = 0
+				for model, m in mobs do
+					if not model.Parent or not m.Root or not m.Root.Parent then
+						mobs[model] = nil
+						if model.Parent then
+							model:Destroy()
+						end
+					elseif m.Zone == zoneId and m.Def.Id == def.Id and not m.Boss and m.Humanoid.Health > 0 then
+						alive += 1
+					end
+				end
+				pop.Alive = alive
 				for i = #pop.Deaths, 1, -1 do
 					if now - pop.Deaths[i] > M.Respawn then
 						table.remove(pop.Deaths, i)

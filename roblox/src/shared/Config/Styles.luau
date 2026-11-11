@@ -146,4 +146,81 @@ function Styles.GetAbility(id: string, key: string)
 	return style.Abilities[key]
 end
 
+local function num(n: number): string
+	return if n == math.floor(n) then tostring(n) else ("%.1f"):format(n)
+end
+
+-- Human-readable description of an ability (Russian), shared by the hover /
+-- long-press tooltip and the "Скиллы" panel. Returns:
+--   Aim   = one line saying whether it homes in or must be aimed
+--   Lines = what it does, damage, control effects and special traits
+function Styles.Describe(ability, isUltimate: boolean?)
+	local lines = {}
+	local kind = ability.Kind
+	local hits = ability.Hits or 1
+	local aim
+	if kind == "Melee" then
+		table.insert(lines, ("Удар вблизи: дальность %s, ширина %s"):format(num(ability.Range or 8), num(ability.Width or 6)))
+		aim = if ability.Homing
+			then "🎯 САМОНАВОДКА: сам разворачивается к ближайшему врагу"
+			else "✋ ПРИЦЕЛЬНО: бьёт туда, куда ты смотришь"
+	elseif kind == "Dash" then
+		table.insert(lines, ("Рывок на %s студ, бьёт всех на пути"):format(num(ability.Distance or 30)))
+		aim = if ability.Homing
+			then "🎯 САМОНАВОДКА: рывок летит к ближайшему врагу и останавливается перед ним"
+			else "✋ ПРИЦЕЛЬНО: рывок туда, куда ты смотришь"
+	elseif kind == "Projectile" then
+		local text = ("Снаряд, летит до %s студ"):format(num(ability.MaxDistance or 100))
+		if ability.Explode then
+			text ..= (", взрыв радиусом %s"):format(num(ability.Explode))
+		end
+		table.insert(lines, text)
+		aim = if ability.Homing
+			then "🎯 САМОНАВОДКА: снаряд сам догоняет ближайшего врага"
+			else "✋ ПРИЦЕЛЬНО: летит прямо, нужно целиться"
+	else -- AoE
+		if ability.Offset then
+			table.insert(lines, ("Удар по области радиусом %s впереди тебя"):format(num(ability.Radius or 12)))
+			aim = if ability.Homing
+				then "🎯 САМОНАВОДКА: удар падает прямо на ближайшего врага"
+				else "✋ ПРИЦЕЛЬНО: удар впереди, куда ты смотришь"
+		else
+			table.insert(lines, ("Удар по области вокруг тебя, радиус %s"):format(num(ability.Radius or 12)))
+			aim = "⭕ ВОКРУГ ТЕБЯ: целиться не нужно"
+		end
+	end
+	table.insert(lines, if hits > 1
+		then ("Урон: %s × %d ударов"):format(num(ability.Damage), hits)
+		else ("Урон: %s"):format(num(ability.Damage)))
+	local control = {}
+	if ability.Stun and ability.Stun > 0 then
+		table.insert(control, ("оглушение %s с"):format(num(ability.Stun)))
+	end
+	if ability.Knockback and ability.Knockback < 0 then
+		table.insert(control, "притягивает")
+	elseif ability.Knockback and ability.Knockback >= 40 then
+		table.insert(control, "сильно отбрасывает")
+	elseif ability.Knockback and ability.Knockback > 0 then
+		table.insert(control, "отталкивает")
+	end
+	if #control > 0 then
+		table.insert(lines, "Эффект: " .. table.concat(control, ", "))
+	end
+	if ability.HyperArmor then
+		table.insert(lines, "🛡 Гиперармор: тебя не сбить, пока кастуешь")
+	end
+	if ability.GuardBreak then
+		table.insert(lines, "💥 Пробивает блок")
+	end
+	if ability.Unblockable then
+		table.insert(lines, "Нельзя заблокировать")
+	end
+	if isUltimate then
+		table.insert(lines, "Ульта: нужна полная шкала пробуждения. Пока играет — неуязвимость")
+	elseif ability.Cooldown then
+		table.insert(lines, ("Перезарядка: %s с"):format(num(ability.Cooldown)))
+	end
+	return { Aim = aim, Lines = lines }
+end
+
 return Styles

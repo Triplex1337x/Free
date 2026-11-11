@@ -34,8 +34,8 @@ Zones.List = {
 			Saturation = 0.25,
 		},
 		Mobs = {
-			{ Id = "CinderImp", Name = "Пепельный бес", Level = 3, Count = 7, Element = "Fire", Outfit = "Imp", Scale = 0.85 },
-			{ Id = "AshBrute", Name = "Пепельный громила", Level = 9, Count = 4, Element = "Fire", Outfit = "Brute", Scale = 1.3 },
+			{ Id = "CinderImp", Name = "Пепельный бес", Level = 3, Count = 11, Element = "Fire", Outfit = "Imp", Scale = 0.85 },
+			{ Id = "AshBrute", Name = "Пепельный громила", Level = 9, Count = 7, Element = "Fire", Outfit = "Brute", Scale = 1.3 },
 		},
 		SkyMobs = { { Id = "InfernoImp", Name = "Элитный адский бес", Level = 14, Count = 9, Element = "Fire", Outfit = "Imp", Scale = 1, Elite = true, Leash = 20 } },
 		Boss = { Id = "MagmaTyrant", Name = "Магмовый Тиран", Level = 15, Element = "Fire", Outfit = "Tyrant", Scale = 2.2, Respawn = 180 },
@@ -58,8 +58,8 @@ Zones.List = {
 			Saturation = 0.2,
 		},
 		Mobs = {
-			{ Id = "ReefStalker", Name = "Рифовый охотник", Level = 18, Count = 7, Element = "Water", Outfit = "Stalker", Scale = 1 },
-			{ Id = "TideSentinel", Name = "Страж прилива", Level = 26, Count = 4, Element = "Water", Outfit = "Sentinel", Scale = 1.35 },
+			{ Id = "ReefStalker", Name = "Рифовый охотник", Level = 18, Count = 11, Element = "Water", Outfit = "Stalker", Scale = 1 },
+			{ Id = "TideSentinel", Name = "Страж прилива", Level = 26, Count = 7, Element = "Water", Outfit = "Sentinel", Scale = 1.35 },
 		},
 		SkyMobs = { { Id = "EliteSentinel", Name = "Элитный страж прилива", Level = 32, Count = 9, Element = "Water", Outfit = "Sentinel", Scale = 1.2, Elite = true, Leash = 20 } },
 		Boss = { Id = "LeviathanKnight", Name = "Рыцарь Левиафана", Level = 35, Element = "Water", Outfit = "Leviathan", Scale = 2.3, Respawn = 180 },
@@ -82,8 +82,8 @@ Zones.List = {
 			Saturation = 0.05,
 		},
 		Mobs = {
-			{ Id = "StormAcolyte", Name = "Послушник бури", Level = 45, Count = 7, Element = "Lightning", Outfit = "Acolyte", Scale = 1 },
-			{ Id = "GaleRonin", Name = "Ронин урагана", Level = 58, Count = 4, Element = "Wind", Outfit = "Ronin", Scale = 1.15 },
+			{ Id = "StormAcolyte", Name = "Послушник бури", Level = 45, Count = 11, Element = "Lightning", Outfit = "Acolyte", Scale = 1 },
+			{ Id = "GaleRonin", Name = "Ронин урагана", Level = 58, Count = 7, Element = "Wind", Outfit = "Ronin", Scale = 1.15 },
 		},
 		SkyMobs = { { Id = "EliteRonin", Name = "Элитный ронин урагана", Level = 66, Count = 9, Element = "Wind", Outfit = "Ronin", Scale = 1.15, Elite = true, Leash = 20 } },
 		Boss = { Id = "ThunderShogun", Name = "Громовой Сёгун", Level = 72, Element = "Lightning", Outfit = "Shogun", Scale = 2.3, Respawn = 180 },
@@ -106,8 +106,8 @@ Zones.List = {
 			Saturation = 0.3,
 		},
 		Mobs = {
-			{ Id = "HollowWraith", Name = "Призрак пустоты", Level = 85, Count = 7, Element = "Void", Outfit = "Wraith", Scale = 1.05 },
-			{ Id = "RiftHorror", Name = "Ужас Разлома", Level = 100, Count = 4, Element = "Void", Outfit = "Horror", Scale = 1.45 },
+			{ Id = "HollowWraith", Name = "Призрак пустоты", Level = 85, Count = 11, Element = "Void", Outfit = "Wraith", Scale = 1.05 },
+			{ Id = "RiftHorror", Name = "Ужас Разлома", Level = 100, Count = 7, Element = "Void", Outfit = "Horror", Scale = 1.45 },
 		},
 		SkyMobs = { { Id = "EliteHorror", Name = "Элитный ужас Разлома", Level = 115, Count = 9, Element = "Void", Outfit = "Horror", Scale = 1.4, Elite = true, Leash = 20 } },
 		Boss = { Id = "RiftSovereign", Name = "Владыка Разлома", Level = 130, Element = "Light", Outfit = "Sovereign", Scale = 2.5, Respawn = 180 },
@@ -138,14 +138,15 @@ Zones.Mob = {
 	AttackCooldown = 1.3,
 	AbilityCooldown = 7,
 	BossHealthMult = 8.5, -- bosses keep ~the same HP after the mob HP bumps
-	BossDamageMult = 2.2,
+	BossDamageMult = 1.15, -- a boss hit takes ~10-15% of a same-level player's HP
+	BossProximityAggro = 30, -- bosses only attack players near them (or who hit them)
 	BossRewardMult = 25,
 	BossContributionShare = 0.05,
 
 	-- Built for 12-player servers:
 	LootShare = 0.2, -- anyone with >= 20% of a mob's damage gets the full reward (no kill stealing)
-	PopulationBase = 0.5, -- mobs alive = Count * (Base + PerPlayer * players in zone), capped at Max
-	PopulationPerPlayer = 0.25,
+	PopulationBase = 1, -- mobs alive = Count * (Base + PerPlayer * players in zone), capped at Max
+	PopulationPerPlayer = 0.15,
 	PopulationMax = 2,
 	BossHealthPerPlayer = 0.35, -- +35% boss HP per extra player in the zone
 	BossRespawn = 180, -- every boss returns 3 minutes after it dies

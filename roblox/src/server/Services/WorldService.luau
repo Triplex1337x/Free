@@ -15,7 +15,9 @@ local NpcFactory = require(script.Parent.Parent.Lib.NpcFactory)
 local WorldService = {}
 
 local ISLAND_RADIUS = 380
-local CHEST_COOLDOWN = 15 * 60
+local CHEST_RESPAWN_MIN = 45 -- seconds until an opened ground chest reappears elsewhere
+local CHEST_RESPAWN_MAX = 90
+local CHEST_RESPAWN_SKY = 180
 local CRYSTALS_PER_ZONE = 8
 local SIGN_FONT = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.ExtraBold)
 
@@ -205,12 +207,17 @@ function WorldService:Reward(player: Player, shards: number, spins: number?, pot
 	end
 end
 
-function WorldService:MakeChest(parent: Instance, cf: CFrame, id: string, zoneId: string, rich: boolean)
+-- Chests are shared world loot: whoever opens one gets the reward, the chest
+-- vanishes for everyone and a new one appears somewhere random a bit later.
+-- They have no collision so they never get in the way of a fight.
+function WorldService:MakeChest(parent: Instance, cf: CFrame, zoneId: string, rich: boolean, nextSpot: () -> CFrame)
 	local gold = Color3.fromRGB(255, 205, 70)
-	local base = part({ Name = "Chest", Size = Vector3.new(5, 3, 3.4), CFrame = cf * CFrame.new(0, 1.5, 0), Material = Enum.Material.WoodPlanks, Color = if rich then Color3.fromRGB(150, 60, 200) else Color3.fromRGB(150, 95, 50), Parent = parent })
-	part({ Name = "ChestLid", Size = Vector3.new(5.2, 1.2, 3.6), CFrame = cf * CFrame.new(0, 3.6, 0), Material = Enum.Material.WoodPlanks, Color = base.Color:Lerp(Color3.new(0, 0, 0), 0.15), Parent = parent })
+	local model = Instance.new("Model")
+	model.Name = if rich then "SkyChest" else "Chest"
+	local base = part({ Name = "Chest", Size = Vector3.new(5, 3, 3.4), CFrame = cf * CFrame.new(0, 1.5, 0), Material = Enum.Material.WoodPlanks, Color = if rich then Color3.fromRGB(150, 60, 200) else Color3.fromRGB(150, 95, 50), CanCollide = false, Parent = model })
+	part({ Name = "ChestLid", Size = Vector3.new(5.2, 1.2, 3.6), CFrame = cf * CFrame.new(0, 3.6, 0), Material = Enum.Material.WoodPlanks, Color = base.Color:Lerp(Color3.new(0, 0, 0), 0.15), CanCollide = false, Parent = model })
 	for _, x in { -2.2, 0, 2.2 } do
-		part({ Name = "ChestTrim", Size = Vector3.new(0.4, 4.4, 3.8), CFrame = cf * CFrame.new(x, 2.2, 0), Material = Enum.Material.Neon, Color = gold, Parent = parent })
+		part({ Name = "ChestTrim", Size = Vector3.new(0.4, 4.4, 3.8), CFrame = cf * CFrame.new(x, 2.2, 0), Material = Enum.Material.Neon, Color = gold, CanCollide = false, CanQuery = false, Parent = model })
 	end
 	light(base, gold, 14, 1.5)
 	local sparkle = Instance.new("ParticleEmitter")
@@ -222,6 +229,8 @@ function WorldService:MakeChest(parent: Instance, cf: CFrame, id: string, zoneId
 	sparkle.Speed = NumberRange.new(1, 3)
 	sparkle.Lifetime = NumberRange.new(1, 1.5)
 	sparkle.Parent = base
+	model.PrimaryPart = base
+	model.Parent = parent
 
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ActionText = "Открыть"
@@ -230,23 +239,24 @@ function WorldService:MakeChest(parent: Instance, cf: CFrame, id: string, zoneId
 	prompt.MaxActivationDistance = 10
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = base
+	local opened = false
 	prompt.Triggered:Connect(function(player)
-		local profile = self.Services.DataService:Get(player)
-		if not profile then
+		if opened or not self.Services.DataService:Get(player) then
 			return
 		end
-		local d = profile.Data
-		local readyAt = (d.ChestCooldowns[id] or 0) + CHEST_COOLDOWN
-		if os.time() < readyAt then
-			Remotes.Notify:FireClient(player, ("Сундук пуст. Загляни через %d мин."):format(math.ceil((readyAt - os.time()) / 60)), "info")
-			return
-		end
-		d.ChestCooldowns[id] = os.time()
+		opened = true
+		prompt.Enabled = false
 		local level = zoneLevel(zoneId)
 		local shards = math.floor((60 + level * 10) * (if rich then 3 else 1))
 		self:Reward(player, shards, if rich then 1 else nil, if rich then 0.6 else 0.2)
 		Remotes.Notify:FireClient(player, ("%s: +%d ◆%s"):format(prompt.ObjectText, shards, if rich then " +1 ✦" else ""), "success")
 		Remotes.Fx:FireAllClients("Potion", { Character = player.Character, Color = gold })
+		model:Destroy()
+		task.delay(if rich then CHEST_RESPAWN_SKY else rng:NextNumber(CHEST_RESPAWN_MIN, CHEST_RESPAWN_MAX), function()
+			if parent.Parent then
+				self:MakeChest(parent, nextSpot(), zoneId, rich, nextSpot)
+			end
+		end)
 	end)
 end
 
@@ -426,9 +436,11 @@ function WorldService:BuildZone(zoneId: string)
 	end
 
 	-- Chests on the ground + a rich one on top of every sky isle.
-	for i = 1, if isHub then 3 else 6 do
-		local pos = spot(zoneId, 50, maxR)
-		self:MakeChest(folder, CFrame.new(pos) * CFrame.Angles(0, rng:NextNumber(0, 6), 0), zoneId .. "_C" .. i, zoneId, false)
+	local function groundSpot(): CFrame
+		return CFrame.new(spot(zoneId, 50, maxR)) * CFrame.Angles(0, rng:NextNumber(0, 6), 0)
+	end
+	for _ = 1, if isHub then 4 else 8 do
+		self:MakeChest(folder, groundSpot(), zoneId, false, groundSpot)
 	end
 	local skyCenters = {}
 	if isHub then
@@ -440,9 +452,16 @@ function WorldService:BuildZone(zoneId: string)
 			table.insert(skyCenters, origin + o)
 		end
 	end
-	for i, center in skyCenters do
+	-- Sky chests reappear on a random sky isle top.
+	local function skySpot(): CFrame
+		local c = skyCenters[rng:NextInteger(1, #skyCenters)]
+		local a = rng:NextNumber(0, math.pi * 2)
+		local r = rng:NextNumber(4, Zones.Sky.TopRadius - 8)
+		return CFrame.new(c + Vector3.new(math.cos(a) * r, Zones.Sky.TopHeight, math.sin(a) * r)) * CFrame.Angles(0, rng:NextNumber(0, 6), 0)
+	end
+	for _, center in skyCenters do
 		local top = center + Vector3.new(6, Zones.Sky.TopHeight, 6)
-		self:MakeChest(folder, CFrame.new(top), zoneId .. "_S" .. i, zoneId, true)
+		self:MakeChest(folder, CFrame.new(top), zoneId, true, skySpot)
 		-- Jump pad at the foot of each sky area (launches to tier 2).
 		local padPos = center + Vector3.new(-40, 0.2, 22)
 		local pad = part({ Name = "JumpPad", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.6, 8, 8), CFrame = CFrame.new(padPos) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Neon, Color = Color3.fromRGB(90, 255, 200), CanCollide = false, Parent = folder })
