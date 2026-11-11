@@ -28,8 +28,8 @@ Zones.List = {
 			ClockTime = 18.4,
 			AtmosphereColor = Color3.fromRGB(255, 150, 110),
 			AtmosphereDecay = Color3.fromRGB(120, 40, 30),
-			Density = 0.42,
-			Haze = 2.4,
+			Density = 0.3,
+			Haze = 1.3,
 			Tint = Color3.fromRGB(255, 225, 205),
 			Saturation = 0.25,
 		},
@@ -52,8 +52,8 @@ Zones.List = {
 			ClockTime = 9.5,
 			AtmosphereColor = Color3.fromRGB(170, 230, 255),
 			AtmosphereDecay = Color3.fromRGB(40, 110, 160),
-			Density = 0.36,
-			Haze = 1.8,
+			Density = 0.24,
+			Haze = 0.7,
 			Tint = Color3.fromRGB(225, 245, 255),
 			Saturation = 0.2,
 		},
@@ -76,8 +76,8 @@ Zones.List = {
 			ClockTime = 15.5,
 			AtmosphereColor = Color3.fromRGB(210, 215, 235),
 			AtmosphereDecay = Color3.fromRGB(80, 90, 130),
-			Density = 0.45,
-			Haze = 2.6,
+			Density = 0.34,
+			Haze = 1.6,
 			Tint = Color3.fromRGB(235, 240, 255),
 			Saturation = 0.05,
 		},
@@ -100,8 +100,8 @@ Zones.List = {
 			ClockTime = 0.5,
 			AtmosphereColor = Color3.fromRGB(120, 70, 200),
 			AtmosphereDecay = Color3.fromRGB(30, 10, 60),
-			Density = 0.5,
-			Haze = 2.8,
+			Density = 0.34,
+			Haze = 1.4,
 			Tint = Color3.fromRGB(230, 215, 255),
 			Saturation = 0.3,
 		},
@@ -118,8 +118,8 @@ Zones.List = {
 Zones.Mob = {
 	-- Tuned so a regular mob dies in ~4-6 s and a boss in ~1 min solo for a
 	-- player at the zone's level (player damage grows ~6% per level via STR).
-	HealthBase = 70,
-	HealthPerLevel = 11,
+	HealthBase = 85,
+	HealthPerLevel = 13,
 	DamageBase = 5,
 	DamagePerLevel = 0.6,
 	ShardsBase = 5,
@@ -127,12 +127,17 @@ Zones.Mob = {
 	XpBase = 12,
 	XpPerLevel = 4,
 	Respawn = 8,
-	AggroRange = 45,
+	AggroRange = 45, -- only used once a mob is already fighting you
+	-- Mobs are neutral: they only start a fight if you hit them or walk right
+	-- up to them, and no more than MaxAttackers mobs gang up on one player.
+	ProximityAggro = 12,
+	AggroMemory = 10, -- seconds a mob stays angry after you last hit it
+	MaxAttackers = 2,
 	LeashRange = 110,
 	AttackRange = 6,
 	AttackCooldown = 1.3,
 	AbilityCooldown = 7,
-	BossHealthMult = 10, -- bosses keep ~the same HP after the mob HP bump
+	BossHealthMult = 8.5, -- bosses keep ~the same HP after the mob HP bumps
 	BossDamageMult = 2.2,
 	BossRewardMult = 25,
 	BossContributionShare = 0.05,

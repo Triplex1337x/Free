@@ -640,6 +640,11 @@ function Hud:BuildTouchButtons()
 	local counter, counterCd, counterShade = round("КОНТР", Color3.fromRGB(120, 230, 255), 66, Vector2.new(-330, -165), 14)
 	counter.Activated:Connect(Input.Counter)
 
+	local run = round("БЕГ", Theme.Good, 60, Vector2.new(-345, -65), 15)
+	run.Activated:Connect(function()
+		Input.SetSprint(not Input.IsSprinting())
+	end)
+
 	local positions = { Q = Vector2.new(-240, -205), E = Vector2.new(-222, -315), R = Vector2.new(-120, -360), G = Vector2.new(-335, -275) }
 	local touch = {}
 	for key, pos in positions do
@@ -668,6 +673,7 @@ function Hud:BuildTouchButtons()
 
 	RunService.RenderStepped:Connect(function()
 		local now = os.clock()
+		run.Text = if Input.IsSprinting() then "БЕГ ✔" else "БЕГ"
 		for key, t in touch do
 			if key == "G" then
 				local ready = (player:GetAttribute("Awakening") or 0) >= GameConfig.Awakening.Max

@@ -184,7 +184,17 @@ end
 -- AI
 ---------------------------------------------------------------------------
 
+-- How many mobs are currently fighting each character (rebuilt every tick).
+local attackers = {} :: { [Model]: number }
+
+-- Bosses are aggressive. Regular mobs are neutral: they fight you if you hit
+-- them (remembered for AggroMemory s), keep fighting a current target, or
+-- attack when you walk right up to them — unless MaxAttackers mobs are
+-- already on you, so you never get swarmed by everything nearby.
 local function findTarget(mob)
+	local now = os.clock()
+	local provokerId = mob.Model:GetAttribute("LastAttackerId")
+	local provokedAt = mob.Model:GetAttribute("LastAttackTime") or 0
 	local best, bestDist = nil, M.AggroRange * (if mob.Boss then 1.5 else 1)
 	for _, player in Players:GetPlayers() do
 		if (player:GetAttribute("Zone") or "Hub") == mob.Zone then
@@ -194,7 +204,17 @@ local function findTarget(mob)
 			local safe = root and Zones.AreaAt(mob.Zone, root.Position) == "Safe"
 			if root and humanoid and humanoid.Health > 0 and not safe and not character:FindFirstChildOfClass("ForceField") then
 				local d = (root.Position - mob.Root.Position).Magnitude
-				if d < bestDist then
+				local allowed
+				if mob.Boss then
+					allowed = true
+				elseif provokerId == player.UserId and now - provokedAt < M.AggroMemory then
+					allowed = true -- you hit it
+				elseif mob.Target == character then
+					allowed = true -- already fighting you
+				else
+					allowed = d <= M.ProximityAggro and (attackers[character] or 0) < M.MaxAttackers
+				end
+				if allowed and d < bestDist then
 					best, bestDist = character, d
 				end
 			end
@@ -374,7 +394,18 @@ function MobService:Populate()
 			if n == 0 or #spawns == 0 then
 				continue
 			end
-			for _, def in group.Defs do
+			-- Spawn bands: weaker mob types near the spawn plaza (+Z), stronger
+			-- ones deeper toward the boss, so low-level players don't get
+			-- jumped by high-level mobs.
+			local sorted = table.clone(spawns)
+			table.sort(sorted, function(a, b)
+				return a.Position.Z > b.Position.Z
+			end)
+			local bands = #group.Defs
+			for defIndex, def in group.Defs do
+				local from = math.floor((defIndex - 1) * #sorted / bands) + 1
+				local to = math.max(from, math.floor(defIndex * #sorted / bands))
+				local band = { table.unpack(sorted, from, to) }
 				local pop = population[zoneId .. "/" .. def.Id]
 				for i = #pop.Deaths, 1, -1 do
 					if now - pop.Deaths[i] > M.Respawn then
@@ -385,7 +416,7 @@ function MobService:Populate()
 				local desired = math.ceil(def.Count * factor)
 				local missing = desired - pop.Alive - #pop.Deaths
 				for _ = 1, math.min(missing, 3) do -- spread spawns over ticks
-					local base = spawns[rng:NextInteger(1, #spawns)]
+					local base = band[rng:NextInteger(1, #band)]
 					local j = group.Jitter
 					local home = base + Vector3.new(rng:NextNumber(-j, j), 0, rng:NextNumber(-j, j))
 					task.spawn(self.Spawn, self, zoneId, def, home, false)
@@ -426,6 +457,12 @@ function MobService:Start()
 		if now - lastPopulate > 2 then
 			lastPopulate = now
 			self:Populate()
+		end
+		table.clear(attackers)
+		for _, mob in mobs do
+			if mob.Target and not mob.Boss then
+				attackers[mob.Target] = (attackers[mob.Target] or 0) + 1
+			end
 		end
 		for _, mob in mobs do
 			-- AI sleeps where nobody is around (saves server time with 12 players

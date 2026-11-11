@@ -161,6 +161,7 @@ function CombatService:UpdateMovement(model: Model)
 	end
 	local baseSpeed = model:GetAttribute("BaseSpeed") or GameConfig.BaseWalkSpeed
 	local baseJump = model:GetAttribute("BaseJump") or GameConfig.JumpHeight
+	humanoid.UseJumpPower = false
 	if self:IsStunned(model) then
 		humanoid.WalkSpeed = math.min(baseSpeed, GameConfig.Stun.WalkSpeed)
 		humanoid.JumpHeight = 0
@@ -168,7 +169,8 @@ function CombatService:UpdateMovement(model: Model)
 		humanoid.WalkSpeed = math.min(baseSpeed, Block.WalkSpeed)
 		humanoid.JumpHeight = 0
 	else
-		humanoid.WalkSpeed = baseSpeed
+		local sprint = if model:GetAttribute("Sprinting") then GameConfig.SprintMultiplier else 1
+		humanoid.WalkSpeed = baseSpeed * sprint
 		humanoid.JumpHeight = baseJump
 	end
 end
@@ -1177,6 +1179,12 @@ function CombatService:Start()
 			self:HandleBlock(player, true)
 		elseif action == "BlockEnd" then
 			self:HandleBlock(player, false)
+		elseif action == "Sprint" then
+			local character = player.Character
+			if character then
+				character:SetAttribute("Sprinting", payload == true or nil)
+				self:UpdateMovement(character)
+			end
 		elseif action == "Counter" then
 			self:HandleCounter(player)
 		elseif action == "AirJump" then

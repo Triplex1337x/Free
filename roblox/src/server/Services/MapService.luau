@@ -7,6 +7,7 @@ local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Textures = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("Textures"))
+local Graphics = require(script.Parent.Parent.Lib.Graphics)
 
 local MapService = {}
 
@@ -27,12 +28,8 @@ local function part(props)
 end
 
 local function buildLighting()
-	Lighting.ClockTime = 17.6
-	Lighting.Brightness = 2.2
-	Lighting.EnvironmentDiffuseScale = 0.6
-	Lighting.EnvironmentSpecularScale = 0.6
-	Lighting.OutdoorAmbient = Color3.fromRGB(120, 100, 150)
-	Lighting.GlobalShadows = true
+	Graphics.SetupLighting()
+	Lighting.ClockTime = 16.8
 
 	local function ensure(className, name)
 		local inst = Lighting:FindFirstChild(name) or Instance.new(className)
@@ -42,30 +39,34 @@ local function buildLighting()
 	end
 
 	local atmosphere = ensure("Atmosphere", "RiftAtmosphere")
-	atmosphere.Density = 0.32
-	atmosphere.Color = Color3.fromRGB(255, 190, 220)
-	atmosphere.Decay = Color3.fromRGB(120, 80, 160)
-	atmosphere.Glare = 0.4
-	atmosphere.Haze = 1.6
+	-- Light haze for depth, not fog: heavy haze is what made everything look
+	-- washed-out and flat.
+	atmosphere.Density = 0.24
+	atmosphere.Offset = 0.2
+	atmosphere.Color = Color3.fromRGB(255, 200, 225)
+	atmosphere.Decay = Color3.fromRGB(110, 90, 170)
+	atmosphere.Glare = 0.7
+	atmosphere.Haze = 0.9
 
 	local bloom = ensure("BloomEffect", "RiftBloom")
-	bloom.Intensity = 0.9
-	bloom.Size = 30
-	bloom.Threshold = 1.4
+	bloom.Intensity = 0.7
+	bloom.Size = 26
+	bloom.Threshold = 1.6
 
 	local cc = ensure("ColorCorrectionEffect", "RiftColor")
-	cc.Saturation = 0.18
-	cc.Contrast = 0.08
-	cc.TintColor = Color3.fromRGB(255, 244, 250)
+	cc.Saturation = 0.14
+	cc.Contrast = 0.12
+	cc.Brightness = 0.02
+	cc.TintColor = Color3.fromRGB(255, 246, 250)
 
 	local rays = ensure("SunRaysEffect", "RiftSunRays")
-	rays.Intensity = 0.06
-	rays.Spread = 0.8
+	rays.Intensity = 0.1
+	rays.Spread = 0.6
 
 	local dof = ensure("DepthOfFieldEffect", "RiftDepth")
-	dof.FarIntensity = 0.18
-	dof.FocusDistance = 70
-	dof.InFocusRadius = 90
+	dof.FarIntensity = 0.12
+	dof.FocusDistance = 90
+	dof.InFocusRadius = 140
 	dof.NearIntensity = 0
 
 	local clouds = workspace.Terrain:FindFirstChildOfClass("Clouds") or Instance.new("Clouds")
@@ -122,7 +123,7 @@ local function buildDecor(folder: Folder)
 
 	-- Floor details: radial glowing lines.
 	for i = 0, 3 do
-		part({ Name = "FloorLine", Size = Vector3.new(0.6, 0.12, ARENA_RADIUS * 2 - 20), CFrame = CFrame.new(0, 0.02, 0) * CFrame.Angles(0, i * math.pi / 4, 0), Material = Enum.Material.Neon, Color = ACCENT_2, Transparency = 0.55, CanCollide = false, Parent = decor })
+		part({ Name = "FloorLine", Size = Vector3.new(0.6, 0.12, 150), CFrame = CFrame.new(0, 0.02, 0) * CFrame.Angles(0, i * math.pi / 4, 0), Material = Enum.Material.Neon, Color = ACCENT_2, Transparency = 0.55, CanCollide = false, Parent = decor })
 	end
 
 	-- Floating islands with crystals.
@@ -203,12 +204,37 @@ local function buildArena(folder: Folder)
 
 	local cylinder = CFrame.Angles(0, 0, math.rad(90))
 
+	-- Terrain ground: grass meadow with animated blades, a sandy shore and a
+	-- reflective lake beyond the arena wall, a cobblestone duel plaza and paved
+	-- paths to the four portal gates.
+	local M = Enum.Material
+	Graphics.Disc(Vector3.new(0, 0, 0), 720, 16, M.Grass)
+	Graphics.Disc(Vector3.new(0, -1.2, 0), 285, 10, M.Water)
+	Graphics.Disc(Vector3.new(0, -11, 0), 285, 4, M.Sand)
+	Graphics.Disc(Vector3.new(0, 0, 0), 214, 8, M.Sand)
+	Graphics.Disc(Vector3.new(0, 0, 0), 200, 16, M.Grass)
+	for i = 0, 3 do
+		local angle = i * math.pi / 2 + math.pi / 4
+		local mid = Vector3.new(math.cos(angle) * 115, -2, math.sin(angle) * 115)
+		Graphics.Block(CFrame.lookAt(mid, Vector3.new(0, -2, 0)), Vector3.new(14, 4, 130), M.Pavement)
+	end
+	Graphics.Disc(Vector3.new(0, 0, 0), 78, 8, M.Cobblestone)
+	-- Grassy hills and rocks on the horizon.
+	local hills = Random.new(77)
+	for i = 1, 22 do
+		local angle = (i / 22) * math.pi * 2 + hills:NextNumber(-0.1, 0.1)
+		local dist = hills:NextNumber(400, 640)
+		local r = hills:NextNumber(50, 110)
+		local c = Vector3.new(math.cos(angle) * dist, -r * 0.45, math.sin(angle) * dist)
+		Graphics.Ball(c, r, if i % 3 == 0 then M.Rock else M.LeafyGrass)
+	end
+	-- Invisible collision floor kept as a safety net under the terrain.
 	part({
 		Name = "Floor",
 		Shape = Enum.PartType.Cylinder,
 		Size = Vector3.new(4, ARENA_RADIUS * 2, ARENA_RADIUS * 2),
-		CFrame = CFrame.new(0, -2, 0) * cylinder,
-		Material = Enum.Material.Slate,
+		CFrame = CFrame.new(0, -6, 0) * cylinder,
+		Transparency = 1,
 		Color = FLOOR_COLOR,
 		Parent = folder,
 	})
@@ -338,6 +364,7 @@ function MapService:Init()
 		folder:SetAttribute("Generated", true) -- hub safe zones only apply to the generated layout
 		folder.Parent = workspace
 		buildLighting()
+		Graphics.Polish(folder)
 	end
 	self.Folder = folder
 end

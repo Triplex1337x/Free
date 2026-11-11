@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Zones = require(Shared.Config.Zones)
 local Remotes = require(Shared.Remotes)
+local Graphics = require(script.Parent.Parent.Lib.Graphics)
 
 local ZoneService = {}
 
@@ -73,15 +74,19 @@ end
 ---------------------------------------------------------------------------
 
 local THEMES = {
-	Ember = { Floor = Enum.Material.Basalt, FloorColor = Color3.fromRGB(48, 36, 36), Rock = Color3.fromRGB(60, 40, 38), Accent = Color3.fromRGB(255, 110, 40) },
-	Tidal = { Floor = Enum.Material.Sand, FloorColor = Color3.fromRGB(226, 210, 170), Rock = Color3.fromRGB(150, 140, 120), Accent = Color3.fromRGB(70, 200, 255) },
-	Storm = { Floor = Enum.Material.Snow, FloorColor = Color3.fromRGB(235, 240, 250), Rock = Color3.fromRGB(110, 115, 130), Accent = Color3.fromRGB(255, 230, 80) },
-	Void = { Floor = Enum.Material.Slate, FloorColor = Color3.fromRGB(26, 20, 36), Rock = Color3.fromRGB(35, 25, 50), Accent = Color3.fromRGB(170, 80, 255) },
+	Ember = { Terrain = Enum.Material.Basalt, Floor = Enum.Material.Basalt, FloorColor = Color3.fromRGB(48, 36, 36), Rock = Color3.fromRGB(60, 40, 38), Accent = Color3.fromRGB(255, 110, 40) },
+	Tidal = { Terrain = Enum.Material.Sand, Floor = Enum.Material.Sand, FloorColor = Color3.fromRGB(226, 210, 170), Rock = Color3.fromRGB(150, 140, 120), Accent = Color3.fromRGB(70, 200, 255) },
+	Storm = { Terrain = Enum.Material.Snow, Floor = Enum.Material.Snow, FloorColor = Color3.fromRGB(235, 240, 250), Rock = Color3.fromRGB(110, 115, 130), Accent = Color3.fromRGB(255, 230, 80) },
+	Void = { Terrain = Enum.Material.Slate, Floor = Enum.Material.Slate, FloorColor = Color3.fromRGB(26, 20, 36), Rock = Color3.fromRGB(35, 25, 50), Accent = Color3.fromRGB(170, 80, 255) },
 }
 
 local function buildIsland(folder: Folder, origin: Vector3, theme)
 	local cylinder = CFrame.Angles(0, 0, math.rad(90))
-	part({ Name = "Floor", Shape = Enum.PartType.Cylinder, Size = Vector3.new(6, RADIUS * 2, RADIUS * 2), CFrame = CFrame.new(origin + Vector3.new(0, -3, 0)) * cylinder, Material = theme.Floor, Color = theme.FloorColor, Parent = folder })
+	-- Terrain ground (proper PBR materials, smooth edges) on a rocky base, plus
+	-- an invisible safety floor a little below it.
+	Graphics.Disc(origin, RADIUS + 2, 12, theme.Terrain)
+	Graphics.Disc(origin - Vector3.new(0, 12, 0), RADIUS - 20, 12, Enum.Material.Rock)
+	part({ Name = "Floor", Shape = Enum.PartType.Cylinder, Size = Vector3.new(4, RADIUS * 2, RADIUS * 2), CFrame = CFrame.new(origin + Vector3.new(0, -8, 0)) * cylinder, Transparency = 1, Parent = folder })
 
 	-- Rocky underside so the island looks like it floats.
 	for i = 1, 28 do
@@ -131,7 +136,8 @@ function Decor.Ember(folder: Folder, origin: Vector3)
 	for _ = 1, 15 do
 		local pos = randomSpot(origin, 30, 350)
 		local r = rng:NextNumber(10, 22)
-		local pool = part({ Name = "LavaPool", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.5, r * 2, r * 2), CFrame = CFrame.new(pos + Vector3.new(0, 0.05, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Neon, Color = lava, CanCollide = false, Parent = folder })
+		Graphics.Disc(pos - Vector3.new(0, 1, 0), r, 3, Enum.Material.CrackedLava)
+		local pool = part({ Name = "LavaPool", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.2, r * 1.2, r * 1.2), CFrame = CFrame.new(pos + Vector3.new(0, -0.6, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Neon, Color = lava, Transparency = 0.45, CanCollide = false, CanQuery = false, Parent = folder })
 		light(pool, lava, r * 2.5, 2)
 		emitter(pool, { Texture = "rbxasset://textures/particles/sparkles_main.dds", Color = ColorSequence.new(Color3.fromRGB(255, 200, 80), lava), LightEmission = 1, Rate = 6, Lifetime = NumberRange.new(1.5, 3), Speed = NumberRange.new(4, 9), Acceleration = Vector3.new(0, 5, 0), Size = NumberSequence.new(0.4, 0), SpreadAngle = Vector2.new(20, 20) })
 	end
@@ -152,11 +158,15 @@ function Decor.Ember(folder: Folder, origin: Vector3)
 end
 
 function Decor.Tidal(folder: Folder, origin: Vector3)
-	local water = Color3.fromRGB(60, 170, 230)
 	for _ = 1, 16 do
 		local pos = randomSpot(origin, 30, 350)
 		local r = rng:NextNumber(12, 26)
-		part({ Name = "Water", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.6, r * 2, r * 2), CFrame = CFrame.new(pos + Vector3.new(0, 0.1, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Glass, Color = water, Transparency = 0.35, Reflectance = 0.2, CanCollide = false, Parent = folder })
+		-- Shallow real water: waves, refraction and reflections.
+		Graphics.Disc(pos - Vector3.new(0, 0.8, 0), r, 3.2, Enum.Material.Water)
+		Graphics.Disc(pos - Vector3.new(0, 4, 0), r, 4, Enum.Material.Sand)
+		if rng:NextNumber() > 0.5 then
+			Graphics.Disc(pos + Vector3.new(r * 0.9, 0, 0), r * 0.5, 4, Enum.Material.LeafyGrass)
+		end
 	end
 	-- Shrine colonnade with teal roofs.
 	for i = 1, 12 do
@@ -172,6 +182,8 @@ function Decor.Tidal(folder: Folder, origin: Vector3)
 			light(c, c.Color, 12, 1)
 		end
 	end
+	-- Open ocean far below the floating island.
+	Graphics.Disc(origin - Vector3.new(0, 90, 0), 1200, 8, Enum.Material.Water)
 	-- Waterfall cliffs on the horizon.
 	for i = -2, 2 do
 		local base = origin + Vector3.new(i * 90, 0, -580)
@@ -186,6 +198,11 @@ function Decor.Storm(folder: Folder, origin: Vector3)
 		local pos = randomSpot(origin, 25, 360)
 		local h = rng:NextNumber(8, 28)
 		part({ Name = "IceCrystal", Size = Vector3.new(rng:NextNumber(3, 7), h, rng:NextNumber(3, 7)), CFrame = CFrame.new(pos + Vector3.new(0, h / 2 - 1, 0)) * CFrame.Angles(rng:NextNumber(-0.4, 0.4), rng:NextNumber(0, 6), rng:NextNumber(-0.4, 0.4)), Material = Enum.Material.Glass, Color = Color3.fromRGB(170, 220, 255), Transparency = 0.25, Parent = folder })
+	end
+	-- Glossy glacier patches in the snow.
+	for _ = 1, 14 do
+		local pos = randomSpot(origin, 30, 340)
+		Graphics.Disc(pos, rng:NextNumber(10, 24), 4, Enum.Material.Glacier)
 	end
 	for i = 1, 6 do
 		local angle = (i / 6) * math.pi * 2
@@ -508,6 +525,7 @@ function ZoneService:Init(services)
 			}
 			-- Return portal behind the plaza.
 			self:CreatePortal(folder, CFrame.lookAt(zone.Origin + Vector3.new(0, 0, 360), zone.Origin), "Hub")
+			Graphics.Polish(folder)
 		end
 	end
 	world.Parent = workspace

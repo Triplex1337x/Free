@@ -238,7 +238,7 @@ local function locomotion(rig, dt: number)
 	local v = root.AssemblyLinearVelocity
 	local speed = Vector3.new(v.X, 0, v.Z).Magnitude
 	local moving = math.clamp(speed / 14, 0, 1.3)
-	rig.Phase += dt * (4 + speed * 0.45)
+	rig.Phase += dt * (4 + math.min(speed, 28) * 0.42)
 	local s = math.sin(rig.Phase)
 	local c = math.cos(rig.Phase)
 	local breath = math.sin(os.clock() * 2) * (1 - math.min(moving, 1))

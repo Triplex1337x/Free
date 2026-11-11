@@ -96,6 +96,30 @@ def build() -> str:
                    'xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">')
 
     b.open_item("Workspace", "Workspace")
+    # Terrain: animated grass blades + reflective water (the ground itself is
+    # generated at runtime by MapService / ZoneService).
+    b.open_item("Terrain", "Terrain", extra=(
+        '<bool name="Decoration">true</bool>'
+        '<float name="WaterReflectance">1</float>'
+        '<float name="WaterTransparency">0.55</float>'
+        '<float name="WaterWaveSize">0.18</float>'
+        '<float name="WaterWaveSpeed">12</float>'
+        '<Color3 name="WaterColor"><R>0.157</R><G>0.588</G><B>0.784</B></Color3>'
+    ))
+    b.close_item()
+    b.close_item()
+
+    # Future lighting (Technology can't be set from scripts): real-time
+    # shadows from every light, specular highlights and sky reflections.
+    b.open_item("Lighting", "Lighting", extra=(
+        '<token name="Technology">4</token>'
+        '<float name="EnvironmentDiffuseScale">1</float>'
+        '<float name="EnvironmentSpecularScale">1</float>'
+        '<bool name="GlobalShadows">true</bool>'
+        '<float name="ShadowSoftness">0.25</float>'
+        '<float name="Brightness">3</float>'
+        '<float name="ClockTime">16.8</float>'
+    ))
     b.close_item()
 
     # 12-player servers (the published server size is set on the Creator

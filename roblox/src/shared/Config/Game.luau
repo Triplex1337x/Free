@@ -8,7 +8,8 @@ Game.Name = "Rift Battlegrounds"
 Game.StarterStyle = "Ember"
 Game.StarterSpins = 5
 Game.RespawnTime = 3
-Game.BaseWalkSpeed = 16
+Game.BaseWalkSpeed = 22 -- big maps: faster than Roblox's default 16
+Game.SprintMultiplier = 1.55 -- hold Shift (or the mobile RUN button)
 Game.JumpHeight = 9 -- base jump (Roblox default is 7.2)
 Game.AutosaveInterval = 120
 

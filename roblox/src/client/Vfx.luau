@@ -419,7 +419,7 @@ function Vfx.GroundDecal(pos: Vector3, textureName: string, size: number, color:
 	end
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
-	params.FilterDescendantsInstances = { workspace:FindFirstChild("Arena") or workspace.Terrain, workspace:FindFirstChild("Zones") or workspace.Terrain }
+	params.FilterDescendantsInstances = { workspace.Terrain, workspace:FindFirstChild("Arena") or workspace.Terrain, workspace:FindFirstChild("Zones") or workspace.Terrain }
 	local hit = workspace:Raycast(pos + Vector3.new(0, 3, 0), Vector3.new(0, -30, 0), params)
 	local y = if hit then hit.Position.Y + 0.06 else pos.Y - 2.9
 	local plate = Vfx.Part({
@@ -479,7 +479,7 @@ function Vfx.Debris(pos: Vector3, count: number, color: Color3, options)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
 	local arena = workspace:FindFirstChild("Arena")
-	params.FilterDescendantsInstances = { arena or workspace.Terrain, workspace:FindFirstChild("Zones") or workspace.Terrain }
+	params.FilterDescendantsInstances = { workspace.Terrain, arena or workspace.Terrain, workspace:FindFirstChild("Zones") or workspace.Terrain }
 	local ground = workspace:Raycast(pos + Vector3.new(0, 3, 0), Vector3.new(0, -50, 0), params)
 	local groundY = if ground then ground.Position.Y else pos.Y - 3
 

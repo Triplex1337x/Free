@@ -85,6 +85,19 @@ function InputController.Counter()
 	Remotes.Action:FireServer("Counter")
 end
 
+local sprinting = false
+function InputController.SetSprint(on: boolean)
+	if on == sprinting then
+		return
+	end
+	sprinting = on
+	Remotes.Action:FireServer("Sprint", on)
+end
+
+function InputController.IsSprinting(): boolean
+	return sprinting
+end
+
 function InputController.SetBlock(on: boolean)
 	if on and not InputController.Enabled then
 		return
@@ -117,6 +130,8 @@ function InputController:Start()
 		end
 		if input.UserInputType == Enum.UserInputType.MouseButton1 and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
 			InputController.Counter()
+		elseif input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.ButtonL3 then
+			InputController.SetSprint(true)
 		elseif input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.ButtonL1 then
 			InputController.Counter()
 		elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.KeyCode == Enum.KeyCode.ButtonR2 then
@@ -133,12 +148,15 @@ function InputController:Start()
 			InputController.SetHoldingAttack(false)
 		elseif BLOCK_KEYS[input.KeyCode] then
 			InputController.SetBlock(false)
+		elseif input.KeyCode == Enum.KeyCode.LeftShift then
+			InputController.SetSprint(false)
 		end
 	end)
 
 	player.CharacterAdded:Connect(function()
 		blocking = false
 		holdingAttack = false
+		sprinting = false
 	end)
 end
 
