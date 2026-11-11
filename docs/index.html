@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Резюме</title>
+  <meta name="description" content="Личный сайт-резюме">
+  <meta name="theme-color" content="#0b0b12">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%237c5cff'/><stop offset='1' stop-color='%2300d4c8'/></linearGradient></defs><rect width='64' height='64' rx='18' fill='url(%23g)'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    // Тема применяется до отрисовки, чтобы не было мигания
+    try {
+      var t = localStorage.getItem("theme");
+      if (t) document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="bg" aria-hidden="true">
+    <span class="blob blob-1"></span>
+    <span class="blob blob-2"></span>
+    <span class="blob blob-3"></span>
+    <span class="grid"></span>
+  </div>
+  <div class="cursor-glow" aria-hidden="true"></div>
+  <div class="progress" aria-hidden="true"></div>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="#top" class="logo" id="logo"></a>
+      <nav class="nav-links" id="navLinks">
+        <a href="#about">Обо мне</a>
+        <a href="#skills">Навыки</a>
+        <a href="#experience">Опыт</a>
+        <a href="#projects">Проекты</a>
+        <a href="#education">Образование</a>
+        <a href="#contacts">Контакты</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Сменить тему">
+          <svg class="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+          <svg class="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/></svg>
+        </button>
+        <button class="icon-btn burger" id="burger" type="button" aria-label="Меню" aria-expanded="false">
+          <span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- Первый экран -->
+    <section class="hero">
+      <div class="hero-text">
+        <p class="status reveal" id="status"><span class="dot"></span><span></span></p>
+        <h1 class="hero-name reveal" id="heroName"></h1>
+        <p class="hero-role reveal" id="heroRole"></p>
+        <p class="hero-tagline reveal" id="heroTagline"></p>
+        <div class="hero-cta reveal">
+          <a href="#contacts" class="btn btn-primary">Связаться</a>
+          <button class="btn btn-ghost" id="printBtn" type="button">
+            <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            Скачать PDF
+          </button>
+        </div>
+        <ul class="stats reveal" id="stats"></ul>
+      </div>
+      <div class="hero-visual reveal">
+        <div class="avatar-wrap" id="avatarWrap">
+          <div class="avatar" id="avatar"></div>
+          <div class="orbit orbit-1"><span></span></div>
+          <div class="orbit orbit-2"><span></span></div>
+        </div>
+        <p class="hero-location" id="heroLocation">
+          <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 1 1 14 0C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+          <span></span>
+        </p>
+      </div>
+      <a href="#about" class="scroll-hint" aria-label="Листать вниз"><span></span></a>
+    </section>
+
+    <section id="about" class="section">
+      <h2 class="section-title reveal"><span class="num">01</span>Обо мне</h2>
+      <div class="about">
+        <div class="about-text reveal" id="aboutText"></div>
+        <dl class="facts reveal" id="facts"></dl>
+      </div>
+    </section>
+
+    <section id="skills" class="section">
+      <h2 class="section-title reveal"><span class="num">02</span>Навыки</h2>
+      <div class="skills" id="skills-list"></div>
+    </section>
+
+    <section id="experience" class="section">
+      <h2 class="section-title reveal"><span class="num">03</span>Опыт</h2>
+      <ol class="timeline" id="experience-list"></ol>
+    </section>
+
+    <section id="projects" class="section">
+      <h2 class="section-title reveal"><span class="num">04</span>Проекты</h2>
+      <div class="projects" id="projects-list"></div>
+    </section>
+
+    <section id="education" class="section">
+      <h2 class="section-title reveal"><span class="num">05</span>Образование</h2>
+      <ol class="timeline" id="education-list"></ol>
+    </section>
+
+    <section id="contacts" class="section contacts-section">
+      <div class="contact-card reveal">
+        <h2 class="contact-title">Давай поработаем<br><span class="grad">вместе</span></h2>
+        <p class="contact-sub">Пиши в любой удобный мессенджер — отвечаю быстро.</p>
+        <div class="contacts" id="contacts-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> <span id="footerName"></span></p>
+    <a href="#top" class="to-top">Наверх ↑</a>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
