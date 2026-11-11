@@ -11,6 +11,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GameConfig = require(Shared.Config.Game)
 local Styles = require(Shared.Config.Styles)
 local Remotes = require(Shared.Remotes)
+local Prog = require(Shared.Config.Progression)
+local Zones = require(Shared.Config.Zones)
 
 local M1 = GameConfig.M1
 local Block = GameConfig.Block
@@ -23,6 +25,8 @@ local stunUntil = {} :: { [Model]: number }
 local damageLog = {} :: { [Model]: { [Player]: number } }
 local lastCombat = {} :: { [Player]: number }
 local pendingXp = {} :: { [Player]: number }
+local pendingMastery = {} :: { [Player]: number }
+local lockNotified = {} :: { [Player]: number }
 
 local projectileFolder = Instance.new("Folder")
 projectileFolder.Name = "Projectiles"
@@ -100,6 +104,9 @@ end
 
 function CombatService:Exclusions(attacker: Model?)
 	local list = { projectileFolder, self.MapFolder }
+	for _, extra in self.ExtraExclusions or {} do
+		table.insert(list, extra)
+	end
 	if attacker then
 		table.insert(list, attacker)
 	end
@@ -209,6 +216,11 @@ function CombatService:AddAwakening(player: Player, amount: number)
 	player:SetAttribute("Awakening", math.min(max, current + amount))
 end
 
+function CombatService:CanPvp(player: Player): boolean
+	local zone = Zones.Get(player:GetAttribute("Zone") or "Hub")
+	return zone ~= nil and zone.Pvp == true
+end
+
 function CombatService:InCombat(player: Player): boolean
 	local t = lastCombat[player]
 	return t ~= nil and os.clock() - t < GameConfig.Combat.InCombatDuration
@@ -243,6 +255,14 @@ function CombatService:Damage(attackerPlayer: Player?, attacker: Model?, target:
 	local attackerRoot = attacker and attacker:FindFirstChild("HumanoidRootPart") :: BasePart?
 	if not targetRoot then
 		return false
+	end
+
+	local victim = Players:GetPlayerFromCharacter(target)
+	if not attackerPlayer and not victim then
+		return false -- NPCs never hurt each other
+	end
+	if attackerPlayer and victim and not (self:CanPvp(attackerPlayer) and self:CanPvp(victim)) then
+		return false -- PvP only inside PvP zones
 	end
 
 	local damage = amount * self.Services.ProgressionService:GetDamageMultiplier(attackerPlayer)
@@ -283,8 +303,10 @@ function CombatService:Damage(attackerPlayer: Player?, attacker: Model?, target:
 		end
 		log[attackerPlayer] = (log[attackerPlayer] or 0) + damage
 		lastCombat[attackerPlayer] = os.clock()
-		self:AddAwakening(attackerPlayer, damage * GameConfig.Awakening.PerDamageDealt)
+		local spirit = self.Services.ProgressionService:GetAwakeningMultiplier(attackerPlayer)
+		self:AddAwakening(attackerPlayer, damage * GameConfig.Awakening.PerDamageDealt * spirit)
 		pendingXp[attackerPlayer] = (pendingXp[attackerPlayer] or 0) + damage * GameConfig.Rewards.XpPerDamage
+		pendingMastery[attackerPlayer] = (pendingMastery[attackerPlayer] or 0) + damage * Prog.Mastery.XpPerDamage
 	end
 	if targetPlayer then
 		lastCombat[targetPlayer] = os.clock()
@@ -369,7 +391,7 @@ function Kinds.Dash(self, player, character, root, ability, aim, color)
 	end
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Include
-	params.FilterDescendantsInstances = { self.MapFolder }
+	params.FilterDescendantsInstances = { self.MapFolder, table.unpack(self.ExtraExclusions or {}) }
 
 	local origin = root.Position
 	local distance = ability.Distance or 30
@@ -492,6 +514,15 @@ function Kinds.Projectile(self, player, character, root, ability, aim, color)
 	end)
 end
 
+-- Lets NPCs (player = nil) use the same ability kinds players do.
+function CombatService:CastAbility(player: Player?, character: Model, ability, aim: Vector3, color: Color3)
+	local root = character:FindFirstChild("HumanoidRootPart")
+	local run = Kinds[ability.Kind]
+	if root and run then
+		task.spawn(run, self, player, character, root, ability, aim, color)
+	end
+end
+
 ---------------------------------------------------------------------------
 -- Input handlers
 ---------------------------------------------------------------------------
@@ -582,6 +613,17 @@ function CombatService:HandleAbility(player: Player, payload)
 	end
 
 	local t = os.clock()
+	if not Prog.IsUnlocked(profile.Data, profile.Data.EquippedStyle, key) then
+		if t - (lockNotified[player] or 0) > 1.5 then
+			lockNotified[player] = t
+			Remotes.Notify:FireClient(
+				player,
+				("%s unlocks at %s Mastery %d. Keep fighting with this Art!"):format(ability.Name, style.Name, Prog.Mastery.Unlocks[key]),
+				"info"
+			)
+		end
+		return
+	end
 	if key == "G" then
 		if (player:GetAttribute("Awakening") or 0) < GameConfig.Awakening.Max then
 			return
@@ -591,8 +633,9 @@ function CombatService:HandleAbility(player: Player, payload)
 		if t < (s.Cooldowns[key] or 0) then
 			return
 		end
-		s.Cooldowns[key] = t + ability.Cooldown
-		Remotes.Cooldown:FireClient(player, key, ability.Cooldown)
+		local cooldown = ability.Cooldown * self.Services.ProgressionService:GetCooldownMultiplier(player)
+		s.Cooldowns[key] = t + cooldown
+		Remotes.Cooldown:FireClient(player, key, cooldown)
 	end
 
 	local aim = readAim(payload.Aim, root)
@@ -683,6 +726,7 @@ function CombatService:OnPlayerDied(player: Player, character: Model)
 			killerProfile.Data.Kills += 1
 			Progression:AddShards(killer, Rewards.PlayerKillShards, true)
 			Progression:AddXp(killer, Rewards.PlayerKillXp)
+			Progression:AddMasteryXp(killer, Prog.Mastery.XpPerKill)
 			Remotes.Notify:FireClient(killer, "You defeated " .. player.DisplayName, "kill")
 		end
 		fx("KillFeed", { Killer = killer.DisplayName, Victim = player.DisplayName })
@@ -766,6 +810,8 @@ function CombatService:Start()
 		playerState[player] = nil
 		lastCombat[player] = nil
 		pendingXp[player] = nil
+		pendingMastery[player] = nil
+		lockNotified[player] = nil
 		for _, log in damageLog do
 			log[player] = nil
 		end
@@ -778,6 +824,12 @@ function CombatService:Start()
 			pendingXp[player] = nil
 			if player.Parent then
 				self.Services.ProgressionService:AddXp(player, amount)
+			end
+		end
+		for player, amount in pendingMastery do
+			pendingMastery[player] = nil
+			if player.Parent then
+				self.Services.ProgressionService:AddMasteryXp(player, amount)
 			end
 		end
 	end

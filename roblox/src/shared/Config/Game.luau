@@ -13,8 +13,8 @@ Game.AutosaveInterval = 120
 
 Game.Level = {
 	Max = 250,
-	HealthPerLevel = 1, -- +1 max HP per level
-	DamagePerLevel = 0.002, -- +0.2% damage per level (+50% at max)
+	HealthPerLevel = 1, -- +1 max HP per level (stats add more, see Config/Progression)
+	DamagePerLevel = 0, -- damage now comes from Strength points and Art mastery
 	BaseHealth = 100,
 }
 

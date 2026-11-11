@@ -1,4 +1,5 @@
--- Levels, XP, Shards, leaderstats, overhead name tags and daily login streak.
+-- Levels, XP, stat points, Art mastery, Shards, leaderstats, overhead name
+-- tags and the daily login streak.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -7,6 +8,7 @@ local GameConfig = require(Shared.Config.Game)
 local Styles = require(Shared.Config.Styles)
 local Gacha = require(Shared.Gacha)
 local MonetizationConfig = require(Shared.Config.Monetization)
+local Prog = require(Shared.Config.Progression)
 local Remotes = require(Shared.Remotes)
 
 local ProgressionService = {}
@@ -15,6 +17,7 @@ function ProgressionService:Init(services)
 	self.Services = services
 
 	services.DataService:OnLoaded(function(player, profile)
+		self:RecountStatPoints(profile.Data)
 		self:CreateLeaderstats(player, profile)
 		self:CheckDaily(player, profile)
 		player.CharacterAdded:Connect(function(character)
@@ -64,15 +67,142 @@ function ProgressionService:GetLevel(player: Player): number
 	return d and d.Level or 1
 end
 
+-- Stat points = earned from levels minus spent. Recomputed on load so the
+-- numbers can never drift (and old saves get their points retroactively).
+function ProgressionService:RecountStatPoints(d)
+	local spent = 0
+	for _, stat in Prog.Stats do
+		d.Stats[stat.Id] = math.max(0, math.floor(d.Stats[stat.Id] or 0))
+		spent += d.Stats[stat.Id]
+	end
+	local earned = (d.Level - 1) * Prog.PointsPerLevel
+	if spent > earned then
+		for _, stat in Prog.Stats do
+			d.Stats[stat.Id] = 0
+		end
+		spent = 0
+	end
+	d.StatPoints = earned - spent
+end
+
+function ProgressionService:GetStat(player: Player, id: string): number
+	local d = data(self, player)
+	return d and d.Stats[id] or 0
+end
+
 function ProgressionService:GetMaxHealth(player: Player): number
-	return GameConfig.Level.BaseHealth + (self:GetLevel(player) - 1) * GameConfig.Level.HealthPerLevel
+	return GameConfig.Level.BaseHealth
+		+ (self:GetLevel(player) - 1) * GameConfig.Level.HealthPerLevel
+		+ self:GetStat(player, "Vitality") * Prog.VitalityHealth
+end
+
+function ProgressionService:GetMasteryLevel(player: Player, styleId: string?): number
+	local d = data(self, player)
+	if not d then
+		return 1
+	end
+	return (Prog.GetMastery(d, styleId or d.EquippedStyle))
 end
 
 function ProgressionService:GetDamageMultiplier(player: Player?): number
 	if not player then
 		return 1
 	end
-	return 1 + (self:GetLevel(player) - 1) * GameConfig.Level.DamagePerLevel
+	local d = data(self, player)
+	if not d then
+		return 1
+	end
+	return 1
+		+ (d.Level - 1) * GameConfig.Level.DamagePerLevel
+		+ (d.Stats.Strength or 0) * Prog.StrengthDamage
+		+ (self:GetMasteryLevel(player) - 1) * Prog.Mastery.DamagePerLevel
+end
+
+function ProgressionService:GetCooldownMultiplier(player: Player): number
+	local reduction = math.min(Prog.AgilityCooldownCap, self:GetStat(player, "Agility") * Prog.AgilityCooldown)
+	return 1 - reduction
+end
+
+function ProgressionService:GetAwakeningMultiplier(player: Player): number
+	return 1 + self:GetStat(player, "Spirit") * Prog.SpiritAwakening
+end
+
+function ProgressionService:GetSpeedBonus(player: Player): number
+	return math.min(Prog.AgilitySpeedCap, self:GetStat(player, "Agility") * Prog.AgilitySpeed)
+end
+
+function ProgressionService:AllocateStat(player: Player, statId, amount)
+	local d = data(self, player)
+	if not d or type(statId) ~= "string" or d.Stats[statId] == nil then
+		return { Ok = false, Error = "Unknown stat." }
+	end
+	amount = math.clamp(math.floor(tonumber(amount) or 1), 1, 1000)
+	amount = math.min(amount, d.StatPoints)
+	if amount <= 0 then
+		return { Ok = false, Error = "No stat points left. Level up to earn more!" }
+	end
+	d.Stats[statId] += amount
+	d.StatPoints -= amount
+	self:ApplyCharacterStats(player)
+	self.Services.DataService:Sync(player)
+	return { Ok = true }
+end
+
+function ProgressionService:ResetStats(player: Player)
+	local d = data(self, player)
+	if not d then
+		return { Ok = false, Error = "Data is still loading." }
+	end
+	if d.Shards < Prog.ResetCostShards then
+		return { Ok = false, Error = ("Resetting stats costs %d Shards."):format(Prog.ResetCostShards) }
+	end
+	d.Shards -= Prog.ResetCostShards
+	for _, stat in Prog.Stats do
+		d.Stats[stat.Id] = 0
+	end
+	self:RecountStatPoints(d)
+	self:ApplyCharacterStats(player)
+	self.Services.DataService:Sync(player)
+	return { Ok = true }
+end
+
+-- Adds mastery XP to the equipped Art and announces newly unlocked skills.
+function ProgressionService:AddMasteryXp(player: Player, amount: number)
+	local d = data(self, player)
+	if not d or amount <= 0 then
+		return
+	end
+	local styleId = d.EquippedStyle
+	local entry = d.Mastery[styleId]
+	if not entry then
+		entry = { Level = 1, Xp = 0 }
+		d.Mastery[styleId] = entry
+	end
+	if entry.Level >= Prog.Mastery.MaxLevel then
+		return
+	end
+	entry.Xp += math.floor(amount + 0.5)
+	local style = Styles.Get(styleId)
+	while entry.Level < Prog.Mastery.MaxLevel and entry.Xp >= Prog.MasteryXpFor(entry.Level) do
+		entry.Xp -= Prog.MasteryXpFor(entry.Level)
+		entry.Level += 1
+		local unlocked = nil
+		for key, need in Prog.Mastery.Unlocks do
+			if need == entry.Level then
+				unlocked = Styles.GetAbility(styleId, key)
+			end
+		end
+		if unlocked then
+			Remotes.Notify:FireClient(player, ("%s Mastery %d — NEW SKILL: %s!"):format(style.Name, entry.Level, unlocked.Name), "level")
+		else
+			Remotes.Notify:FireClient(player, ("%s Mastery %d (+%d%% damage)"):format(style.Name, entry.Level, (entry.Level - 1)), "success")
+		end
+	end
+	if entry.Level >= Prog.Mastery.MaxLevel then
+		entry.Xp = 0
+		Remotes.Notify:FireClient(player, style.Name .. " MASTERED!", "level")
+	end
+	self.Services.DataService:Sync(player)
 end
 
 function ProgressionService:ApplyCharacterStats(player: Player, character: Model?)
@@ -85,6 +215,8 @@ function ProgressionService:ApplyCharacterStats(player: Player, character: Model
 	local ratio = if humanoid.MaxHealth > 0 then humanoid.Health / humanoid.MaxHealth else 1
 	humanoid.MaxHealth = maxHealth
 	humanoid.Health = maxHealth * math.clamp(ratio, 0, 1)
+	character:SetAttribute("BaseSpeed", GameConfig.BaseWalkSpeed + self:GetSpeedBonus(player))
+	self.Services.CombatService:UpdateMovement(character)
 end
 
 function ProgressionService:AddXp(player: Player, amount: number)
@@ -101,6 +233,7 @@ function ProgressionService:AddXp(player: Player, amount: number)
 	while d.Level < GameConfig.Level.Max and d.Xp >= GameConfig.XpForLevel(d.Level) do
 		d.Xp -= GameConfig.XpForLevel(d.Level)
 		d.Level += 1
+		d.StatPoints += Prog.PointsPerLevel
 		leveled = true
 	end
 	if d.Level >= GameConfig.Level.Max then
@@ -110,7 +243,7 @@ function ProgressionService:AddXp(player: Player, amount: number)
 	if leveled then
 		self:ApplyCharacterStats(player)
 		self:RefreshOverhead(player)
-		Remotes.Notify:FireClient(player, ("Level up! You are now Lv. %d"):format(d.Level), "level")
+		Remotes.Notify:FireClient(player, ("LEVEL UP! Lv. %d  •  +%d stat points"):format(d.Level, Prog.PointsPerLevel), "level")
 		Remotes.Fx:FireAllClients("LevelUp", { Character = player.Character })
 	end
 	self.Services.DataService:Sync(player)
@@ -231,6 +364,15 @@ function ProgressionService:RefreshOverhead(player: Player)
 	gui.NameLabel.TextColor3 = vip and Color3.fromRGB(255, 215, 60) or Color3.new(1, 1, 1)
 	gui.SubLabel.Text = ("Lv. %d • %s"):format(d.Level, style.Name)
 	gui.SubLabel.TextColor3 = rarity.Color
+end
+
+function ProgressionService:Start()
+	Remotes.AllocateStat.OnServerInvoke = function(player, statId, amount)
+		return self:AllocateStat(player, statId, amount)
+	end
+	Remotes.ResetStats.OnServerInvoke = function(player)
+		return self:ResetStats(player)
+	end
 end
 
 return ProgressionService

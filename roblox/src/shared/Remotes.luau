@@ -18,6 +18,9 @@ local FUNCTIONS = {
 	"Roll",
 	"Equip",
 	"RedeemCode",
+	"AllocateStat",
+	"ResetStats",
+	"Travel",
 }
 
 local Remotes = {}

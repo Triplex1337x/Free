@@ -27,6 +27,9 @@ local TEMPLATE = {
 	Deaths = 0,
 	EquippedStyle = GameConfig.StarterStyle,
 	OwnedStyles = { [GameConfig.StarterStyle] = true },
+	Stats = { Strength = 0, Vitality = 0, Agility = 0, Spirit = 0 },
+	StatPoints = 0,
+	Mastery = {},
 	RollsSincePity = 0,
 	TotalRolls = 0,
 	RedeemedCodes = {},
@@ -203,6 +206,9 @@ function DataService:BuildSnapshot(player: Player)
 		RollsSincePity = d.RollsSincePity,
 		TotalRolls = d.TotalRolls,
 		DailyStreak = d.DailyStreak,
+		Stats = d.Stats,
+		StatPoints = d.StatPoints,
+		Mastery = d.Mastery,
 	}
 end
 

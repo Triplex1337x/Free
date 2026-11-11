@@ -75,6 +75,9 @@ local function buildLighting()
 	clouds.Parent = workspace.Terrain
 end
 
+local portalSlots: { CFrame } = {}
+local hubSpawns: { CFrame } = {}
+
 local function buildDecor(folder: Folder)
 	local decor = Instance.new("Folder")
 	decor.Name = "Decor"
@@ -89,6 +92,7 @@ local function buildDecor(folder: Folder)
 	for i = 0, 3 do
 		local angle = i * math.pi / 2 + math.pi / 4
 		local base = CFrame.new(math.cos(angle) * 118, 0, math.sin(angle) * 118) * CFrame.Angles(0, -angle + math.pi / 2, 0)
+		table.insert(portalSlots, base)
 		for _, x in { -11, 11 } do
 			part({ Name = "GatePost", Shape = Enum.PartType.Cylinder, Size = Vector3.new(30, 2.6, 2.6), CFrame = base * CFrame.new(x, 15, 0) * cylinder, Material = Enum.Material.SmoothPlastic, Color = GATE_RED, Parent = decor })
 			part({ Name = "GateFoot", Size = Vector3.new(3.6, 2, 3.6), CFrame = base * CFrame.new(x, 1, 0), Material = Enum.Material.Slate, Color = DARK, Parent = decor })
@@ -285,6 +289,7 @@ local function buildArena(folder: Folder)
 		spawn.Anchored = true
 		spawn.Size = Vector3.new(10, 1, 10)
 		spawn.CFrame = CFrame.lookAt(pos, Vector3.new(0, 0.5, 0))
+		table.insert(hubSpawns, spawn.CFrame)
 		spawn.Material = Enum.Material.Neon
 		spawn.Color = ACCENT
 		spawn.Transparency = 0.4
@@ -334,6 +339,31 @@ function MapService:Init()
 		buildLighting()
 	end
 	self.Folder = folder
+end
+
+-- Gate frames where zone portals go (falls back to a ring for custom maps).
+function MapService:GetPortalSlots(): { CFrame }
+	if #portalSlots > 0 then
+		return portalSlots
+	end
+	local slots = {}
+	for i = 0, 3 do
+		local angle = i * math.pi / 2 + math.pi / 4
+		table.insert(slots, CFrame.lookAt(Vector3.new(math.cos(angle) * 90, 0, math.sin(angle) * 90), Vector3.zero))
+	end
+	return slots
+end
+
+function MapService:GetHubSpawn(): CFrame
+	if #hubSpawns > 0 then
+		return hubSpawns[math.random(1, #hubSpawns)]
+	end
+	for _, d in self.Folder:GetDescendants() do
+		if d:IsA("SpawnLocation") then
+			return d.CFrame
+		end
+	end
+	return CFrame.new(0, 5, 0)
 end
 
 function MapService:GetFolder(): Folder
