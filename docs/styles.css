@@ -311,7 +311,7 @@ main { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 .tl-desc { color: var(--muted); margin-top: 12px; }
 
 /* ================= Проекты ================= */
-.projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 20px; }
 .project { padding: 30px; display: flex; flex-direction: column; }
 .project:hover { transform: translateY(-6px); }
 .project-num { font-family: "Unbounded", sans-serif; font-size: 44px; font-weight: 700; line-height: 1; color: transparent; -webkit-text-stroke: 1px var(--border-strong); margin-bottom: 22px; }
