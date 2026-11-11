@@ -268,6 +268,10 @@ function InventoryController:BuildPanel()
 	end
 
 	Hud:AddMenuButton("Items", Color3.fromRGB(255, 120, 200), 6, panel.Toggle)
+	Hud.OpenPotionShop = function()
+		panel.Open()
+		select("МАГАЗИН ЗЕЛИЙ")
+	end
 end
 
 function InventoryController:Init()

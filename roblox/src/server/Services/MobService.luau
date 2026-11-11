@@ -117,15 +117,26 @@ function MobService:Spawn(zoneId: string, def, home: CFrame, isBoss: boolean)
 		mob.ScaledFor = 1
 		self:ScaleBoss(mob)
 		Remotes.Announce:FireAllClients(("%s (ур. %d) появился: %s!"):format(def.Name, def.Level, Zones.Get(zoneId).Name))
-	else
+	elseif not def.Special then
 		local pop = population[zoneId .. "/" .. def.Id]
 		pop.Alive += 1
+	end
+	if def.Golden then
+		local glow = Instance.new("Highlight")
+		glow.FillColor = Color3.fromRGB(255, 205, 60)
+		glow.FillTransparency = 0.45
+		glow.OutlineColor = Color3.fromRGB(255, 240, 170)
+		glow.Parent = model
+	end
+	if def.RewardMult then
+		shards = math.floor(shards * def.RewardMult)
+		xp = math.floor(xp * def.RewardMult)
 	end
 
 	humanoid.Died:Connect(function()
 		mobs[model] = nil
 		self:OnDeath(mob, shards, xp)
-		if not isBoss then
+		if not isBoss and not def.Special then
 			local pop = population[zoneId .. "/" .. def.Id]
 			pop.Alive -= 1
 			table.insert(pop.Deaths, os.clock())
@@ -254,11 +265,17 @@ function MobService:Think(mob, now: number)
 		return
 	end
 
-	-- Fell off a sky platform: put it back home.
+	-- Slow out-of-combat regen only (no instant heal when you step away).
+	local lastHit = mob.Model:GetAttribute("LastHitAt") or 0
+	local humanoid = mob.Humanoid
+	if now - lastHit > M.RegenDelay and humanoid.Health < humanoid.MaxHealth then
+		humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + humanoid.MaxHealth * M.RegenPerSecond * TICK)
+	end
+
+	-- Fell off a sky platform: put it back home (HP unchanged).
 	if root.Position.Y < mob.Home.Position.Y - 12 then
 		mob.Target = nil
 		mob.Model:PivotTo(mob.Home + Vector3.new(0, 3, 0))
-		mob.Humanoid.Health = mob.Humanoid.MaxHealth
 		return
 	end
 
@@ -267,7 +284,6 @@ function MobService:Think(mob, now: number)
 	if fromHome.Magnitude > (mob.Def.Leash or M.LeashRange) then
 		mob.Target = nil
 		mob.Humanoid:MoveTo(mob.Home.Position)
-		mob.Humanoid.Health = math.min(mob.Humanoid.MaxHealth, mob.Humanoid.Health + mob.Humanoid.MaxHealth * 0.1)
 		return
 	end
 

@@ -53,7 +53,8 @@ function DummyService:SpawnDummy(cf: CFrame)
 	task.spawn(function()
 		while humanoid.Parent and humanoid.Health > 0 do
 			task.wait(1)
-			if humanoid.Health > 0 and humanoid.Health < humanoid.MaxHealth then
+			local idle = os.clock() - (model:GetAttribute("LastHitAt") or 0) > 3
+			if idle and humanoid.Health > 0 and humanoid.Health < humanoid.MaxHealth then
 				humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + 4)
 			end
 		end

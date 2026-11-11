@@ -118,8 +118,8 @@ Zones.List = {
 Zones.Mob = {
 	-- Tuned so a regular mob dies in ~4-6 s and a boss in ~1 min solo for a
 	-- player at the zone's level (player damage grows ~6% per level via STR).
-	HealthBase = 50,
-	HealthPerLevel = 9,
+	HealthBase = 70,
+	HealthPerLevel = 11,
 	DamageBase = 5,
 	DamagePerLevel = 0.6,
 	ShardsBase = 5,
@@ -132,7 +132,7 @@ Zones.Mob = {
 	AttackRange = 6,
 	AttackCooldown = 1.3,
 	AbilityCooldown = 7,
-	BossHealthMult = 12,
+	BossHealthMult = 10, -- bosses keep ~the same HP after the mob HP bump
 	BossDamageMult = 2.2,
 	BossRewardMult = 25,
 	BossContributionShare = 0.05,
@@ -144,6 +144,10 @@ Zones.Mob = {
 	PopulationMax = 2,
 	BossHealthPerPlayer = 0.35, -- +35% boss HP per extra player in the zone
 	BossRespawn = 180, -- every boss returns 3 minutes after it dies
+	-- Out-of-combat regen: only after RegenDelay seconds without being hit,
+	-- and slowly. Leashing back home never heals.
+	RegenDelay = 8,
+	RegenPerSecond = 0.02,
 	-- Rewards fall off when you out-level a mob (no farming newbie mobs):
 	-- -15% per level beyond 5 levels above the mob, down to 10%.
 	LevelGapFree = 5,

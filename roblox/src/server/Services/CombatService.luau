@@ -422,6 +422,7 @@ function CombatService:Damage(attackerPlayer: Player?, attacker: Model?, target:
 	end
 	damage = math.max(1, math.floor(damage + 0.5))
 	humanoid:TakeDamage(damage)
+	target:SetAttribute("LastHitAt", os.clock())
 	if attackerPlayer then
 		target:SetAttribute("LastAttackerId", attackerPlayer.UserId)
 		target:SetAttribute("LastAttackTime", os.clock())

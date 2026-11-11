@@ -11,6 +11,7 @@ local ORDER = {
 	"MapService",
 	"ZoneService",
 	"DestructionService",
+	"WorldService",
 	"MonetizationService",
 	"ProgressionService",
 	"QuestService",

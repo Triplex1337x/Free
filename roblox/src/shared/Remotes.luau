@@ -11,6 +11,7 @@ local EVENTS = {
 	"Cooldown", -- server -> client: ability cooldown started
 	"Notify", -- server -> client: toast message
 	"Announce", -- server -> all: system chat message
+	"OpenUI", -- server -> client: open a panel (e.g. NPC merchant)
 }
 
 local FUNCTIONS = {
@@ -26,6 +27,7 @@ local FUNCTIONS = {
 	"Admin",
 	"SetPvp",
 	"SetSetting",
+	"TutorialDone",
 }
 
 local Remotes = {}
