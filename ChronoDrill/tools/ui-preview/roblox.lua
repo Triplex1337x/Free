@@ -820,9 +820,9 @@ function methods.ChangeState() end
 function methods.GetState() return Enum.HumanoidStateType.Running end
 function methods.SetStateEnabled() end
 function methods.UnequipTools() end
-function methods.AddTag(self, t) rawget(self, "_attrs")["__tag_" .. t] = true end
-function methods.HasTag(self, t) return rawget(self, "_attrs")["__tag_" .. t] == true end
-function methods.RemoveTag(self, t) rawget(self, "_attrs")["__tag_" .. t] = nil end
+function methods.AddTag(self, a, b) local inst, t = self, a if b then inst, t = a, b end rawget(inst, "_attrs")["__tag_" .. t] = true end
+function methods.HasTag(self, a, b) local inst, t = self, a if b then inst, t = a, b end return rawget(inst, "_attrs")["__tag_" .. t] == true end
+function methods.RemoveTag(self, a, b) local inst, t = self, a if b then inst, t = a, b end rawget(inst, "_attrs")["__tag_" .. t] = nil end
 function methods.ScreenPointToRay(self, x, y) return Ray.new(Vector3.new(), Vector3.new(0, 0, -1)) end
 function methods.ViewportPointToRay(self, x, y) return Ray.new(Vector3.new(), Vector3.new(0, 0, -1)) end
 function methods.WorldToViewportPoint(self, p) return Vector3.new(640, 360, 10), true end

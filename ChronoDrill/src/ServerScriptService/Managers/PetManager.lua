@@ -227,6 +227,11 @@ local function petAction(player, action, arg, arg2)
 		if type(arg) ~= "string" or not PetsData.ById[arg] then
 			return { ok = false }
 		end
+		-- мификов и «Огромных» автоудалять нельзя: слишком легко потерять самого редкого питомца
+		local r = PetsData.ById[arg].Rarity
+		if arg2 and (r == "Mythic" or r == "Huge") then
+			return { ok = false, msg = "Мификов и «Огромных» нельзя удалять автоматически" }
+		end
 		data.AutoDelete = data.AutoDelete or {}
 		data.AutoDelete[arg] = arg2 and true or nil
 	elseif action == "DeleteMany" then

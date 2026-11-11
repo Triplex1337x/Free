@@ -1182,23 +1182,27 @@ local function buildHub(b, folder, O, biome, assets)
 	-- яйца
 	pts.Eggs = {}
 	local eggSpots = { V3(34, 0, -184), V3(58, 0, -191), V3(82, 0, -184) }
+	-- 4-е яйцо (Сказочное) стоит отдельно на лужайке рядом с Хроно-Древом, на своём пьедестале
+	local SPECIAL_SPOT = V3(-14, 0, -186)
+	local wide = false
 	-- площадка питомцев: мощёный полукруг и большие объёмные буквы
 	local paveCol = MK.Shade(T.Path, -0.05)
 	-- сцена с яйцами: три пологие ступени (по 0.8 студа), яйца стоят наверху
 	local STAGE = 2.4
 	for i = 0, 2 do
-		local st = MK.Part(hub, V3(70 - i * 4, 0.8, 36 - i * 4), CF(O + V3(58, 0.4 + i * 0.8, -188)), (i % 2 == 0) and MK.Shade(paveCol, -0.12) or MK.Shade(paveCol, -0.04), { Material = "Cobblestone" })
+		local st = MK.Part(hub, V3((wide and 86 or 70) - i * 4, 0.8, 36 - i * 4), CF(O + V3(58, 0.4 + i * 0.8, -188)), (i % 2 == 0) and MK.Shade(paveCol, -0.12) or MK.Shade(paveCol, -0.04), { Material = "Cobblestone" })
 		st.CanCollide = true
 		st.Name = i == 2 and "PetPlaza" or "PetStage"
 	end
 	for _, sx in ipairs({ -1, 1 }) do
-		local post = O + V3(58 + sx * 30, STAGE, -200)
+		local post = O + V3(58 + sx * (wide and 38 or 30), STAGE, -200)
 		solid(MK.Part(hub, V3(2, 16, 2), CF(post + V3(0, 8, 0)), { 120, 84, 60 }, { Material = "Wood" }))
 	end
 	MK.Text3D(hub, "ПИТОМЦЫ", CFrame.lookAt(O + V3(58, 19, -202), O + V3(58, 19, -120)), 8, { 214, 120, 255 }, { 120, 50, 170 }, { Outline = { 255, 255, 255 }, Gradient = { { 240, 170, 255 }, { 180, 90, 255 } } })
 	for _, egg in ipairs(EggsData.List) do
 		if egg.Biome == b then
-			local _, p = buildEggStand(hub, O + eggSpots[egg.Slot] + V3(0, STAGE, 0), center, biome, egg)
+			local spot = eggSpots[egg.Slot] and (O + eggSpots[egg.Slot] + V3(0, STAGE, 0)) or (O + SPECIAL_SPOT)
+			local _, p = buildEggStand(hub, spot, center, biome, egg)
 			pts.Eggs[egg.Id] = p
 		end
 	end

@@ -53,7 +53,7 @@ for e, egg in ipairs(EggsData.List) do
 			n = n + 1
 		end
 	end
-	local pmin = EGG_BASE * EGG_GROW ^ (e - 1)
+	local pmin = EGG_BASE * EGG_GROW ^ ((egg.PowerIndex or e) - 1)
 	egg.Index = e
 	for order, entry in ipairs(egg.Pets) do
 		local id = entry[1]

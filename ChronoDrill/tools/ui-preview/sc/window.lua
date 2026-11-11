@@ -12,7 +12,13 @@ local ctx = H.ctx()
 local panels = Panels.Build(root, ctx)
 ctx.OpenPanel = function(n) if panels[n] then panels[n].Open() end end
 local which = os.getenv and os.getenv("SC_WINDOW") or "Pets"
-panels[which].Open()
+if which == "Egg" then
+	H.Data.AutoDelete = { MushroomPup = true, PetalBunny = true }
+	for _, id in ipairs({ "MushroomPup", "PetalBunny", "MossTurtle", "GlowJelly", "FairyFox", "Bunny", "Kitty", "Puppy" }) do H.Data.Index[id] = true end
+	panels.Egg.ShowEgg(os.getenv("SC_EGG") or "Fairy")
+else
+	panels[which].Open()
+end
 R.run(0.6)
 local clickN = tonumber(os.getenv("SC_CLICK") or "")
 if clickN then

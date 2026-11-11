@@ -1302,48 +1302,65 @@ end
 ---------------------------------------------------------------------------------------------
 -- Окно яйца: шансы и открытие
 ---------------------------------------------------------------------------------------------
+-- значок «мусорка» из фреймов (крышка, ручка, корзина с прорезями)
+local function trashIcon(parent, size, color, z)
+	local f = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(size, size), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), ZIndex = z, Parent = parent })
+	local handle = UI.new("Frame", { BackgroundColor3 = color, Size = UDim2.new(0.34, 0, 0.12, 0), Position = UDim2.new(0.33, 0, 0.06, 0), ZIndex = z, Parent = f })
+	UI.Corner(handle, 2)
+	local lid = UI.new("Frame", { BackgroundColor3 = color, Size = UDim2.new(0.86, 0, 0.13, 0), Position = UDim2.new(0.07, 0, 0.15, 0), ZIndex = z, Parent = f })
+	UI.Corner(lid, 2)
+	local body = UI.new("Frame", { BackgroundColor3 = color, Size = UDim2.new(0.64, 0, 0.6, 0), Position = UDim2.new(0.18, 0, 0.33, 0), ZIndex = z, Parent = f })
+	UI.Corner(body, 3)
+	return f
+end
+
+-- Компактное окно яйца: прижато к низу экрана (яйцо в мире видно), сверху цена, удача и быстрые фильтры
+-- автоудаления, посередине ряд питомцев с шансами и кнопкой-мусоркой, снизу кнопки открытия.
+local EGG_TILE_GAP = 6
+local QUICK_RARITIES = { { "Common", "Обычных" }, { "Uncommon", "Необычных" }, { "Rare", "Редких" } }
 local function buildEgg(screen, ctx)
-	local win = UI.Window(screen, { Name = "Egg", Title = "ЯЙЦО", Color = UI.Colors.Teal, Size = UDim2.fromOffset(900, 540) })
+	local win = UI.Window(screen, { Name = "Egg", Title = "ЯЙЦО", Color = UI.Colors.Teal, Size = UDim2.fromOffset(700, 262), NoBackdrop = true })
+	win.Root.Position = UDim2.new(0.5, 0, 1, -160)
 	local c = win.Content
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local W = 664
 
-	---------------------------------------------------------------- витрина яйца слева
-	local _, show = UI.Plate(c, UDim2.new(0, 250, 1, 0), UDim2.new(), Color3.new(1, 1, 1), 20)
-	local hero = UI.new("Frame", { BackgroundColor3 = UI.Colors.Teal, Size = UDim2.new(1, -12, 0, 200), Position = UDim2.fromOffset(6, 6), Parent = show })
-	UI.Corner(hero, 16)
-	local heroGrad = UI.Gradient(hero, Color3.fromRGB(160, 240, 230), UI.Colors.Teal)
-	local heroStroke = UI.Stroke(hero, 3, UI.Edge(UI.Colors.Teal), true)
-	for k = 0, 3 do
-		local r = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.85, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.new(0, 26, 0, 250), Rotation = k * 45, Parent = hero })
-		UI.Corner(r, UDim.new(1, 0))
+	---------------------------------------------------------------- строка 1: цена, удача, быстрое удаление
+	local row1 = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 32), Parent = c })
+	local left = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(0.5, 0, 1, 0), Parent = row1 })
+	UI.List(left, 8, Enum.FillDirection.Horizontal, nil, Enum.VerticalAlignment.Center)
+	local pricePill = pill(left, "Coin", Color3.fromRGB(255, 176, 30), UDim2.fromOffset(132, 32), nil, 1)
+	local luckPill, luckF = pill(left, "Clover", UI.Colors.Green, UDim2.fromOffset(118, 32), nil, 2)
+	local right = UI.new("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.new(0.66, 0, 1, 0), Parent = row1 })
+	UI.List(right, 6, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Right, Enum.VerticalAlignment.Center)
+	local qLabelHolder = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(96, 30), LayoutOrder = 0, Parent = right })
+	local qi = trashIcon(qLabelHolder, 22, Color3.fromRGB(120, 112, 150), 3)
+	qi.Position = UDim2.new(0, 12, 0.5, 0)
+	UI.Text(qLabelHolder, "Удалять:", { Size = UDim2.new(1, -26, 1, -6), Position = UDim2.fromOffset(26, 3), MaxText = 16, TextColor3 = Color3.fromRGB(100, 92, 130), Stroke = false, TextXAlignment = Enum.TextXAlignment.Left })
+	local quick = {}
+	for i, q in ipairs(QUICK_RARITIES) do
+		local col = rarityColor(q[1])
+		local b = UI.Button({ Parent = right, Text = q[2], Color = Color3.fromRGB(176, 172, 200), Size = UDim2.fromOffset(104, 30), LayoutOrder = i, TextSize = 15, Radius = 15 })
+		quick[q[1]] = { btn = b, col = col }
 	end
-	local eggHolder = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, -20, 1, -20), Position = UDim2.fromOffset(10, 10), Parent = hero })
-	local eggName = UI.Text(show, "", { Size = UDim2.new(1, -16, 0, 30), Position = UDim2.fromOffset(8, 212), MaxText = 24, TextColor3 = Color3.fromRGB(70, 56, 90), Stroke = false })
-	local pricePill = pill(show, "Coin", Color3.fromRGB(255, 176, 30), UDim2.new(1, -24, 0, 40), UDim2.fromOffset(12, 248))
-	local luckPill, luckF = pill(show, "Clover", UI.Colors.Green, UDim2.new(1, -24, 0, 34), UDim2.fromOffset(12, 296))
-	local hint = UI.Text(show, "Нажми на питомца справа, чтобы удалять его сразу при выпадении", { Size = UDim2.new(1, -20, 0, 56), Position = UDim2.new(0, 10, 1, -64), MaxText = 14, TextWrapped = true, TextColor3 = Color3.fromRGB(130, 120, 160), Stroke = false })
-	local _ = hint
 
-	---------------------------------------------------------------- питомцы справа
-	local well = UI.new("Frame", { BackgroundColor3 = Color3.fromRGB(232, 250, 248), BackgroundTransparency = 0.1, Size = UDim2.new(1, -262, 1, -76), Position = UDim2.fromOffset(262, 0), Parent = c })
-	UI.Corner(well, 18)
-	UI.Stroke(well, 3, Color3.fromRGB(170, 226, 220), true)
-	local grid = UI.Scroll(well, UDim2.new(1, -8, 1, -8), UDim2.fromOffset(4, 4))
-	local gl = Instance.new("UIGridLayout")
-	gl.CellSize = UDim2.fromOffset(108, 148)
-	gl.CellPadding = UDim2.fromOffset(8, 10)
-	gl.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	gl.SortOrder = Enum.SortOrder.LayoutOrder
-	gl.Parent = grid
-	UI.Padding(grid, 6)
+	---------------------------------------------------------------- строка 2: питомцы
+	local well = UI.new("Frame", { BackgroundColor3 = Color3.fromRGB(240, 246, 252), Size = UDim2.new(1, 0, 0, 108), Position = UDim2.fromOffset(0, 40), Parent = c })
+	UI.Corner(well, 16)
+	UI.Stroke(well, 2, Color3.fromRGB(200, 214, 232), true)
+	local row = UI.new("ScrollingFrame", {
+		BackgroundTransparency = 1, Size = UDim2.new(1, -12, 1, -8), Position = UDim2.fromOffset(6, 4),
+		ScrollBarThickness = 4, ScrollingDirection = Enum.ScrollingDirection.X, AutomaticCanvasSize = Enum.AutomaticSize.X,
+		CanvasSize = UDim2.new(), ScrollBarImageColor3 = Color3.fromRGB(150, 140, 190), Parent = well,
+	})
+	local rl = UI.List(row, EGG_TILE_GAP, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center)
 
-	---------------------------------------------------------------- кнопки
-	local bottom = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, -262, 0, 64), Position = UDim2.new(0, 262, 1, -66), Parent = c })
+	---------------------------------------------------------------- строка 3: кнопки
+	local bottom = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 48), Position = UDim2.new(0, 0, 1, -48), Parent = c })
 	UI.List(bottom, 10, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center)
-	local one = UI.Button({ Parent = bottom, Text = "x1", Color = UI.Colors.Green, Size = UDim2.fromOffset(138, 56), LayoutOrder = 1, TextSize = 22, Glyph = "Coin", GlyphColor = GOLD, Radius = 22 })
-	local three = UI.Button({ Parent = bottom, Text = "x3", Color = UI.Colors.Purple, Size = UDim2.fromOffset(138, 56), LayoutOrder = 2, TextSize = 22, Glyph = "Coin", GlyphColor = GOLD, Radius = 22 })
-	local eight = UI.Button({ Parent = bottom, Text = "x8", Color = Color3.fromRGB(40, 200, 110), Size = UDim2.fromOffset(146, 56), LayoutOrder = 3, TextSize = 22, Glyph = "Egg", Radius = 22 })
-	local autoB = UI.Button({ Parent = bottom, Text = "Авто", Color = Color3.fromRGB(40, 190, 210), Size = UDim2.fromOffset(140, 56), LayoutOrder = 4, TextSize = 22, Glyph = "Bolt", Radius = 22 })
+	local one = UI.Button({ Parent = bottom, Text = "x1", Color = UI.Colors.Green, Size = UDim2.fromOffset(156, 44), LayoutOrder = 1, TextSize = 20, Glyph = "Coin", GlyphColor = GOLD, Radius = 22 })
+	local three = UI.Button({ Parent = bottom, Text = "x3", Color = UI.Colors.Purple, Size = UDim2.fromOffset(156, 44), LayoutOrder = 2, TextSize = 20, Glyph = "Coin", GlyphColor = GOLD, Radius = 22 })
+	local eight = UI.Button({ Parent = bottom, Text = "x8", Color = Color3.fromRGB(40, 200, 110), Size = UDim2.fromOffset(156, 44), LayoutOrder = 3, TextSize = 20, Glyph = "Egg", Radius = 22 })
+	local autoB = UI.Button({ Parent = bottom, Text = "Авто", Color = Color3.fromRGB(40, 190, 210), Size = UDim2.fromOffset(150, 44), LayoutOrder = 4, TextSize = 20, Glyph = "Bolt", Radius = 22 })
 
 	-- плашка «идёт автооткрытие» поверх экрана (окно яйца в это время закрыто)
 	local autoBar = UI.new("Frame", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -110), Size = UDim2.fromOffset(360, 56), Visible = false, ZIndex = 30, Parent = screen })
@@ -1352,7 +1369,7 @@ local function buildEgg(screen, ctx)
 	local currentEgg
 	local busy = false
 	local auto = { on = false }
-	local cards = {}
+	local tiles = {}
 
 	local function canAfford(n)
 		local coins = ctx.ClientState.Data and ctx.ClientState.Data.Coins or 0
@@ -1403,7 +1420,6 @@ local function buildEgg(screen, ctx)
 		end)
 	end
 	stopB.Activated:Connect(stopAuto)
-
 	one.Activated:Connect(function()
 		open(1)
 	end)
@@ -1431,10 +1447,70 @@ local function buildEgg(screen, ctx)
 		end
 	end)
 
-	local function setDeleteLook(card, on)
-		card.del.Visible = on
-		card.stroke.Color = on and UI.Colors.Red or UI.Edge(card.col)
-		card.stroke.Thickness = on and 4 or 3
+	-- внешний вид плитки: обычная / «удалять»
+	local function paintTile(t)
+		local on = t.on
+		t.overlay.Visible = on
+		t.binBg.BackgroundColor3 = on and UI.Colors.Red or Color3.new(1, 1, 1)
+		for _, f in ipairs(t.bin:GetChildren()) do
+			if f:IsA("Frame") then
+				f.BackgroundColor3 = on and Color3.new(1, 1, 1) or Color3.fromRGB(120, 112, 150)
+			end
+		end
+		t.binStroke.Color = on and UI.Edge(UI.Colors.Red) or Color3.fromRGB(190, 184, 214)
+		t.stroke.Color = on and UI.Colors.Red or UI.Darker(t.col, 0.15)
+	end
+	local function paintQuick()
+		for key, q in pairs(quick) do
+			local any, all = false, true
+			for _, t in pairs(tiles) do
+				if t.rarity == key then
+					any = true
+					all = all and t.on
+				end
+			end
+			q.btn.Holder.Visible = any
+			q.btn.SetColor((any and all) and UI.Colors.Red or Color3.fromRGB(176, 172, 200))
+		end
+	end
+	local function setDelete(t, on, silent)
+		if t.locked or t.on == on then
+			return true
+		end
+		t.on = on
+		paintTile(t)
+		local res = invoke(ctx, "PetAction", "AutoDelete", t.id, on)
+		if not (res and res.ok) then
+			t.on = not on
+			paintTile(t)
+			return false
+		end
+		if not silent then
+			ctx.Toast(on and ("«" .. t.name .. "» будет удаляться сразу (шайни — никогда)") or ("«" .. t.name .. "» снова попадает в инвентарь"), on and "warn" or "good")
+		end
+		return true
+	end
+	for key, q in pairs(quick) do
+		q.btn.Activated:Connect(function()
+			local all = true
+			for _, t in pairs(tiles) do
+				if t.rarity == key and not t.on then
+					all = false
+				end
+			end
+			local target = not all
+			local n = 0
+			for _, t in pairs(tiles) do
+				if t.rarity == key and t.on ~= target then
+					if setDelete(t, target, true) then
+						n = n + 1
+					end
+				end
+			end
+			paintQuick()
+			local rname = PetsData.Rarity[key] and PetsData.Rarity[key].Name or key
+			ctx.Toast(target and ("Удаляются сразу: все «" .. rname .. "» этого яйца") or ("«" .. rname .. "» снова попадают в инвентарь"), target and "warn" or "good")
+		end)
 	end
 
 	local function refreshButtons()
@@ -1464,21 +1540,10 @@ local function buildEgg(screen, ctx)
 		currentEgg = egg
 		local data = ctx.ClientState.Data or {}
 		win.Title.Text = string.upper(egg.Name)
-		eggName.Text = egg.Name
 		pricePill.Text = Util.Format(egg.Price)
-		-- витрина: модель яйца
-		clear(eggHolder)
-		local src = ReplicatedStorage:FindFirstChild("Assets") and ReplicatedStorage.Assets:FindFirstChild("Eggs") and ReplicatedStorage.Assets.Eggs:FindFirstChild(eggId)
-		if src then
-			UI.Viewport(eggHolder, src:Clone())
-		end
-		local biome = BiomesData[egg.Biome]
-		local hc = biome and c3(biome.Theme.UI) or UI.Colors.Teal
-		heroGrad.Color = ColorSequence.new(UI.Lighter(hc, 0.45), hc)
-		heroStroke.Color = UI.Edge(hc)
 		-- шансы с учётом удачи
-		clear(grid, true)
-		cards = {}
+		clear(row, true)
+		tiles = {}
 		local luck = Stats.LuckMult(data)
 		local lucky = luck > 1
 		local total = 0
@@ -1493,51 +1558,80 @@ local function buildEgg(screen, ctx)
 		luckPill.Text = "Удача x" .. string.format(luck < 10 and "%.1f" or "%.0f", luck)
 		local index = data.Index or {}
 		local autoDel = data.AutoDelete or {}
+		local n = #egg.Pets
+		local TW = math.min(84, math.floor((W - 12 - (n - 1) * EGG_TILE_GAP) / n))
+		local TH = 98
 		for i, e in ipairs(egg.Pets) do
 			local def = PetsData.ById[e[1]]
 			local col = rarityColor(def.Rarity)
-			local holder, face, strip, stroke = petCard(grid, UDim2.fromOffset(108, 148), col, i, (def.Rarity == "Huge" and "huge") or (def.Rarity == "Mythic" and "rainbow") or nil)
+			local special = def.Rarity == "Mythic" or def.Rarity == "Huge"
+			local holder = UI.new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(TW, TH), LayoutOrder = i, Parent = row })
+			local face = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.fromScale(1, 1), Parent = holder })
+			UI.Corner(face, 14)
+			UI.Gradient(face, UI.Lighter(col, 0.55), UI.Lighter(col, 0.1))
+			face.BackgroundColor3 = Color3.new(1, 1, 1)
+			local stroke = UI.Stroke(face, 2.5, UI.Darker(col, 0.15), true)
+			if special then
+				local rg = Instance.new("UIGradient")
+				rg.Color = def.Rarity == "Huge" and CARD_MODES.huge[1] or CARD_MODES.rainbow[1]
+				rg.Rotation = 45
+				rg.Parent = stroke
+				stroke.Thickness = 3
+			end
+			UI.Gloss(face, UDim2.new(1, -10, 0, 14), UDim2.fromOffset(5, 3), 0.55, 1)
 			local model = ctx.PetModel(e[1], false)
 			if not index[e[1]] then
 				EggOpening.Silhouette(model)
 			end
-			UI.Viewport(face, model, UDim2.new(1, -8, 0, 84), UDim2.fromOffset(4, 8))
+			UI.Viewport(face, model, UDim2.new(1, -6, 0, TH - 30), UDim2.fromOffset(3, 4))
+			-- шанс внизу
 			local w = e[3]
 			if lucky and e[3] <= Balance.LuckyRareThreshold then
 				w = w * luck
 			end
 			local pct = w / total * 100
-			local pctL = UI.Text(strip, (pct >= 1 and string.format("%.1f", pct) or (pct >= 0.01 and string.format("%.2f", pct) or string.format("%.3f", pct))) .. "%", { Size = UDim2.new(1, -8, 0, 22), Position = UDim2.fromOffset(4, 2), MaxText = 20, ZIndex = 4 })
-			local _ = pctL
-			local db, sb = Stats.PetBonus({ Id = e[1] })
-			local l1 = statLine(strip, "Pickaxe", DMG_COLOR, UDim2.fromOffset(4, 25), UDim2.new(0.5, -4, 0, 17), 4)
-			l1.Text = string.format("%.2f", 1 + db)
-			local l2 = statLine(strip, "Coin", SELL_COLOR, UDim2.new(0.5, 0, 0, 25), UDim2.new(0.5, -4, 0, 17), 4)
-			l2.Text = string.format("%.2f", 1 + sb)
-			chipText(face, (def.Rarity == "Mythic" and "МИФ") or (def.Rarity == "Huge" and "ОГРОМНЫЙ") or (PetsData.Rarity[def.Rarity] and PetsData.Rarity[def.Rarity].Name or ""), UI.Darker(col, 0.45), UDim2.fromOffset(72, 18), UDim2.fromOffset(6, 6), 6)
-			-- метка автоудаления
-			local del = UI.new("Frame", { BackgroundColor3 = UI.Colors.Red, BackgroundTransparency = 0.35, Size = UDim2.fromScale(1, 1), ZIndex = 7, Visible = false, Parent = face })
-			UI.Corner(del, 18)
-			local dx = Icons2D.New(del, "Close", 46, { ZIndex = 8 })
-			dx.AnchorPoint = Vector2.new(0.5, 0.5)
-			dx.Position = UDim2.fromScale(0.5, 0.36)
-			UI.Text(del, "УДАЛЯТЬ", { Size = UDim2.new(1, -8, 0, 22), Position = UDim2.new(0, 4, 0.6, 0), MaxText = 18, ZIndex = 8 })
-			local card = { del = del, stroke = stroke, col = col, id = e[1] }
-			cards[e[1]] = card
-			setDeleteLook(card, autoDel[e[1]] == true)
-			local btn = UI.new("TextButton", { BackgroundTransparency = 1, Text = "", Size = UDim2.fromScale(1, 1), ZIndex = 9, Parent = face })
-			UI.Bounce(btn, holder)
-			btn.Activated:Connect(function()
-				local on = not card.del.Visible
-				setDeleteLook(card, on)
-				local res = invoke(ctx, "PetAction", "AutoDelete", e[1], on)
-				if not (res and res.ok) then
-					setDeleteLook(card, not on)
-				else
-					ctx.Toast(on and ("«" .. def.Name .. "» будет удаляться сразу (шайни — никогда)") or ("«" .. def.Name .. "» снова попадает в инвентарь"), on and "warn" or "good")
+			local chanceF = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -4), Size = UDim2.new(1, -8, 0, 20), ZIndex = 3, Parent = face })
+			UI.Glass(chanceF, UDim.new(1, 0), 0.05)
+			UI.Text(chanceF, (pct >= 1 and string.format("%.1f", pct) or (pct >= 0.01 and string.format("%.2f", pct) or string.format("%.3f", pct))) .. "%", { Size = UDim2.new(1, -6, 1, -4), Position = UDim2.fromOffset(3, 2), MaxText = 15, ZIndex = 4, StrokeThickness = 1.4 })
+			-- «удалять»: тёмно-красная вуаль и перечёркнутая надпись
+			local overlay = UI.new("Frame", { BackgroundColor3 = Color3.fromRGB(120, 20, 40), BackgroundTransparency = 0.35, Size = UDim2.fromScale(1, 1), Visible = false, ZIndex = 6, Parent = face })
+			UI.Corner(overlay, 14)
+			UI.Text(overlay, "УДАЛЯТЬ", { Size = UDim2.new(1, -10, 0, 16), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), MaxText = 13, ZIndex = 7, StrokeThickness = 1.6 })
+			-- кнопка-мусорка в углу (у мификов и «Огромных» — замок)
+			local binBg = UI.new("TextButton", { Name = "Trash", AutoButtonColor = false, Text = "", BackgroundColor3 = Color3.new(1, 1, 1), AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -3, 0, 3), Size = UDim2.fromOffset(24, 24), ZIndex = 8, Parent = face })
+			UI.Corner(binBg, UDim.new(1, 0))
+			local binStroke = UI.Stroke(binBg, 2, Color3.fromRGB(190, 184, 214), true)
+			local bin
+			if special then
+				bin = Icons2D.New(binBg, "Lock", 18, { ZIndex = 9, Shadow = false })
+				bin.AnchorPoint = Vector2.new(0.5, 0.5)
+				bin.Position = UDim2.fromScale(0.5, 0.5)
+			else
+				bin = trashIcon(binBg, 16, Color3.fromRGB(120, 112, 150), 9)
+			end
+			local t = { id = e[1], name = def.Name, rarity = def.Rarity, col = col, on = autoDel[e[1]] == true, locked = special,
+				overlay = overlay, binBg = binBg, bin = bin, binStroke = binStroke, stroke = stroke }
+			tiles[e[1]] = t
+			if not special then
+				paintTile(t)
+			else
+				stroke.Color = Color3.new(1, 1, 1)
+			end
+			local function toggle()
+				if t.locked then
+					ctx.Toast("Мификов и «Огромных» нельзя удалять автоматически", "info")
+					return
 				end
-			end)
+				setDelete(t, not t.on)
+				paintQuick()
+			end
+			binBg.Activated:Connect(toggle)
+			local btn = UI.new("TextButton", { BackgroundTransparency = 1, Text = "", Size = UDim2.fromScale(1, 1), ZIndex = 5, Parent = face })
+			UI.Bounce(btn, holder)
+			btn.Activated:Connect(toggle)
 		end
+		rl.HorizontalAlignment = (n * (TW + EGG_TILE_GAP) > W) and Enum.HorizontalAlignment.Left or Enum.HorizontalAlignment.Center
+		paintQuick()
 		refreshButtons()
 		win.Open()
 	end

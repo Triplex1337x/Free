@@ -207,4 +207,17 @@ return {
 	HugeRainbowUnicorn = { A = "quad", C = c(255, 255, 255), C2 = c(255, 226, 246), C3 = c(220, 200, 255), X = { "ears_pointy", "cheeks" }, Iris = c(200, 120, 255),
 		Mythic = { Wings = "rainbow", Horns = "unicorn", HornColor = c(255, 236, 140), Halo = true, HaloColor = c(255, 240, 160), Glow = c(255, 170, 240), Gem = false, Trim = false },
 		Huge = { Rainbow = true, Mane = true, RainbowTail = true, Aura = c(255, 170, 240), Stars = true } },
+
+	-- СКАЗОЧНОЕ ЯЙЦО (ярус 1, 4-е яйцо)
+	MushroomPup = { A = "quad", C = c(250, 236, 214), C2 = c(255, 255, 255), C3 = c(170, 120, 90), X = { "ears_round_big", "nose", "tongue", "cheeks", "mushroom_hat" }, Iris = c(140, 90, 50) },
+	PetalBunny = { A = "quad", C = c(255, 214, 232), C2 = c(255, 255, 255), C3 = c(255, 160, 200), X = { "ears_long", "tail_puff", "nose", "cheeks", "flower_crown" }, Iris = c(90, 200, 120) },
+	MossTurtle = { A = "quad", C = c(140, 206, 116), C2 = c(250, 240, 200), C3 = c(96, 150, 80), X = { "shell_flowers", "cheeks" }, Iris = c(220, 150, 40) },
+	GlowJelly = { A = "orb", C = c(214, 160, 255), C2 = c(130, 240, 255), M = "Glass", X = { "jelly_tentacles", "inner_core", "cheeks" }, Iris = c(150, 90, 230), Fly = true },
+	FairyFox = { A = "quad", C = c(255, 176, 120), C2 = c(255, 250, 244), C3 = c(255, 120, 170), X = { "ears_pointy_big", "tail_fluffy", "fairy_wings", "flower_crown", "cheeks" }, Iris = c(120, 90, 220), WingColor = c(255, 190, 230) },
+	CrystalDeer = { A = "quad", C = c(206, 196, 255), C2 = c(255, 255, 255), C3 = c(150, 220, 255), X = { "crystal_antlers", "ears_pointy", "spots_glow", "stars", "cheeks", "sparkle" }, Iris = c(60, 170, 255), AntlerColor = c(170, 232, 255) },
+	FairyQueen = { A = "quad", C = c(248, 240, 255), C2 = c(255, 196, 236), C3 = c(196, 156, 255), X = { "ears_pointy", "tail_fluffy", "flower_crown", "cheeks" }, Iris = c(220, 90, 200), CuteEyes = true,
+		Mythic = { Wings = "butterfly", C1 = c(255, 170, 225), C2 = c(200, 160, 255), Glow = c(255, 140, 220), Halo = true, HaloColor = c(255, 220, 140), Gem = false, Trim = false } },
+	HugeBloomDragon = { A = "quad", C = c(160, 226, 150), C2 = c(255, 246, 226), C3 = c(255, 150, 196), X = { "horns", "tail_spikes", "flower_crown", "cheeks" }, Iris = c(255, 110, 170),
+		Mythic = { Wings = "petal", C1 = c(255, 160, 205), C2 = c(255, 255, 255), Glow = c(255, 215, 110), Gem = false, Trim = false },
+		Huge = { Aura = c(255, 150, 210), Bloom = true, Stars = true } },
 }

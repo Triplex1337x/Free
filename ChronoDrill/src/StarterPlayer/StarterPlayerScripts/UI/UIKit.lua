@@ -554,7 +554,9 @@ function UI.Window(screen, opts)
 		root.Visible = true
 		scale.Scale = 0.78
 		TweenService:Create(scale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
-		UI.SetBackdrop(win, true)
+		if not opts.NoBackdrop then
+			UI.SetBackdrop(win, true)
+		end
 		openedEvent:Fire()
 	end
 	function win.Hide()
@@ -562,7 +564,9 @@ function UI.Window(screen, opts)
 			return
 		end
 		win.IsOpen = false
-		UI.SetBackdrop(win, false)
+		if not opts.NoBackdrop then
+			UI.SetBackdrop(win, false)
+		end
 		local tw = TweenService:Create(scale, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0.7 })
 		tw:Play()
 		tw.Completed:Connect(function()

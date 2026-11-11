@@ -539,7 +539,7 @@ local function buildEyes(look, a)
 	local ex = w * 0.22
 	local ey = (a.eyeY or 0.1) * a.hs.Y * 2
 	-- у «Огромных» всегда живые аниме-глаза с цветной радужкой (так милее), у мификов — светящиеся
-	local glow = (style == "glow" or (look.Mythic ~= nil)) and not look.Huge
+	local glow = (style == "glow" or (look.Mythic ~= nil)) and not look.Huge and not look.CuteEyes
 	local iris = look.Iris and MK.C(look.Iris) or (look.EyeColor and MK.C(look.EyeColor)) or IRIS[(ctx.hash % #IRIS) + 1]
 	for _, sx in ipairs({ -1, 1 }) do
 		local pos = faceAt(a, sx * ex, ey, 0.02)
@@ -1357,6 +1357,21 @@ WINGS.galaxy = function(a, m, s, root)
 	end
 end
 
+-- лепестковые крылья: веер из розовых и белых лепестков с золотыми прожилками
+WINGS.petal = function(a, m, s, root)
+	local c1, c2, c3 = mc(m.C1, Color3.fromRGB(255, 160, 200)), mc(m.C2, WHITE), mc(m.Glow, GOLD)
+	for k = 0, 5 do
+		local cf = CF(root) * ANG(0, rad(s * -14), rad(s * (82 - k * 17))) * CF(s * (1.5 - k * 0.05), 0, 0)
+		E(V3(3.0 - k * 0.18, 1.15 - k * 0.05, 0.14), cf, (k % 2 == 0) and c1 or c2)
+		E(V3(2.2 - k * 0.15, 0.16, 0.16), cf * CF(0, 0, -0.04), c3, { Material = "Neon", Transparency = 0.25 })
+	end
+	for k = 0, 3 do
+		local cf = CF(root + V3(0, -0.15, -0.1)) * ANG(0, rad(s * -14), rad(s * (70 - k * 22))) * CF(s * 1.0, 0, 0)
+		E(V3(1.9, 0.8, 0.16), cf, c1:Lerp(WHITE, 0.4))
+	end
+	E(V3(0.6, 0.6, 0.45), root, c3, { Material = "Metal" })
+end
+
 local HORNS = {}
 -- изогнутые рога из цепочки цилиндров
 HORNS.curved = function(a, m, s)
@@ -1467,6 +1482,114 @@ end
 -- «Огромные» питомцы: аура-пьедестал, облако, бант, мантия, радужная грива и хвост,
 -- ледяная корона, самоцвет на груди, звёзды-спутники. Всё из примитивов Roblox.
 ---------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+-- Сказочные детали (Сказочное яйцо)
+---------------------------------------------------------------------------------------------
+local FLOWER_COLS = { Color3.fromRGB(255, 130, 180), WHITE, Color3.fromRGB(255, 214, 90), Color3.fromRGB(190, 150, 255) }
+local function flower(pos, size, col, up)
+	local cf = CF(pos) * (up or ANG(0, 0, 0))
+	for k = 0, 4 do
+		local ang = k * math.pi * 2 / 5
+		E(V3(size * 0.62, size * 0.22, size * 0.62), cf * CF(math.cos(ang) * size * 0.42, 0, math.sin(ang) * size * 0.42), col)
+	end
+	E(V3(size * 0.42, size * 0.3, size * 0.42), cf * CF(0, size * 0.08, 0), Color3.fromRGB(255, 214, 80))
+end
+
+-- шляпка мухомора: большая красная шляпка с белыми пятнами на коротком «пеньке»
+X.mushroom_hat = function(look, a)
+	local cap = mc(look.HatColor, Color3.fromRGB(235, 60, 60))
+	local top = a.top + V3(0, -0.05, 0.05)
+	E(V3(0.9, 0.5, 0.9), top + V3(0, 0.15, 0), IVORY)
+	E(V3(a.hs.X * 2.35, 1.0, a.hs.Z * 2.3), top + V3(0, 0.55, 0), cap)
+	E(V3(a.hs.X * 2.1, 0.3, a.hs.Z * 2.05), top + V3(0, 0.22, 0), MK.Shade(cap, -0.25))
+	-- белые пятна прямо на поверхности шляпки (эллипсоид: полуоси rx, 0.5, rz)
+	local rx, rz = a.hs.X * 1.175, a.hs.Z * 1.15
+	local spots = { { -0.55, -0.35, 0.46 }, { 0.6, -0.2, 0.4 }, { 0.05, 0.1, 0.48 }, { -0.2, -0.85, 0.36 }, { 0.7, 0.5, 0.34 }, { -0.75, 0.45, 0.32 }, { 0.3, -0.75, 0.3 } }
+	for _, sp in ipairs(spots) do
+		local k = 1 - (sp[1] / rx) ^ 2 - (sp[2] / rz) ^ 2
+		if k > 0.05 then
+			local y = 0.55 + 0.5 * math.sqrt(k)
+			E(V3(sp[3], sp[3] * 0.4, sp[3]), top + V3(sp[1], y - 0.04, sp[2]), WHITE)
+		end
+	end
+end
+
+-- венок из цветов по краю макушки
+X.flower_crown = function(look, a)
+	local n = 7
+	local leaf = Color3.fromRGB(110, 200, 90)
+	for i = 0, n - 1 do
+		local ang = i / n * math.pi * 2 + 0.2
+		local p = a.top + V3(math.cos(ang) * a.hs.X * 0.82, 0.08, math.sin(ang) * a.hs.Z * 0.82)
+		E(V3(0.36, 0.14, 0.24), CF(p + V3(0, -0.05, 0)) * ANG(0, -ang, 0) * CF(0.18, 0, 0), leaf)
+		flower(p, 0.5, FLOWER_COLS[i % #FLOWER_COLS + 1], ANG(rad(math.sin(ang) * 18), 0, rad(-math.cos(ang) * 18)))
+	end
+end
+
+-- крылья феи: две пары полупрозрачных крыльев-бабочки с неоновой кромкой
+X.fairy_wings = function(look, a)
+	local c = mc(look.WingColor, ctx.C2)
+	local edge = mc(look.WingEdge, Color3.fromRGB(255, 240, 255))
+	for _, sd in ipairs({ -1, 1 }) do
+		local root = V3(sd * a.side * 0.55, a.wingY + 0.3, a.bodyC.Z + a.bodyS.Z * 0.75)
+		local up = CF(root) * ANG(rad(-10), rad(sd * -25), rad(sd * 38)) * CF(sd * 1.05, 0.15, 0)
+		E(V3(2.1, 1.4, 0.1), up, edge, { Material = "Neon", Transparency = 0.35 })
+		E(V3(1.95, 1.25, 0.12), up * CF(0, 0, -0.02), c, { Material = "Glass", Transparency = 0.25 })
+		E(V3(0.5, 0.5, 0.14), up * CF(sd * 0.35, 0.15, -0.04), WHITE, { Material = "Neon", Transparency = 0.2 })
+		local low = CF(root) * ANG(rad(-10), rad(sd * -25), rad(sd * -18)) * CF(sd * 0.8, -0.1, 0.05)
+		E(V3(1.4, 0.95, 0.1), low, edge, { Material = "Neon", Transparency = 0.35 })
+		E(V3(1.28, 0.84, 0.12), low * CF(0, 0, -0.02), c:Lerp(WHITE, 0.3), { Material = "Glass", Transparency = 0.25 })
+	end
+end
+
+-- рога из хрусталя
+X.crystal_antlers = function(look, a)
+	local col = mc(look.AntlerColor, Color3.fromRGB(170, 230, 255))
+	for _, sd in ipairs({ -1, 1 }) do
+		local base = a.top + V3(sd * a.hs.X * 0.45, -0.05, 0.1)
+		crystal(base, 1.1, ANG(rad(-8), 0, rad(sd * -22)), col)
+		crystal(base + V3(sd * 0.32, 0.25, 0.05), 0.65, ANG(rad(-5), 0, rad(sd * -55)), col)
+		crystal(base + V3(sd * 0.05, 0.35, -0.1), 0.5, ANG(rad(-35), 0, rad(sd * -10)), col)
+	end
+end
+
+-- панцирь-купол на спине с узором, сверху мох, цветы и грибок
+X.shell_flowers = function(look, a)
+	local moss = Color3.fromRGB(110, 190, 90)
+	local sh = a.top + V3(0, -0.15, 0.45)
+	E(V3(a.hs.X * 2.25, 1.3, a.hs.Z * 1.9), sh, "C3")
+	E(V3(a.hs.X * 2.35, 0.3, a.hs.Z * 2.0), sh + V3(0, -0.4, 0), MK.Shade(ctx.C3, -0.2))
+	for i = 0, 5 do
+		local ang = i / 6 * math.pi * 2
+		E(V3(0.5, 0.18, 0.5), sh + V3(math.cos(ang) * 0.75, 0.42, math.sin(ang) * 0.6), MK.Shade(ctx.C3, 0.25))
+	end
+	local b = sh + V3(0, 0.55, 0)
+	E(V3(1.4, 0.3, 1.2), b, moss)
+	flower(b + V3(-0.35, 0.18, -0.15), 0.62, FLOWER_COLS[1])
+	flower(b + V3(0.4, 0.15, 0.2), 0.52, FLOWER_COLS[2])
+	flower(b + V3(0.05, 0.22, 0.45), 0.44, FLOWER_COLS[3])
+	E(V3(0.22, 0.4, 0.22), b + V3(0.55, 0.25, -0.35), Color3.fromRGB(240, 240, 230))
+	E(V3(0.5, 0.25, 0.5), b + V3(0.55, 0.48, -0.35), Color3.fromRGB(235, 70, 70))
+end
+
+-- длинные светящиеся щупальца медузы (6 штук, волной)
+X.jelly_tentacles = function(look, a)
+	for i = 0, 5 do
+		local ang = i / 6 * math.pi * 2 + 0.3
+		local p = a.hc + V3(math.cos(ang) * 0.6, -a.hs.Y * 0.75, math.sin(ang) * 0.6)
+		for k = 0, 3 do
+			local q = p + V3(math.sin(k + i) * 0.12, -0.38, math.cos(k + i) * 0.12)
+			Cyl(p, q, 0.2 - k * 0.035, (k % 2 == 0) and "C" or "C2", (k % 2 == 1) and { Material = "Neon", Transparency = 0.1 } or { Transparency = 0.15 })
+			p = q
+		end
+	end
+	-- бахрома по краю «купола»
+	for i = 0, 13 do
+		local ang = i / 14 * math.pi * 2
+		E(V3(0.4, 0.28, 0.4), a.hc + V3(math.cos(ang) * a.hs.X * 0.92, -a.hs.Y * 0.62, math.sin(ang) * a.hs.Z * 0.92), "C2", { Transparency = 0.2 })
+	end
+end
+
 local function star4(pos, size, color, tilt)
 	local cf = CF(pos) * (tilt or ANG(0, 0, 0))
 	B(V3(size, size * 0.22, size * 0.22), cf, color, { Material = "Neon" })
@@ -1497,6 +1620,13 @@ local function hugeFx(look, a)
 	end
 	local disc = MK.Disc(ctx.model, 0.05, R * 2, V3(0, 0.03, zc), glow)
 	finish(disc, "Fixed", { Material = "Neon", Transparency = 0.8, NoShadow = true })
+	-- цветочная поляна на пьедестале
+	if h.Bloom then
+		for i = 0, 9 do
+			local ang = i / 10 * math.pi * 2 + 0.15
+			flower(V3(math.cos(ang) * R * 0.82, 0.12, zc + math.sin(ang) * R * 0.82), 0.7, FLOWER_COLS[i % #FLOWER_COLS + 1])
+		end
+	end
 	-- звёзды-спутники
 	if h.Stars then
 		for i = 0, 3 do
