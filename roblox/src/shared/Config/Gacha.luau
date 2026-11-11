@@ -3,11 +3,11 @@
 
 return {
 	Rarities = {
-		{ Id = "Common", Name = "Обычный", Weight = 56, Color = Color3.fromRGB(200, 200, 210), DupeShards = 40 },
-		{ Id = "Rare", Name = "Редкий", Weight = 28, Color = Color3.fromRGB(80, 160, 255), DupeShards = 120 },
-		{ Id = "Epic", Name = "Эпический", Weight = 12, Color = Color3.fromRGB(190, 90, 255), DupeShards = 400 },
-		{ Id = "Legendary", Name = "Легендарный", Weight = 3.6, Color = Color3.fromRGB(255, 190, 40), DupeShards = 1500 },
-		{ Id = "Mythic", Name = "Мифический", Weight = 0.4, Color = Color3.fromRGB(255, 70, 110), DupeShards = 5000 },
+		{ Id = "Common", Name = "Обычный", Power = 1.0, Weight = 56, Color = Color3.fromRGB(200, 200, 210), DupeShards = 40 },
+		{ Id = "Rare", Name = "Редкий", Power = 1.15, Weight = 28, Color = Color3.fromRGB(80, 160, 255), DupeShards = 120 },
+		{ Id = "Epic", Name = "Эпический", Power = 1.32, Weight = 12, Color = Color3.fromRGB(190, 90, 255), DupeShards = 400 },
+		{ Id = "Legendary", Name = "Легендарный", Power = 1.52, Weight = 3.6, Color = Color3.fromRGB(255, 190, 40), DupeShards = 1500 },
+		{ Id = "Mythic", Name = "Мифический", Power = 1.75, Weight = 0.4, Color = Color3.fromRGB(255, 70, 110), DupeShards = 5000 },
 	},
 
 	LuckAffectsFromIndex = 3, -- luck multiplies weights of Epic and above

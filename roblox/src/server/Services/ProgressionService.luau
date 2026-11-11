@@ -119,9 +119,16 @@ function ProgressionService:GetDamageMultiplier(player: Player?): number
 		+ self.Services.InventoryService:Bonus(player, "Damage")
 end
 
+local function passiveOf(self, player: Player): string?
+	local d = data(self, player)
+	local style = d and Styles.Get(d.EquippedStyle)
+	return style and style.Passive and style.Passive.Id
+end
+
 function ProgressionService:GetCooldownMultiplier(player: Player): number
 	local reduction = math.min(Prog.AgilityCooldownCap, self:GetStat(player, "Agility") * Prog.AgilityCooldown)
-	return 1 - reduction
+	local swift = if passiveOf(self, player) == "Swift" then 0.85 else 1
+	return (1 - reduction) * swift
 end
 
 function ProgressionService:GetAwakeningMultiplier(player: Player): number
@@ -131,6 +138,7 @@ end
 function ProgressionService:GetSpeedBonus(player: Player): number
 	return math.min(Prog.AgilitySpeedCap, self:GetStat(player, "Agility") * Prog.AgilitySpeed)
 		+ self.Services.InventoryService:Bonus(player, "Speed")
+		+ (if passiveOf(self, player) == "Swift" then 4 else 0)
 end
 
 function ProgressionService:AllocateStat(player: Player, statId, amount)

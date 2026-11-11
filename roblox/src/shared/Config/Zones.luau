@@ -13,8 +13,8 @@ Zones.List = {
 		Pvp = true,
 		Color = Color3.fromRGB(255, 80, 150),
 		Boss = { Id = "RiftWarden", Name = "Страж Разлома", Level = 12, Element = "Void", Outfit = "Warden", Scale = 1.9, Respawn = 180, Leash = 45 },
-		SkyMobs = { { Id = "RiftSprite", Name = "Дух Разлома", Level = 4, Count = 5, Element = "Light", Outfit = "Sprite", Scale = 0.8, Leash = 20 } },
-		SkyCenter = Vector3.new(-120, 0, 40),
+		SkyMobs = { { Id = "RiftSprite", Name = "Дух Разлома", Level = 4, Count = 9, Element = "Light", Outfit = "Sprite", Scale = 0.8, Leash = 20 } },
+		SkyCenters = { Vector3.new(-120, 0, 40), Vector3.new(118, 0, -10) },
 	},
 
 	Ember = {
@@ -37,8 +37,8 @@ Zones.List = {
 			{ Id = "CinderImp", Name = "Пепельный бес", Level = 3, Count = 7, Element = "Fire", Outfit = "Imp", Scale = 0.85 },
 			{ Id = "AshBrute", Name = "Пепельный громила", Level = 9, Count = 4, Element = "Fire", Outfit = "Brute", Scale = 1.3 },
 		},
-		SkyMobs = { { Id = "InfernoImp", Name = "Элитный адский бес", Level = 14, Count = 5, Element = "Fire", Outfit = "Imp", Scale = 1, Elite = true, Leash = 20 } },
-		Boss = { Id = "MagmaTyrant", Name = "Магмовый Тиран", Level = 15, Element = "Fire", Outfit = "Tyrant", Scale = 2.2, Respawn = 150 },
+		SkyMobs = { { Id = "InfernoImp", Name = "Элитный адский бес", Level = 14, Count = 9, Element = "Fire", Outfit = "Imp", Scale = 1, Elite = true, Leash = 20 } },
+		Boss = { Id = "MagmaTyrant", Name = "Магмовый Тиран", Level = 15, Element = "Fire", Outfit = "Tyrant", Scale = 2.2, Respawn = 180 },
 	},
 
 	Tidal = {
@@ -61,7 +61,7 @@ Zones.List = {
 			{ Id = "ReefStalker", Name = "Рифовый охотник", Level = 18, Count = 7, Element = "Water", Outfit = "Stalker", Scale = 1 },
 			{ Id = "TideSentinel", Name = "Страж прилива", Level = 26, Count = 4, Element = "Water", Outfit = "Sentinel", Scale = 1.35 },
 		},
-		SkyMobs = { { Id = "EliteSentinel", Name = "Элитный страж прилива", Level = 32, Count = 5, Element = "Water", Outfit = "Sentinel", Scale = 1.2, Elite = true, Leash = 20 } },
+		SkyMobs = { { Id = "EliteSentinel", Name = "Элитный страж прилива", Level = 32, Count = 9, Element = "Water", Outfit = "Sentinel", Scale = 1.2, Elite = true, Leash = 20 } },
 		Boss = { Id = "LeviathanKnight", Name = "Рыцарь Левиафана", Level = 35, Element = "Water", Outfit = "Leviathan", Scale = 2.3, Respawn = 180 },
 	},
 
@@ -85,8 +85,8 @@ Zones.List = {
 			{ Id = "StormAcolyte", Name = "Послушник бури", Level = 45, Count = 7, Element = "Lightning", Outfit = "Acolyte", Scale = 1 },
 			{ Id = "GaleRonin", Name = "Ронин урагана", Level = 58, Count = 4, Element = "Wind", Outfit = "Ronin", Scale = 1.15 },
 		},
-		SkyMobs = { { Id = "EliteRonin", Name = "Элитный ронин урагана", Level = 66, Count = 5, Element = "Wind", Outfit = "Ronin", Scale = 1.15, Elite = true, Leash = 20 } },
-		Boss = { Id = "ThunderShogun", Name = "Громовой Сёгун", Level = 72, Element = "Lightning", Outfit = "Shogun", Scale = 2.3, Respawn = 210 },
+		SkyMobs = { { Id = "EliteRonin", Name = "Элитный ронин урагана", Level = 66, Count = 9, Element = "Wind", Outfit = "Ronin", Scale = 1.15, Elite = true, Leash = 20 } },
+		Boss = { Id = "ThunderShogun", Name = "Громовой Сёгун", Level = 72, Element = "Lightning", Outfit = "Shogun", Scale = 2.3, Respawn = 180 },
 	},
 
 	Void = {
@@ -109,15 +109,17 @@ Zones.List = {
 			{ Id = "HollowWraith", Name = "Призрак пустоты", Level = 85, Count = 7, Element = "Void", Outfit = "Wraith", Scale = 1.05 },
 			{ Id = "RiftHorror", Name = "Ужас Разлома", Level = 100, Count = 4, Element = "Void", Outfit = "Horror", Scale = 1.45 },
 		},
-		SkyMobs = { { Id = "EliteHorror", Name = "Элитный ужас Разлома", Level = 115, Count = 5, Element = "Void", Outfit = "Horror", Scale = 1.4, Elite = true, Leash = 20 } },
-		Boss = { Id = "RiftSovereign", Name = "Владыка Разлома", Level = 130, Element = "Light", Outfit = "Sovereign", Scale = 2.5, Respawn = 240 },
+		SkyMobs = { { Id = "EliteHorror", Name = "Элитный ужас Разлома", Level = 115, Count = 9, Element = "Void", Outfit = "Horror", Scale = 1.4, Elite = true, Leash = 20 } },
+		Boss = { Id = "RiftSovereign", Name = "Владыка Разлома", Level = 130, Element = "Light", Outfit = "Sovereign", Scale = 2.5, Respawn = 180 },
 	},
 }
 
 -- Mob stat formulas (bosses multiply these).
 Zones.Mob = {
-	HealthBase = 80,
-	HealthPerLevel = 22,
+	-- Tuned so a regular mob dies in ~4-6 s and a boss in ~1 min solo for a
+	-- player at the zone's level (player damage grows ~6% per level via STR).
+	HealthBase = 50,
+	HealthPerLevel = 9,
 	DamageBase = 5,
 	DamagePerLevel = 0.6,
 	ShardsBase = 5,
@@ -130,7 +132,7 @@ Zones.Mob = {
 	AttackRange = 6,
 	AttackCooldown = 1.3,
 	AbilityCooldown = 7,
-	BossHealthMult = 18,
+	BossHealthMult = 12,
 	BossDamageMult = 2.2,
 	BossRewardMult = 25,
 	BossContributionShare = 0.05,
@@ -141,6 +143,15 @@ Zones.Mob = {
 	PopulationPerPlayer = 0.25,
 	PopulationMax = 2,
 	BossHealthPerPlayer = 0.35, -- +35% boss HP per extra player in the zone
+	BossRespawn = 180, -- every boss returns 3 minutes after it dies
+	-- Rewards fall off when you out-level a mob (no farming newbie mobs):
+	-- -15% per level beyond 5 levels above the mob, down to 10%.
+	LevelGapFree = 5,
+	LevelGapPenalty = 0.15,
+	LevelGapMin = 0.1,
+	-- Fighting mobs above your level pays a bit more (+3% per level, max +30%).
+	LevelGapBonus = 0.03,
+	LevelGapBonusMax = 0.3,
 	EliteHealthMult = 2,
 	EliteRewardMult = 2.5,
 }
@@ -148,18 +159,19 @@ Zones.Mob = {
 -- Floating platforms reachable with double (Lv 10) / triple (Lv 15) jumps.
 -- Heights are relative to the ground; elites live on the top isle.
 Zones.Sky = {
-	Tier1Height = 11, -- needs a double jump from the ground
-	Tier2Height = 21, -- double jump from tier 1
-	TopHeight = 37, -- triple jump from tier 2
+	Tier1Height = 16, -- needs a double jump from the ground
+	Tier2Height = 31, -- double jump from tier 1
+	TopHeight = 56, -- triple jump from tier 2
 	TopRadius = 26,
-	IslandOffset = Vector3.new(200, 0, 60), -- sky area position inside PvE islands
+	-- Several sky areas per island (relative to the island centre).
+	IslandOffsets = { Vector3.new(200, 0, 60), Vector3.new(-210, 0, -20), Vector3.new(30, 0, -140) },
 }
 
 Zones.Jumps = {
 	{ Level = 10, Extra = 1 }, -- double jump
 	{ Level = 15, Extra = 2 }, -- triple jump
 }
-Zones.AirJumpHeight = 7.5
+Zones.AirJumpHeight = 11
 
 -- Hub safety (matches the generated arena layout in MapService).
 Zones.HubSafe = {
@@ -224,6 +236,18 @@ function Zones.AreaAt(zoneId: string, pos: Vector3): string
 		return "Pvp"
 	end
 	return "Pve"
+end
+
+-- Reward multiplier for a player of `playerLevel` beating a mob of `mobLevel`.
+function Zones.RewardFactor(playerLevel: number, mobLevel: number): number
+	local m = Zones.Mob
+	local gap = playerLevel - mobLevel
+	if gap > m.LevelGapFree then
+		return math.max(m.LevelGapMin, 1 - (gap - m.LevelGapFree) * m.LevelGapPenalty)
+	elseif gap < 0 then
+		return 1 + math.min(m.LevelGapBonusMax, -gap * m.LevelGapBonus)
+	end
+	return 1
 end
 
 function Zones.Get(id: string)

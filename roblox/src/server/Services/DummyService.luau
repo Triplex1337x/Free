@@ -5,11 +5,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GameConfig = require(Shared.Config.Game)
 local Prog = require(Shared.Config.Progression)
+local Zones = require(Shared.Config.Zones)
 local NpcFactory = require(script.Parent.Parent.Lib.NpcFactory)
 
 local DummyService = {}
 
-local DUMMY_HEALTH = 160
+local DUMMY_HEALTH = 120
 local DUMMY_RESPAWN = 5
 
 function DummyService:Init(services)
@@ -61,9 +62,11 @@ function DummyService:SpawnDummy(cf: CFrame)
 	humanoid.Died:Connect(function()
 		local killer = Combat:GetKiller(model)
 		if killer then
-			Progression:AddShards(killer, Rewards.DummyKillShards, true)
-			Progression:AddXp(killer, Rewards.DummyKillXp)
-			Progression:AddMasteryXp(killer, Prog.Mastery.XpPerKill * 0.5)
+			-- Dummies are for newcomers: rewards fade out as you level up.
+			local factor = Zones.RewardFactor(Progression:GetLevel(killer), 1)
+			Progression:AddShards(killer, math.max(1, math.floor(Rewards.DummyKillShards * factor)), true)
+			Progression:AddXp(killer, math.max(1, math.floor(Rewards.DummyKillXp * factor)))
+			Progression:AddMasteryXp(killer, Prog.Mastery.XpPerKill * 0.5 * factor)
 			self.Services.QuestService:Progress(killer, "Dummy", 1)
 		end
 		task.delay(DUMMY_RESPAWN, function()

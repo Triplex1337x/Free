@@ -135,7 +135,7 @@ function MobService:Spawn(zoneId: string, def, home: CFrame, isBoss: boolean)
 			model:Destroy()
 		end)
 		if isBoss and not def.NoRespawn then
-			task.delay(def.Respawn or 180, function()
+			task.delay(def.Respawn or M.BossRespawn, function()
 				self:Spawn(zoneId, def, home, true)
 			end)
 		end
@@ -155,9 +155,11 @@ function MobService:OnDeath(mob, shards: number, xp: number)
 			local id = Potions.Order[rng:NextInteger(1, #Potions.Order)]
 			self.Services.InventoryService:AddPotion(player, id, 1)
 		end
-		Progression:AddShards(player, shards, true)
-		Progression:AddXp(player, xp)
-		Progression:AddMasteryXp(player, if mob.Boss then Prog.Mastery.XpPerKill * 10 else Prog.Mastery.XpPerKill)
+		-- Out-levelled mobs pay less (no farming starter zones at high level).
+		local factor = Zones.RewardFactor(Progression:GetLevel(player), mob.Def.Level)
+		Progression:AddShards(player, math.max(1, math.floor(shards * factor)), true)
+		Progression:AddXp(player, math.max(1, math.floor(xp * factor)))
+		Progression:AddMasteryXp(player, (if mob.Boss then Prog.Mastery.XpPerKill * 10 else Prog.Mastery.XpPerKill) * factor)
 		if mob.Boss then
 			Remotes.Notify:FireClient(player, ("%s повержен! +%d ◆  +%d опыта"):format(mob.Def.Name, shards, xp), "level")
 		end

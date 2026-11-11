@@ -255,7 +255,7 @@ function RollController:BuildArtsPanel()
 			local rarity = Gacha.GetRarity(style.Rarity)
 			local row = UI.new("Frame", {
 				BackgroundColor3 = Color3.new(1, 1, 1),
-				Size = UDim2.new(1, -10, 0, if owned then 132 else 70),
+				Size = UDim2.new(1, -10, 0, if owned then 156 else 70),
 				LayoutOrder = i,
 				Parent = list,
 			}, {
@@ -277,6 +277,19 @@ function RollController:BuildArtsPanel()
 			if not owned then
 				UI.label({ Text = "Выбей этот стиль в ролле.", TextColor3 = Theme.SubText, Outline = false, TextXAlignment = Enum.TextXAlignment.Left, Size = UDim2.new(1, -140, 0, 22), Position = UDim2.fromOffset(0, 30), MaxTextSize = 15, Parent = row })
 			else
+				if style.Passive then
+					UI.label({
+						Text = ("★ %s: %s   •   СИЛА x%.2f"):format(style.Passive.Name, style.Passive.Description, rarity.Power or 1),
+						TextColor3 = Theme.Gold,
+						Outline = false,
+						TextWrapped = true,
+						TextXAlignment = Enum.TextXAlignment.Left,
+						MaxTextSize = 14,
+						Size = UDim2.new(1, -140, 0, 18),
+						Position = UDim2.fromOffset(0, 116),
+						Parent = row,
+					})
+				end
 				local level, xp = Prog.GetMastery(d, id)
 				local maxed = level >= Prog.Mastery.MaxLevel
 				local _, setBar = UI.bar({ Color = style.Color, Size = UDim2.new(1, -140, 0, 16), Position = UDim2.fromOffset(0, 34), MaxTextSize = 12, Parent = row })

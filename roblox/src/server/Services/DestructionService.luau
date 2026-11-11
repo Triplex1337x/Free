@@ -73,8 +73,9 @@ function DestructionService:Shatter(prop: BasePart, from: Vector3, power: number
 		piece.Parent = workspace
 		local away = (piece.Position - from)
 		away = if away.Magnitude > 0.1 then away.Unit else Vector3.yAxis
-		piece.AssemblyLinearVelocity = away * math.clamp(power, 20, 70) + Vector3.new(0, rng:NextNumber(20, 45), 0)
-		piece.AssemblyAngularVelocity = Vector3.new(rng:NextNumber(-12, 12), rng:NextNumber(-12, 12), rng:NextNumber(-12, 12))
+		piece.AssemblyLinearVelocity = away * math.clamp(power * 0.4, 8, 24) + Vector3.new(0, rng:NextNumber(8, 18), 0)
+		piece.AssemblyAngularVelocity = Vector3.new(rng:NextNumber(-4, 4), rng:NextNumber(-4, 4), rng:NextNumber(-4, 4))
+		piece.CustomPhysicalProperties = PhysicalProperties.new(2, 0.6, 0.1) -- heavy, grippy, little bounce
 		Debris:AddItem(piece, FRAGMENT_LIFETIME)
 	end
 	Remotes.Fx:FireAllClients("Shatter", { Pos = center, Color = cfg.Color })
@@ -142,7 +143,15 @@ function DestructionService:Init(services)
 		local zone = Zones.Get(id)
 		if zone.Origin then
 			scatter(zone.Origin, 30, 40, 340, function(rel)
-				return rel.Z > 290 or (rel.Z < -225 and math.abs(rel.X) < 80) or (rel - Zones.Sky.IslandOffset).Magnitude < 60
+				if rel.Z > 290 or (rel.Z < -225 and math.abs(rel.X) < 80) then
+					return true
+				end
+				for _, offset in Zones.Sky.IslandOffsets do
+					if (rel - offset).Magnitude < 60 then
+						return true
+					end
+				end
+				return false
 			end)
 		end
 	end

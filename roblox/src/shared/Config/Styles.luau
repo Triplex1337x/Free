@@ -6,6 +6,9 @@
 --   AoE        sphere around the caster, optionally pushed forward (Radius, Offset)
 --   Projectile travelling orb, optional explosion (Speed, MaxDistance, Size, Explode)
 --
+-- Passive = the style's signature trait (see CombatService). Rarity also sets
+-- a power multiplier (Config/Gacha: Power) so rarer Arts always hit harder.
+--
 -- Element drives the visual effect set (Fire, Water, Wind, Earth, Lightning,
 -- Void, Light).
 --
@@ -25,6 +28,7 @@ Styles.List = {
 	Ember = {
 		Name = "Пламенный Кулак",
 		Element = "Fire",
+		Passive = { Id = "Burn", Name = "Поджог", Description = "Удары поджигают цель: +25% урона за 2 сек." },
 		Rarity = "Common",
 		Color = Color3.fromRGB(255, 112, 40),
 		Description = "Горячий боец ближнего боя. Быстрые вспышки пламени.",
@@ -39,6 +43,7 @@ Styles.List = {
 	Tide = {
 		Name = "Клинок Прилива",
 		Element = "Water",
+		Passive = { Id = "Lifesteal", Name = "Прилив жизни", Description = "Восстанавливаешь 12% от нанесённого урона." },
 		Rarity = "Common",
 		Color = Color3.fromRGB(60, 170, 255),
 		Description = "Текучее фехтование. Контроль пространства водой.",
@@ -53,6 +58,7 @@ Styles.List = {
 	Gale = {
 		Name = "Шаг Урагана",
 		Element = "Wind",
+		Passive = { Id = "Swift", Name = "Попутный ветер", Description = "+4 к скорости и -15% перезарядки скиллов." },
 		Rarity = "Rare",
 		Color = Color3.fromRGB(140, 255, 190),
 		Description = "Неуловимая скорость. Удар, исчезновение, снова удар.",
@@ -67,6 +73,7 @@ Styles.List = {
 	Bastion = {
 		Name = "Железный Бастион",
 		Element = "Earth",
+		Passive = { Id = "Stoneskin", Name = "Каменная кожа", Description = "-20% получаемого урона, все скиллы с гиперармором." },
 		Rarity = "Rare",
 		Color = Color3.fromRGB(190, 140, 90),
 		Description = "Танк, повелевающий землёй. Медленный, тяжёлый, сокрушающий.",
@@ -81,6 +88,7 @@ Styles.List = {
 	Storm = {
 		Name = "Копьё Бури",
 		Element = "Lightning",
+		Passive = { Id = "Chain", Name = "Цепная молния", Description = "Скиллы бьют ещё 2 врагов рядом на 40% урона." },
 		Rarity = "Epic",
 		Color = Color3.fromRGB(255, 230, 70),
 		Description = "Дуэлянт молний. Дальний бой и мгновенные наказания.",
@@ -95,6 +103,7 @@ Styles.List = {
 	Hollow = {
 		Name = "Длань Пустоты",
 		Element = "Void",
+		Passive = { Id = "Execute", Name = "Казнь", Description = "+40% урона по целям ниже 35% здоровья." },
 		Rarity = "Legendary",
 		Color = Color3.fromRGB(150, 70, 255),
 		Description = "Повелитель пустоты. Притягивает врагов и стирает их.",
@@ -109,6 +118,7 @@ Styles.List = {
 	Dawn = {
 		Name = "Владыка Рассвета",
 		Element = "Light",
+		Passive = { Id = "Radiance", Name = "Сияние", Description = "20% шанс крита x2 и 3% лечения за попадание скиллом." },
 		Rarity = "Mythic",
 		Color = Color3.fromRGB(255, 245, 200),
 		Description = "Повелевает пойманным рассветом. Самый редкий стиль Разлома.",

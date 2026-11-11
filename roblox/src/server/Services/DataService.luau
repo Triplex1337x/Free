@@ -38,7 +38,7 @@ local TEMPLATE = {
 	},
 	Inventory = {},
 	Buffs = {},
-	Settings = { Pvp = false },
+	Settings = { Pvp = false, AutoLock = true },
 	RollsSincePity = 0,
 	TotalRolls = 0,
 	RedeemedCodes = {},

@@ -9,6 +9,7 @@ Game.StarterStyle = "Ember"
 Game.StarterSpins = 5
 Game.RespawnTime = 3
 Game.BaseWalkSpeed = 16
+Game.JumpHeight = 9 -- base jump (Roblox default is 7.2)
 Game.AutosaveInterval = 120
 
 Game.Level = {
@@ -23,8 +24,8 @@ function Game.XpForLevel(level: number): number
 end
 
 Game.M1 = {
-	Damage = 4,
-	FinisherDamage = 9,
+	Damage = 6,
+	FinisherDamage = 13,
 	Range = 7,
 	Width = 5,
 	HitCooldown = 0.32, -- min time between swings
@@ -75,8 +76,18 @@ Game.Stun = {
 
 Game.Awakening = {
 	Max = 100,
-	PerDamageDealt = 0.55,
-	PerDamageTaken = 0.25,
+	PerDamageDealt = 0.3,
+	PerDamageTaken = 0.2,
+	NpcFactor = 0.5, -- hitting bots charges the ultimate at half speed
+}
+
+-- Knockback tuning. Knockback is applied as a short LinearVelocity push
+-- (no spinning ragdoll), scaled down globally and further for NPCs.
+Game.Knockback = {
+	Scale = 0.6,
+	NpcScale = 0.45,
+	Duration = 0.18,
+	MaxSpeed = 70,
 }
 
 Game.Combat = {

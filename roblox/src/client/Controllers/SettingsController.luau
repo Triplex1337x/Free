@@ -17,7 +17,7 @@ local player = Players.LocalPlayer
 local SettingsController = {}
 
 function SettingsController:Init()
-	local panel = Hud:CreatePanel("Настройки", Vector2.new(640, 460))
+	local panel = Hud:CreatePanel("Настройки", Vector2.new(640, 560))
 	local list = UI.new("Frame", { BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 10), Size = UDim2.fromScale(1, 1), Parent = panel.Content }, {
 		UI.new("UIListLayout", { Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder }),
 	})
@@ -61,13 +61,19 @@ function SettingsController:Init()
 	end)
 	player:GetAttributeChangedSignal("Pvp"):Connect(refreshPvp)
 
-	row(2, "📳 ТРЯСКА КАМЕРЫ", "Встряска экрана от ударов и взрывов.", function()
+	row(2, "🎯 АВТОАТАКА", "ЛКМ сам доворачивает и подшагивает к ближайшему мобу. Против игроков не работает никогда.", function()
+		return player:GetAttribute("AutoLock") ~= false
+	end, function(on)
+		pcall(Remotes.SetSetting.InvokeServer, Remotes.SetSetting, "AutoLock", on)
+	end)
+
+	row(3, "📳 ТРЯСКА КАМЕРЫ", "Встряска экрана от ударов и взрывов.", function()
 		return Vfx.ShakeEnabled
 	end, function(on)
 		Vfx.ShakeEnabled = on
 	end)
 
-	row(3, "🔢 ЦИФРЫ УРОНА", "Всплывающие числа урона над целями.", function()
+	row(4, "🔢 ЦИФРЫ УРОНА", "Всплывающие числа урона над целями.", function()
 		return Vfx.DamageNumbers
 	end, function(on)
 		Vfx.DamageNumbers = on

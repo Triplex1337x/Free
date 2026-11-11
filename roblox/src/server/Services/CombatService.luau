@@ -13,6 +13,7 @@ local Styles = require(Shared.Config.Styles)
 local Remotes = require(Shared.Remotes)
 local Prog = require(Shared.Config.Progression)
 local Zones = require(Shared.Config.Zones)
+local Gacha = require(Shared.Gacha)
 
 local M1 = GameConfig.M1
 local Block = GameConfig.Block
@@ -159,7 +160,7 @@ function CombatService:UpdateMovement(model: Model)
 		return
 	end
 	local baseSpeed = model:GetAttribute("BaseSpeed") or GameConfig.BaseWalkSpeed
-	local baseJump = model:GetAttribute("BaseJump") or 7.2
+	local baseJump = model:GetAttribute("BaseJump") or GameConfig.JumpHeight
 	if self:IsStunned(model) then
 		humanoid.WalkSpeed = math.min(baseSpeed, GameConfig.Stun.WalkSpeed)
 		humanoid.JumpHeight = 0
@@ -284,30 +285,42 @@ function CombatService:InCombat(player: Player): boolean
 	return t ~= nil and os.clock() - t < GameConfig.Combat.InCombatDuration
 end
 
+-- Knockback is a short, controlled LinearVelocity push (Roblox's physics
+-- constraint for this), not an impulse that sends bodies spinning.
 function CombatService:ApplyKnockback(model: Model, velocity: Vector3)
 	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart?
 	if not root or model:GetAttribute("NoKnockback") or root.Anchored or self:HasArmor(model) then
 		return
 	end
+	local cfg = GameConfig.Knockback
 	local owner = Players:GetPlayerFromCharacter(model)
+	velocity *= cfg.Scale * (if owner then 1 else cfg.NpcScale)
+	if velocity.Magnitude > cfg.MaxSpeed then
+		velocity = velocity.Unit * cfg.MaxSpeed
+	end
 	if owner then
 		-- The client owns its character's physics, so it applies the push.
-		Remotes.Knockback:FireClient(owner, velocity)
-	else
-		root.AssemblyLinearVelocity = velocity
-		-- Heavy hits send NPCs tumbling (physics ragdoll-lite).
-		local humanoid = model:FindFirstChildOfClass("Humanoid")
-		if humanoid and velocity.Magnitude > 55 then
-			humanoid.PlatformStand = true
-			root.AssemblyAngularVelocity = Vector3.new(math.random(-8, 8), math.random(-4, 4), math.random(-8, 8))
-			task.delay(0.8, function()
-				if humanoid.Parent and humanoid.Health > 0 then
-					humanoid.PlatformStand = false
-					humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-				end
-			end)
-		end
+		Remotes.Knockback:FireClient(owner, velocity, cfg.Duration)
+		return
 	end
+	local old = root:FindFirstChild("KnockbackPush")
+	if old then
+		old:Destroy()
+	end
+	local attachment = root:FindFirstChild("RootAttachment") or root:FindFirstChildOfClass("Attachment")
+	if not attachment then
+		return
+	end
+	local push = Instance.new("LinearVelocity")
+	push.Name = "KnockbackPush"
+	push.Attachment0 = attachment
+	push.MaxForce = 1e6
+	push.VectorVelocity = velocity
+	push.RelativeTo = Enum.ActuatorRelativeTo.World
+	push.Parent = root
+	task.delay(cfg.Duration, function()
+		push:Destroy()
+	end)
 end
 
 ---------------------------------------------------------------------------
@@ -364,6 +377,19 @@ function CombatService:Damage(attackerPlayer: Player?, attacker: Model?, target:
 
 	local damage = amount * self.Services.ProgressionService:GetDamageMultiplier(attackerPlayer)
 	local blocked = false
+	local crit = false
+	local attackerStyle = attackerPlayer and self:GetStyle(attackerPlayer)
+	local passive = attackerStyle and attackerStyle.Passive and attackerStyle.Passive.Id
+	if attackerStyle then
+		-- Rarer Arts always hit harder (Config/Gacha Power).
+		damage *= Gacha.GetRarity(attackerStyle.Rarity).Power or 1
+		if passive == "Execute" and humanoid.Health / humanoid.MaxHealth < 0.35 then
+			damage *= 1.4
+		elseif passive == "Radiance" and not opts.NoPassive and math.random() < 0.2 then
+			damage *= 2
+			crit = true
+		end
+	end
 
 	if target:GetAttribute("Blocking") and not opts.Unblockable then
 		local from = opts.Origin or (attackerRoot and attackerRoot.Position) or targetRoot.Position
@@ -389,6 +415,10 @@ function CombatService:Damage(attackerPlayer: Player?, attacker: Model?, target:
 	local targetPlayer = Players:GetPlayerFromCharacter(target)
 	if targetPlayer then
 		damage *= 1 - self.Services.InventoryService:Bonus(targetPlayer, "Defense")
+		local targetStyle = self:GetStyle(targetPlayer)
+		if targetStyle and targetStyle.Passive and targetStyle.Passive.Id == "Stoneskin" then
+			damage *= 0.8
+		end
 	end
 	damage = math.max(1, math.floor(damage + 0.5))
 	humanoid:TakeDamage(damage)
@@ -403,7 +433,8 @@ function CombatService:Damage(attackerPlayer: Player?, attacker: Model?, target:
 		log[attackerPlayer] = (log[attackerPlayer] or 0) + damage
 		lastCombat[attackerPlayer] = os.clock()
 		local spirit = self.Services.ProgressionService:GetAwakeningMultiplier(attackerPlayer)
-		self:AddAwakening(attackerPlayer, damage * GameConfig.Awakening.PerDamageDealt * spirit)
+		local npcFactor = if targetPlayer then 1 else GameConfig.Awakening.NpcFactor
+		self:AddAwakening(attackerPlayer, damage * GameConfig.Awakening.PerDamageDealt * spirit * npcFactor)
 		pendingXp[attackerPlayer] = (pendingXp[attackerPlayer] or 0) + damage * GameConfig.Rewards.XpPerDamage
 		pendingMastery[attackerPlayer] = (pendingMastery[attackerPlayer] or 0) + damage * Prog.Mastery.XpPerDamage
 	end
@@ -432,8 +463,56 @@ function CombatService:Damage(attackerPlayer: Player?, attacker: Model?, target:
 		end
 	end
 
-	fx("Hit", { Pos = targetRoot.Position, Damage = damage, Blocked = blocked, Color = opts.Color, Target = target, Attacker = attacker })
+	fx("Hit", { Pos = targetRoot.Position, Damage = damage, Blocked = blocked, Crit = crit, Color = opts.Color, Target = target, Attacker = attacker })
+
+	-- Style passives that trigger on hit.
+	if passive and not opts.NoPassive then
+		self:ApplyPassive(attackerPlayer :: Player, attacker, target, humanoid, damage, passive, opts)
+	end
 	return true
+end
+
+function CombatService:ApplyPassive(player: Player, attacker: Model?, target: Model, humanoid: Humanoid, damage: number, passive: string, opts)
+	local attackerHumanoid = attacker and attacker:FindFirstChildOfClass("Humanoid")
+	if passive == "Lifesteal" and attackerHumanoid then
+		attackerHumanoid.Health = math.min(attackerHumanoid.MaxHealth, attackerHumanoid.Health + damage * 0.12)
+	elseif passive == "Radiance" and opts.IsAbility and attackerHumanoid then
+		attackerHumanoid.Health = math.min(attackerHumanoid.MaxHealth, attackerHumanoid.Health + attackerHumanoid.MaxHealth * 0.03)
+	elseif passive == "Burn" then
+		-- 25% extra damage over 2 seconds (4 ticks); refreshes, doesn't stack.
+		local token = (target:GetAttribute("BurnToken") or 0) + 1
+		target:SetAttribute("BurnToken", token)
+		target:SetAttribute("Burning", true)
+		local tick = math.max(1, math.floor(damage * 0.25 / 4 + 0.5))
+		task.spawn(function()
+			for _ = 1, 4 do
+				task.wait(0.5)
+				if target:GetAttribute("BurnToken") ~= token or humanoid.Health <= 0 then
+					return
+				end
+				humanoid:TakeDamage(tick)
+			end
+			if target:GetAttribute("BurnToken") == token then
+				target:SetAttribute("Burning", nil)
+			end
+		end)
+	elseif passive == "Chain" and opts.IsAbility and not opts.NoChain then
+		local root = target:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if not root then
+			return
+		end
+		local count = 0
+		for _, other in self:QueryRadius(root.Position, 14, attacker) do
+			if other ~= target and count < 2 then
+				count += 1
+				local otherRoot = other:FindFirstChild("HumanoidRootPart")
+				if otherRoot then
+					fx("Chain", { From = root.Position, To = otherRoot.Position, Color = opts.Color })
+				end
+				self:Damage(player, attacker, other, damage * 0.4, { Stun = 0.3, NoChain = true, NoPassive = true, Color = opts.Color })
+			end
+		end
+	end
 end
 
 -- Damages whatever `query()` returns, `hits` times.
@@ -456,6 +535,7 @@ function CombatService:MultiHit(player: Player, character: Model, ability, color
 				Unblockable = ability.Unblockable,
 				GuardBreak = ability.GuardBreak and last,
 				Color = color,
+				IsAbility = true,
 			})
 		end
 		if not last then
@@ -469,7 +549,7 @@ end
 ---------------------------------------------------------------------------
 
 -- Nearest valid enemy in front of `origin` (cone given by minDot) within range.
-function CombatService:FindTarget(player: Player?, character: Model, origin: Vector3, aim: Vector3, range: number, minDot: number): (Model?, BasePart?)
+function CombatService:FindTarget(player: Player?, character: Model, origin: Vector3, aim: Vector3, range: number, minDot: number, npcOnly: boolean?): (Model?, BasePart?)
 	local best, bestRoot, bestScore = nil, nil, math.huge
 	local function consider(model: Model)
 		if model == character or not aliveHumanoid(model) then
@@ -500,7 +580,7 @@ function CombatService:FindTarget(player: Player?, character: Model, origin: Vec
 				consider(model)
 			end
 		end
-		if self:CanPvp(player) then
+		if not npcOnly and self:CanPvp(player) then
 			for _, other in Players:GetPlayers() do
 				if other ~= player and other.Character and self:CanPvp(other) then
 					consider(other.Character)
@@ -781,8 +861,13 @@ function CombatService:HandleM1(player: Player, rawAim)
 
 	-- Distance-based soft lock: any enemy within reach in front of you (or
 	-- right next to you) gets hit and you turn to face it.
-	local locked = self:FindTarget(player, character, root.Position, aim, M1.Range + M1.LockBonus, 0.1)
-		or self:FindTarget(player, character, root.Position, aim, 5, -1)
+	-- Auto-attack (setting, on by default) only ever locks onto bots/mobs —
+	-- in fights between players you aim yourself.
+	local locked = nil
+	if player:GetAttribute("AutoLock") ~= false then
+		locked = self:FindTarget(player, character, root.Position, aim, M1.Range + M1.LockBonus, 0.1, true)
+			or self:FindTarget(player, character, root.Position, aim, 5, -1, true)
+	end
 	if locked then
 		local lockRoot = locked:FindFirstChild("HumanoidRootPart") :: BasePart
 		local offset = (lockRoot.Position - root.Position) * Vector3.new(1, 0, 1)
@@ -908,7 +993,7 @@ function CombatService:HandleAbility(player: Player, payload)
 	root.CFrame = CFrame.lookAt(root.Position, root.Position + aim)
 	if key == "G" then
 		self:SetArmor(character, busy + GameConfig.UltimateInvulnerability, true)
-	elseif ability.HyperArmor then
+	elseif ability.HyperArmor or (style.Passive and style.Passive.Id == "Stoneskin") then
 		self:SetArmor(character, busy + 0.2, false)
 	end
 
@@ -1045,6 +1130,7 @@ function CombatService:OnCharacterAdded(player: Player, character: Model)
 	local profile = self.Services.DataService:Get(player)
 	if profile and player:GetAttribute("Pvp") == nil then
 		player:SetAttribute("Pvp", profile.Data.Settings.Pvp == true)
+		player:SetAttribute("AutoLock", profile.Data.Settings.AutoLock ~= false)
 	end
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	humanoid.BreakJointsOnDeath = false
@@ -1103,6 +1189,15 @@ function CombatService:Start()
 
 	Remotes.SetPvp.OnServerInvoke = function(player, on)
 		return self:SetPvp(player, on == true)
+	end
+	Remotes.SetSetting.OnServerInvoke = function(player, name, value)
+		local profile = self.Services.DataService:Get(player)
+		if not profile or name ~= "AutoLock" or type(value) ~= "boolean" then
+			return { Ok = false }
+		end
+		profile.Data.Settings.AutoLock = value
+		player:SetAttribute("AutoLock", value)
+		return { Ok = true }
 	end
 
 	Players.PlayerRemoving:Connect(function(player)

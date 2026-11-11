@@ -127,6 +127,7 @@ function GachaService:Equip(player: Player, styleId)
 	self.Services.DataService:Sync(player)
 	self.Services.ProgressionService:RefreshOverhead(player)
 	self.Services.CombatService:ApplyStyleAttributes(player)
+	self.Services.ProgressionService:ApplyCharacterStats(player)
 	return { Ok = true }
 end
 

@@ -496,7 +496,15 @@ function ZoneService:Init(services)
 				Spawn = CFrame.lookAt(zone.Origin + Vector3.new(0, 1, 330), zone.Origin + Vector3.new(0, 1, 0)),
 				MobSpawns = spawns,
 				BossSpawn = CFrame.new(zone.Origin + Vector3.new(0, 6, -280)),
-				SkySpawns = self:BuildSky(folder, zone.Origin + Zones.Sky.IslandOffset, theme.Accent, theme.Floor, theme.FloorColor),
+				SkySpawns = (function()
+					local all = {}
+					for _, offset in Zones.Sky.IslandOffsets do
+						for _, cf in self:BuildSky(folder, zone.Origin + offset, theme.Accent, theme.Floor, theme.FloorColor) do
+							table.insert(all, cf)
+						end
+					end
+					return all
+				end)(),
 			}
 			-- Return portal behind the plaza.
 			self:CreatePortal(folder, CFrame.lookAt(zone.Origin + Vector3.new(0, 0, 360), zone.Origin), "Hub")
@@ -523,7 +531,13 @@ function ZoneService:Init(services)
 		local skyFolder = Instance.new("Folder")
 		skyFolder.Name = "HubSky"
 		skyFolder.Parent = hubFolder
-		zoneData.Hub = { SkySpawns = self:BuildSky(skyFolder, hub.SkyCenter, Color3.fromRGB(90, 200, 255), Enum.Material.Marble, Color3.fromRGB(70, 66, 92)) }
+		local all = {}
+		for _, center in hub.SkyCenters do
+			for _, cf in self:BuildSky(skyFolder, center, Color3.fromRGB(90, 200, 255), Enum.Material.Marble, Color3.fromRGB(70, 66, 92)) do
+				table.insert(all, cf)
+			end
+		end
+		zoneData.Hub = { SkySpawns = all }
 	end
 
 	-- Combat queries ignore all zone geometry (like the hub map).

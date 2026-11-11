@@ -360,8 +360,8 @@ local function damageNumber(d, color: Color3)
 	gui.MaxDistance = 120
 	gui.Adornee = anchor
 	gui.Parent = anchor
-	local big = (d.Damage or 0) >= 20
-	local text = if d.Immune then "НЕУЯЗВИМ" elseif d.Parried then "ПАРИРОВАНИЕ!" elseif d.Blocked then ("БЛОК %d"):format(d.Damage or 0) else tostring(d.Damage or "")
+	local big = (d.Damage or 0) >= 20 or d.Crit == true
+	local text = if d.Crit then ("КРИТ %d!"):format(d.Damage or 0) elseif d.Immune then "НЕУЯЗВИМ" elseif d.Parried then "ПАРИРОВАНИЕ!" elseif d.Blocked then ("БЛОК %d"):format(d.Damage or 0) else tostring(d.Damage or "")
 	local label = UI.label({
 		Text = text,
 		Font = Theme.FontHeavy,
@@ -656,6 +656,11 @@ function Handlers.Counter(d)
 	Hud:Toast(if isLocal(d.Character) then "КОНТРАТАКА!" else "ТЕБЯ КОНТРАТАКОВАЛИ!", if isLocal(d.Character) then "success" else "error")
 end
 
+function Handlers.Chain(d)
+	Vfx.Lightning(d.From, d.To, d.Color or Theme.Gold, 0.35, 1.5, 0.3)
+	Vfx.Emit(d.To, "Sparks", 8, d.Color or Theme.Gold)
+end
+
 function Handlers.Shatter(d)
 	Vfx.Emit(d.Pos, "Smoke", 10, Color3.fromRGB(160, 140, 120))
 	Vfx.Ring(CFrame.new(d.Pos - Vector3.new(0, 1.5, 0)), 1, 8, d.Color, 0.35, 0.4, 20)
@@ -782,6 +787,20 @@ local function watchModel(model: Model)
 		end
 	end)
 
+	-- Burning (Ember passive): flames on the torso while it lasts.
+	model:GetAttributeChangedSignal("Burning"):Connect(function()
+		local torso = model:FindFirstChild("UpperTorso") or model:FindFirstChild("Torso")
+		local existing = torso and torso:FindFirstChild("RiftBurn")
+		if model:GetAttribute("Burning") and torso and not existing then
+			local attachment = Instance.new("Attachment")
+			attachment.Name = "RiftBurn"
+			attachment.Parent = torso
+			Vfx.Attach(attachment, "Flame", 18, Color3.fromRGB(255, 120, 40))
+		elseif not model:GetAttribute("Burning") and existing then
+			existing:Destroy()
+		end
+	end)
+
 	-- Hyper armor = golden outline; invulnerable (ultimate) = golden glow.
 	local function armorVisual()
 		local glow = model:FindFirstChild("RiftArmorGlow")
@@ -866,26 +885,34 @@ function FxController:Start()
 		end
 	end)
 
-	Remotes.Knockback.OnClientEvent:Connect(function(velocity: Vector3)
+	-- Short controlled push (LinearVelocity) — no spinning ragdoll.
+	Remotes.Knockback.OnClientEvent:Connect(function(velocity: Vector3, duration: number?)
 		local character = player.Character
 		local root = rootOf(character)
-		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-		if root and humanoid and typeof(velocity) == "Vector3" then
+		if not root or typeof(velocity) ~= "Vector3" then
+			return
+		end
+		local old = root:FindFirstChild("KnockbackPush")
+		if old then
+			old:Destroy()
+		end
+		local attachment = root:FindFirstChild("RootAttachment") or root:FindFirstChildOfClass("Attachment")
+		if not attachment then
 			root.AssemblyLinearVelocity = velocity
-			if velocity.Magnitude > 55 then
-				-- Heavy hit: tumble through the air, then get back up.
-				humanoid.PlatformStand = true
-				root.AssemblyAngularVelocity = Vector3.new(math.random(-8, 8), math.random(-3, 3), math.random(-8, 8))
-				Vfx.SpeedLines(0.3)
-				task.delay(0.75, function()
-					if humanoid.Parent and humanoid.Health > 0 then
-						humanoid.PlatformStand = false
-						humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-					end
-				end)
-			else
-				humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
-			end
+			return
+		end
+		local push = Instance.new("LinearVelocity")
+		push.Name = "KnockbackPush"
+		push.Attachment0 = attachment
+		push.MaxForce = 1e6
+		push.VectorVelocity = velocity
+		push.RelativeTo = Enum.ActuatorRelativeTo.World
+		push.Parent = root
+		task.delay(duration or 0.18, function()
+			push:Destroy()
+		end)
+		if velocity.Magnitude > 40 then
+			Vfx.SpeedLines(0.25)
 		end
 	end)
 
