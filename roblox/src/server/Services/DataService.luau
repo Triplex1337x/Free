@@ -30,7 +30,14 @@ local TEMPLATE = {
 	Stats = { Strength = 0, Vitality = 0, Agility = 0, Spirit = 0 },
 	StatPoints = 0,
 	Mastery = {},
-	Quests = { Day = 0, List = {}, Bonus = false },
+	Quests = {
+		Daily = { Period = 0, List = {}, Bonus = false },
+		Weekly = { Period = 0, List = {}, Bonus = false },
+		Monthly = { Period = 0, List = {}, Bonus = false },
+		Chain = { Step = 1, Progress = 0 },
+	},
+	Inventory = {},
+	Buffs = {},
 	RollsSincePity = 0,
 	TotalRolls = 0,
 	RedeemedCodes = {},
@@ -211,6 +218,16 @@ function DataService:BuildSnapshot(player: Player)
 		StatPoints = d.StatPoints,
 		Mastery = d.Mastery,
 		Quests = d.Quests,
+		Inventory = d.Inventory,
+		BuffsLeft = (function()
+			local now, left = os.time(), {}
+			for id, expires in d.Buffs do
+				if expires > now then
+					left[id] = expires - now
+				end
+			end
+			return left
+		end)(),
 	}
 end
 

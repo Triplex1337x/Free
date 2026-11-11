@@ -15,6 +15,7 @@ local Zones = require(Shared.Config.Zones)
 local Styles = require(Shared.Config.Styles)
 local Prog = require(Shared.Config.Progression)
 local Remotes = require(Shared.Remotes)
+local Potions = require(Shared.Config.Potions)
 local NpcFactory = require(script.Parent.Parent.Lib.NpcFactory)
 
 local MobService = {}
@@ -144,7 +145,11 @@ function MobService:OnDeath(mob, shards: number, xp: number)
 	local winners = Combat:GetContributors(mob.Model, if mob.Boss then M.BossContributionShare else M.LootShare)
 	local Quests = self.Services.QuestService
 	for _, player in winners do
-		Quests:Progress(player, if mob.Boss then "BossKill" else "MobKill", 1)
+		Quests:Progress(player, if mob.Boss then "BossKill" else "MobKill", 1, mob.Zone)
+		if rng:NextNumber() < (if mob.Boss then Potions.BossDropChance else Potions.MobDropChance) then
+			local id = Potions.Order[rng:NextInteger(1, #Potions.Order)]
+			self.Services.InventoryService:AddPotion(player, id, 1)
+		end
 		Progression:AddShards(player, shards, true)
 		Progression:AddXp(player, xp)
 		Progression:AddMasteryXp(player, if mob.Boss then Prog.Mastery.XpPerKill * 10 else Prog.Mastery.XpPerKill)

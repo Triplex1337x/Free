@@ -56,6 +56,7 @@ function DummyService:SpawnDummy(cf: CFrame)
 			Progression:AddShards(killer, Rewards.DummyKillShards, true)
 			Progression:AddXp(killer, Rewards.DummyKillXp)
 			Progression:AddMasteryXp(killer, Prog.Mastery.XpPerKill * 0.5)
+			self.Services.QuestService:Progress(killer, "Dummy", 1)
 		end
 		task.delay(DUMMY_RESPAWN, function()
 			Combat:CleanupModel(model)

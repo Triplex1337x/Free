@@ -93,6 +93,7 @@ function MonetizationService:GetLuck(player: Player): number
 	if self:IsServerLuckActive() then
 		luck *= Config.ServerLuckMultiplier
 	end
+	luck *= self.Services.InventoryService:Mult(player, "Luck")
 	return luck
 end
 

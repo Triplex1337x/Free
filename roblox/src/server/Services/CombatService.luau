@@ -304,10 +304,12 @@ function CombatService:Damage(attackerPlayer: Player?, attacker: Model?, target:
 		end
 	end
 
+	local targetPlayer = Players:GetPlayerFromCharacter(target)
+	if targetPlayer then
+		damage *= 1 - self.Services.InventoryService:Bonus(targetPlayer, "Defense")
+	end
 	damage = math.max(1, math.floor(damage + 0.5))
 	humanoid:TakeDamage(damage)
-
-	local targetPlayer = Players:GetPlayerFromCharacter(target)
 	if attackerPlayer then
 		target:SetAttribute("LastAttackerId", attackerPlayer.UserId)
 		target:SetAttribute("LastAttackTime", os.clock())

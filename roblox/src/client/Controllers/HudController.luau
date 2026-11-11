@@ -155,16 +155,15 @@ function Hud:CloseAll()
 	end
 end
 
-local MENU_ICONS = { Roll = "✦", Arts = "⚔", Stats = "▲", Map = "◈", Quests = "!", Shop = "$", Codes = "#" }
+local MENU_ICONS = { Roll = "✦", Arts = "⚔", Stats = "▲", Map = "◈", Quests = "!", Items = "♥", Shop = "$", Codes = "#" }
 
 function Hud:AddMenuButton(text: string, color: Color3, order: number, onClick: () -> ())
 	local button = UI.button({
 		Text = (MENU_ICONS[text] or "•") .. " " .. string.upper(text),
 		Color = color,
-		Size = UDim2.new(1, 0, 0, if isTouch then 40 else 46),
 		LayoutOrder = order,
 		Rotation = -3,
-		MaxTextSize = 22,
+		MaxTextSize = 17,
 		Parent = self.Menu,
 		OnClick = onClick,
 	})
@@ -709,13 +708,14 @@ function Hud:Init()
 		self:CloseAll()
 	end)
 
+	-- Compact 2-column menu under the player card (leaves the bottom-left
+	-- corner free for active potion buffs).
 	self.Menu = UI.new("Frame", {
 		BackgroundTransparency = 1,
-		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 14, 0.56, 0),
-		Size = UDim2.fromOffset(if isTouch then 120 else 150, 400),
+		Position = UDim2.fromOffset(16, 226),
+		Size = UDim2.fromOffset(240, 4 * 50),
 		Parent = self.Gui,
-	}, { UI.new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
+	}, { UI.new("UIGridLayout", { CellSize = UDim2.fromOffset(114, 42), CellPadding = UDim2.fromOffset(8, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
 
 	self.Toasts = UI.new("Frame", {
 		BackgroundTransparency = 1,

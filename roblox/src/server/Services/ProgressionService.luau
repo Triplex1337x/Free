@@ -116,6 +116,7 @@ function ProgressionService:GetDamageMultiplier(player: Player?): number
 		+ (d.Level - 1) * GameConfig.Level.DamagePerLevel
 		+ (d.Stats.Strength or 0) * Prog.StrengthDamage
 		+ (self:GetMasteryLevel(player) - 1) * Prog.Mastery.DamagePerLevel
+		+ self.Services.InventoryService:Bonus(player, "Damage")
 end
 
 function ProgressionService:GetCooldownMultiplier(player: Player): number
@@ -124,11 +125,12 @@ function ProgressionService:GetCooldownMultiplier(player: Player): number
 end
 
 function ProgressionService:GetAwakeningMultiplier(player: Player): number
-	return 1 + self:GetStat(player, "Spirit") * Prog.SpiritAwakening
+	return 1 + self:GetStat(player, "Spirit") * Prog.SpiritAwakening + self.Services.InventoryService:Bonus(player, "Awakening")
 end
 
 function ProgressionService:GetSpeedBonus(player: Player): number
 	return math.min(Prog.AgilitySpeedCap, self:GetStat(player, "Agility") * Prog.AgilitySpeed)
+		+ self.Services.InventoryService:Bonus(player, "Speed")
 end
 
 function ProgressionService:AllocateStat(player: Player, statId, amount)
@@ -181,6 +183,7 @@ function ProgressionService:AddMasteryXp(player: Player, amount: number)
 	if entry.Level >= Prog.Mastery.MaxLevel then
 		return
 	end
+	amount *= self.Services.InventoryService:Mult(player, "Mastery")
 	entry.Xp += math.floor(amount + 0.5)
 	self.Services.QuestService:Progress(player, "Mastery", amount)
 	local style = Styles.Get(styleId)
@@ -193,6 +196,7 @@ function ProgressionService:AddMasteryXp(player: Player, amount: number)
 				unlocked = Styles.GetAbility(styleId, key)
 			end
 		end
+		self.Services.QuestService:Progress(player, "MasteryLevel", entry.Level)
 		if unlocked then
 			Remotes.Notify:FireClient(player, ("%s Mastery %d — NEW SKILL: %s!"):format(style.Name, entry.Level, unlocked.Name), "level")
 		else
@@ -228,6 +232,7 @@ function ProgressionService:AddXp(player: Player, amount: number)
 	if self.Services.MonetizationService:HasPass(player, "DoubleXP") then
 		amount *= 2
 	end
+	amount *= self.Services.InventoryService:Mult(player, "Xp")
 	d.Xp += math.floor(amount + 0.5)
 
 	local leveled = false
@@ -246,6 +251,7 @@ function ProgressionService:AddXp(player: Player, amount: number)
 		self:RefreshOverhead(player)
 		Remotes.Notify:FireClient(player, ("LEVEL UP! Lv. %d  •  +%d stat points"):format(d.Level, Prog.PointsPerLevel), "level")
 		Remotes.Fx:FireAllClients("LevelUp", { Character = player.Character })
+		self.Services.QuestService:Progress(player, "Level", d.Level)
 	end
 	self.Services.DataService:Sync(player)
 end
@@ -258,6 +264,9 @@ function ProgressionService:AddShards(player: Player, amount: number, earned: bo
 	end
 	if earned and self.Services.MonetizationService:HasPass(player, "VIP") then
 		amount *= MonetizationConfig.VipShardMultiplier
+	end
+	if earned then
+		amount *= self.Services.InventoryService:Mult(player, "Shards")
 	end
 	d.Shards += math.floor(amount)
 	self.Services.DataService:Sync(player)

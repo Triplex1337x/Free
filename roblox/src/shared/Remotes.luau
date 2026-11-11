@@ -21,6 +21,8 @@ local FUNCTIONS = {
 	"AllocateStat",
 	"ResetStats",
 	"Travel",
+	"UsePotion",
+	"BuyPotion",
 }
 
 local Remotes = {}

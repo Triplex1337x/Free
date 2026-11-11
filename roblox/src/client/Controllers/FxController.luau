@@ -613,6 +613,19 @@ function Handlers.LevelUp(d)
 	Vfx.Ring(CFrame.new(root.Position - Vector3.new(0, 2.6, 0)), 1, 10, Theme.Gold, 0.6, 0.5, 28)
 end
 
+function Handlers.Potion(d)
+	local root = rootOf(d.Character)
+	if not root then
+		return
+	end
+	Vfx.Emit(root.Position, "Glitter", 24, d.Color)
+	Vfx.Ring(CFrame.new(root.Position - Vector3.new(0, 2.6, 0)), 1, 7, d.Color, 0.5, 0.4, 24)
+	Vfx.Ball(root.Position, 2, 8, d.Color, 0.4, 0.5)
+	if isLocal(d.Character) then
+		Vfx.Flash(d.Color, 0.2, 0.4)
+	end
+end
+
 function Handlers.Teleport(d)
 	local root = rootOf(d.Character)
 	if not root then
