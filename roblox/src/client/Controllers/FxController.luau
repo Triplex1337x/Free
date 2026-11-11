@@ -416,6 +416,9 @@ function Handlers.Hit(d)
 		Vfx.Emit(d.Pos, "Glitter", 14, Theme.Accent2)
 	end
 	damageNumber(d, color)
+	if isLocal(d.Attacker) and not d.Parried and (d.Damage or 0) > 0 then
+		Hud:AddHit(d.Damage)
+	end
 
 	local shake = if big then 0.45 else 0.15
 	if isLocal(d.Attacker) or isLocal(d.Target) then
@@ -610,6 +613,20 @@ function Handlers.LevelUp(d)
 	Vfx.Ring(CFrame.new(root.Position - Vector3.new(0, 2.6, 0)), 1, 10, Theme.Gold, 0.6, 0.5, 28)
 end
 
+function Handlers.Teleport(d)
+	local root = rootOf(d.Character)
+	if not root then
+		return
+	end
+	Vfx.Pillar(root.Position - Vector3.new(0, 3, 0), d.Color, 4, 60, 0.8)
+	Vfx.Ring(CFrame.new(root.Position - Vector3.new(0, 2.6, 0)), 1, 12, d.Color, 0.5, 0.6, 28)
+	Vfx.Emit(root.Position, "Glitter", 30, d.Color)
+	if isLocal(d.Character) then
+		Vfx.Flash(d.Color, 0.5, 0.6)
+		Vfx.SpeedLines(0.5, d.Color)
+	end
+end
+
 function Handlers.KillFeed(d)
 	Hud:KillFeed(d.Killer, d.Victim)
 end
@@ -730,6 +747,17 @@ function FxController:Start()
 			watchModel(model)
 		end
 		npcs.ChildAdded:Connect(watchModel)
+		local function walker(model)
+			task.defer(function()
+				if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") then
+					Animator.EnableLocomotion(model)
+				end
+			end)
+		end
+		for _, model in npcs:GetChildren() do
+			walker(model)
+		end
+		npcs.ChildAdded:Connect(walker)
 	end
 
 	local projectiles = workspace:WaitForChild("Projectiles", 10)

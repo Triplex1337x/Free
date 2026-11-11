@@ -186,8 +186,8 @@ end
 function ShopController:Init()
 	local shop = self:BuildShop()
 	local codes = self:BuildCodes()
-	Hud:AddMenuButton("Shop", Theme.Gold, 3, shop.Toggle)
-	Hud:AddMenuButton("Codes", Theme.Good, 4, codes.Toggle)
+	Hud:AddMenuButton("Shop", Color3.fromRGB(255, 150, 40), 5, shop.Toggle)
+	Hud:AddMenuButton("Codes", Theme.Good, 6, codes.Toggle)
 end
 
 return ShopController

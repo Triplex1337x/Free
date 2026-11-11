@@ -7,6 +7,10 @@
 --
 -- Layers: tracks on the same layer replace each other. Layers are applied in
 -- LAYER_ORDER, so "Action" (attacks) overrides "State" (block / stun).
+--
+-- Clips are authored for R15. R6 rigs get an automatic conversion (no
+-- elbows/knees there, the rest maps onto the R6 joints). NPCs, which have no
+-- default Animate script, get a procedural walk / idle cycle underneath.
 
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -43,6 +47,37 @@ local function toCFrame(entry): CFrame
 		* CFrame.Angles(math.rad(entry[1] or 0), math.rad(entry[2] or 0), math.rad(entry[3] or 0))
 end
 
+local function cf6(rx, ry, rz, px, py, pz): CFrame
+	return CFrame.new(px or 0, py or 0, pz or 0) * CFrame.Angles(math.rad(rx), math.rad(ry), math.rad(rz))
+end
+
+-- R15 pose -> R6 joint CFrames. R6 joints use rotated C0 frames, so axes are
+-- remapped per joint; waist rotation is folded into the root.
+local function toR6(pose)
+	local out = {}
+	local function g(name)
+		local e = pose[name]
+		return (e and e[1] or 0), (e and e[2] or 0), (e and e[3] or 0)
+	end
+	local x, y, z = g("RightShoulder")
+	out["Right Shoulder"] = cf6(-z, y, x)
+	x, y, z = g("LeftShoulder")
+	out["Left Shoulder"] = cf6(z, y, -x)
+	x, y, z = g("RightHip")
+	out["Right Hip"] = cf6(-z, y, x)
+	x, y, z = g("LeftHip")
+	out["Left Hip"] = cf6(z, y, -x)
+	x, y, z = g("Neck")
+	out["Neck"] = cf6(-x, z, y)
+	local rx, ry, rz = g("Root")
+	local wx, wy, wz = g("Waist")
+	local root = pose.Root
+	out["RootJoint"] = cf6(-(rx + wx), rz + wz, ry + wy, -(root and root[4] or 0), (root and root[6] or 0), (root and root[5] or 0))
+	return out
+end
+
+local R6_JOINTS = { "Right Shoulder", "Left Shoulder", "Right Hip", "Left Hip", "Neck", "RootJoint" }
+
 -- Turns an authored clip into per-joint CFrames once, then caches it.
 local function prepare(clip)
 	if clip.Prepared then
@@ -54,21 +89,25 @@ local function prepare(clip)
 			joints[joint] = true
 		end
 	end
-	local frames = {}
+	local frames, framesR6 = {}, {}
 	for i, key in clip.Keyframes do
 		local cfs = {}
 		for joint in joints do
 			cfs[joint] = toCFrame(key.Pose[joint])
 		end
-		frames[i] = {
-			Time = key.Time,
-			CFrames = cfs,
-			Style = EASING[key.Ease or "Quad"] or Enum.EasingStyle.Quad,
-			Direction = if key.In then Enum.EasingDirection.In else Enum.EasingDirection.Out,
-		}
+		local style = EASING[key.Ease or "Quad"] or Enum.EasingStyle.Quad
+		local direction = if key.In then Enum.EasingDirection.In else Enum.EasingDirection.Out
+		frames[i] = { Time = key.Time, CFrames = cfs, Style = style, Direction = direction }
+		framesR6[i] = { Time = key.Time, CFrames = toR6(key.Pose), Style = style, Direction = direction }
+	end
+	local jointsR6 = {}
+	for _, name in R6_JOINTS do
+		jointsR6[name] = true
 	end
 	clip.Joints = joints
 	clip.Frames = frames
+	clip.JointsR6 = jointsR6
+	clip.FramesR6 = framesR6
 	clip.Duration = clip.Duration or frames[#frames].Time
 	clip.FadeIn = clip.FadeIn or 0.05
 	clip.FadeOut = clip.FadeOut or 0.12
@@ -87,16 +126,20 @@ local function getRig(character: Model)
 			motors[d.Name] = d
 		end
 	end
-	if not motors.Waist then
-		return nil -- not an R15 rig
+	local rigType
+	if motors.Waist then
+		rigType = "R15"
+	elseif motors.RootJoint and motors["Right Shoulder"] then
+		rigType = "R6"
+	else
+		return nil
 	end
-	rig = { Motors = motors, Layers = {} }
+	rig = { Motors = motors, Layers = {}, Type = rigType, Phase = 0 }
 	rigs[character] = rig
 	return rig
 end
 
-local function sample(clip, t: number, joint: string): CFrame
-	local frames = clip.Frames
+local function sample(frames, t: number, joint: string): CFrame
 	if t <= frames[1].Time then
 		return frames[1].CFrames[joint]
 	end
@@ -174,12 +217,59 @@ function Animator.IsPlaying(character: Model?, layer: string, clip: any?): boole
 	return track ~= nil and not track.StopAt and (clip == nil or track.Clip == clip)
 end
 
+-- Procedural walk / run / idle for rigs without an Animate script (NPCs).
+function Animator.EnableLocomotion(character: Model)
+	local rig = getRig(character)
+	if rig and rig.Type == "R15" then
+		rig.Locomotion = character:FindFirstChild("HumanoidRootPart")
+	end
+end
+
+local function locomotion(rig, dt: number)
+	local root = rig.Locomotion :: BasePart?
+	if not root or not root.Parent then
+		return
+	end
+	local m = rig.Motors
+	local v = root.AssemblyLinearVelocity
+	local speed = Vector3.new(v.X, 0, v.Z).Magnitude
+	local moving = math.clamp(speed / 14, 0, 1.3)
+	rig.Phase += dt * (4 + speed * 0.45)
+	local s = math.sin(rig.Phase)
+	local c = math.cos(rig.Phase)
+	local breath = math.sin(os.clock() * 2) * (1 - math.min(moving, 1))
+	local swing = 38 * moving
+	local function set(name, cf)
+		local motor = m[name]
+		if motor then
+			motor.Transform = cf
+		end
+	end
+	set("Root", cf6(0, 0, 0, 0, math.abs(c) * 0.25 * moving + breath * 0.04, 0))
+	set("Waist", cf6(-8 * moving + breath * 2, s * 8 * moving, 0))
+	set("Neck", cf6(4 * moving, -s * 6 * moving, 0))
+	set("RightHip", cf6(-s * swing, 0, 0))
+	set("LeftHip", cf6(s * swing, 0, 0))
+	set("RightKnee", cf6(-math.max(0, c) * 50 * moving, 0, 0))
+	set("LeftKnee", cf6(-math.max(0, -c) * 50 * moving, 0, 0))
+	set("RightShoulder", cf6(s * swing * 0.9 + 8, 0, 6 + breath * 2))
+	set("LeftShoulder", cf6(-s * swing * 0.9 + 8, 0, -6 - breath * 2))
+	set("RightElbow", cf6(20 + 25 * moving, 0, 0))
+	set("LeftElbow", cf6(20 + 25 * moving, 0, 0))
+end
+
+local lastStep = os.clock()
 RunService.Stepped:Connect(function()
 	local now = os.clock()
+	local dt = math.min(0.1, now - lastStep)
+	lastStep = now
 	for character, rig in rigs do
 		if not character.Parent then
 			rigs[character] = nil
 			continue
+		end
+		if rig.Locomotion then
+			locomotion(rig, dt)
 		end
 		for _, layer in LAYER_ORDER do
 			local track = rig.Layers[layer]
@@ -188,10 +278,12 @@ RunService.Stepped:Connect(function()
 				if not weight then
 					rig.Layers[layer] = nil
 				elseif weight > 0 then
-					for joint in track.Clip.Joints do
+					local isR6 = rig.Type == "R6"
+					local frames = if isR6 then track.Clip.FramesR6 else track.Clip.Frames
+					for joint in (if isR6 then track.Clip.JointsR6 else track.Clip.Joints) do
 						local motor = rig.Motors[joint]
 						if motor then
-							motor.Transform = motor.Transform:Lerp(sample(track.Clip, t, joint), weight)
+							motor.Transform = motor.Transform:Lerp(sample(frames, t, joint), weight)
 						end
 					end
 				end

@@ -6,8 +6,11 @@ local ORDER = {
 	"InputController",
 	"HudController",
 	"RollController",
+	"StatsController",
+	"ZoneController",
 	"ShopController",
 	"FxController",
+	"MenuController",
 }
 
 local loaded = {}

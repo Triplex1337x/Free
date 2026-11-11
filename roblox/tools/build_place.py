@@ -106,7 +106,9 @@ def build() -> str:
     b.add_path(os.path.join(SRC, "server"), "Server")
     b.close_item()
 
-    b.open_item("StarterPlayer", "StarterPlayer")
+    # GameSettingsAvatar 1 = R15 (the fighting animations are authored for R15;
+    # R6 avatars still get a converted version).
+    b.open_item("StarterPlayer", "StarterPlayer", extra='<token name="GameSettingsAvatar">1</token>')
     b.open_item("StarterPlayerScripts", "StarterPlayerScripts")
     b.add_path(os.path.join(SRC, "client"), "Client")
     b.close_item()

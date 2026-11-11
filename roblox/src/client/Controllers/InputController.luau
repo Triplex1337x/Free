@@ -11,6 +11,7 @@ local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 
 local InputController = {}
+InputController.Enabled = true -- false while the title screen is up
 
 local KEYS = {
 	[Enum.KeyCode.Q] = "Q",
@@ -59,18 +60,27 @@ local function face(aim: Vector3)
 end
 
 function InputController.M1()
+	if not InputController.Enabled then
+		return
+	end
 	local aim = InputController.GetAim()
 	face(aim)
 	Remotes.Action:FireServer("M1", aim)
 end
 
 function InputController.Ability(key: string)
+	if not InputController.Enabled then
+		return
+	end
 	local aim = InputController.GetAim()
 	face(aim)
 	Remotes.Action:FireServer("Ability", { Key = key, Aim = aim })
 end
 
 function InputController.SetBlock(on: boolean)
+	if on and not InputController.Enabled then
+		return
+	end
 	if on == blocking then
 		return
 	end

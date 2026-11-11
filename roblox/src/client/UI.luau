@@ -1,23 +1,27 @@
--- Tiny UI toolkit: consistent anime-neon look without a UI library.
+-- Anime / manga UI kit: comic fonts, thick ink outlines, gradients, slanted
+-- shapes and springy buttons. No uploaded images needed.
 
 local TweenService = game:GetService("TweenService")
 
 local UI = {}
 
 UI.Theme = {
-	Background = Color3.fromRGB(16, 14, 26),
-	Panel = Color3.fromRGB(28, 24, 44),
-	PanelLight = Color3.fromRGB(42, 36, 66),
-	Accent = Color3.fromRGB(255, 80, 150),
-	Accent2 = Color3.fromRGB(90, 200, 255),
+	Background = Color3.fromRGB(14, 11, 26),
+	Panel = Color3.fromRGB(26, 20, 46),
+	PanelLight = Color3.fromRGB(48, 36, 82),
+	Ink = Color3.fromRGB(8, 5, 14),
+	Accent = Color3.fromRGB(255, 70, 140),
+	Accent2 = Color3.fromRGB(70, 200, 255),
 	Gold = Color3.fromRGB(255, 205, 60),
-	Good = Color3.fromRGB(90, 230, 140),
-	Bad = Color3.fromRGB(255, 90, 90),
-	Text = Color3.fromRGB(245, 240, 255),
-	SubText = Color3.fromRGB(175, 165, 205),
-	Font = Enum.Font.GothamBold,
-	FontHeavy = Enum.Font.GothamBlack,
+	Good = Color3.fromRGB(90, 235, 140),
+	Bad = Color3.fromRGB(255, 80, 90),
+	Text = Color3.fromRGB(255, 252, 245),
+	SubText = Color3.fromRGB(185, 175, 215),
+	Font = Enum.Font.FredokaOne,
+	FontHeavy = Enum.Font.LuckiestGuy,
 }
+
+local Theme = UI.Theme
 
 function UI.new(className: string, props: { [string]: any }?, children: { Instance }?)
 	local inst = Instance.new(className)
@@ -44,11 +48,19 @@ end
 
 function UI.stroke(color: Color3?, thickness: number?, transparency: number?)
 	return UI.new("UIStroke", {
-		Color = color or UI.Theme.Accent,
+		Color = color or Theme.Accent,
 		Thickness = thickness or 2,
-		Transparency = transparency or 0.3,
+		Transparency = transparency or 0,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		LineJoinMode = Enum.LineJoinMode.Miter,
 	})
+end
+
+-- Two-colour gradient outline (e.g. pink -> cyan) for that anime UI glow.
+function UI.gradientStroke(a: Color3, b: Color3, thickness: number?)
+	local stroke = UI.stroke(Color3.new(1, 1, 1), thickness or 3, 0)
+	UI.new("UIGradient", { Color = ColorSequence.new(a, b), Rotation = 35, Parent = stroke })
+	return stroke
 end
 
 function UI.padding(px: number)
@@ -60,62 +72,82 @@ function UI.padding(px: number)
 	})
 end
 
+-- Text with a thick ink outline, like manga lettering.
 function UI.label(props)
 	local defaults = {
 		BackgroundTransparency = 1,
-		Font = UI.Theme.Font,
-		TextColor3 = UI.Theme.Text,
+		Font = Theme.Font,
+		TextColor3 = Theme.Text,
 		TextScaled = true,
 		Size = UDim2.fromScale(1, 1),
 	}
 	for k, v in props do
-		if k ~= "MaxTextSize" then
+		if k ~= "MaxTextSize" and k ~= "Outline" then
 			defaults[k] = v
 		end
 	end
 	local label = UI.new("TextLabel", defaults)
 	UI.new("UITextSizeConstraint", { MaxTextSize = props.MaxTextSize or 28, Parent = label })
+	if props.Outline ~= false then
+		UI.new("UIStroke", {
+			Color = Theme.Ink,
+			Thickness = props.Outline or 2,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
+			Parent = label,
+		})
+	end
 	return label
 end
 
-function UI.tween(inst: Instance, time: number, goal, style: Enum.EasingStyle?)
-	local tween = TweenService:Create(inst, TweenInfo.new(time, style or Enum.EasingStyle.Quad, Enum.EasingDirection.Out), goal)
+function UI.tween(inst: Instance, time: number, goal, style: Enum.EasingStyle?, direction: Enum.EasingDirection?)
+	local tween = TweenService:Create(inst, TweenInfo.new(time, style or Enum.EasingStyle.Quad, direction or Enum.EasingDirection.Out), goal)
 	tween:Play()
 	return tween
 end
 
+-- Comic-style button: bold gradient fill, ink outline, slight slant,
+-- springy hover / press, shine sweep on hover.
 function UI.button(props)
-	local color = props.Color or UI.Theme.Accent
+	local color = props.Color or Theme.Accent
+	local h, s, v = color:ToHSV()
+	local light = Color3.fromHSV(h, math.max(0, s - 0.15), math.min(1, v + 0.15))
+	local dark = Color3.fromHSV(h, math.min(1, s + 0.1), v * 0.7)
 	local button = UI.new("TextButton", {
 		AutoButtonColor = false,
-		BackgroundColor3 = color,
-		Font = UI.Theme.FontHeavy,
-		TextColor3 = UI.Theme.Text,
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		Font = Theme.FontHeavy,
+		TextColor3 = Theme.Text,
 		TextScaled = true,
 		Text = props.Text or "",
 		Size = props.Size or UDim2.fromOffset(120, 40),
 		Position = props.Position or UDim2.new(),
 		AnchorPoint = props.AnchorPoint or Vector2.zero,
 		LayoutOrder = props.LayoutOrder or 0,
+		Rotation = props.Rotation or 0,
+		ClipsDescendants = false,
 		Parent = props.Parent,
 	}, {
-		UI.corner(props.Radius or 10),
-		UI.new("UIStroke", { Color = Color3.new(1, 1, 1), Transparency = 0.75, Thickness = 1.5, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }),
-		UI.new("UITextSizeConstraint", { MaxTextSize = props.MaxTextSize or 22 }),
-		UI.new("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4) }),
+		UI.corner(props.Radius or 8),
+		UI.new("UIGradient", { Color = ColorSequence.new(light, dark), Rotation = 90 }),
+		UI.new("UIStroke", { Color = Theme.Ink, Thickness = 3, ApplyStrokeMode = Enum.ApplyStrokeMode.Border, LineJoinMode = Enum.LineJoinMode.Round }),
+		UI.new("UITextSizeConstraint", { MaxTextSize = props.MaxTextSize or 24 }),
+		UI.new("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 5), PaddingBottom = UDim.new(0, 5) }),
 	})
+	-- Ink outline on the text itself.
+	UI.new("UIStroke", { Color = Theme.Ink, Thickness = 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual, Parent = button })
+
 	local scale = UI.new("UIScale", { Parent = button })
 	button.MouseEnter:Connect(function()
-		UI.tween(scale, 0.12, { Scale = 1.06 })
+		UI.tween(scale, 0.15, { Scale = 1.07 }, Enum.EasingStyle.Back)
 	end)
 	button.MouseLeave:Connect(function()
-		UI.tween(scale, 0.12, { Scale = 1 })
+		UI.tween(scale, 0.15, { Scale = 1 })
 	end)
 	button.MouseButton1Down:Connect(function()
-		UI.tween(scale, 0.06, { Scale = 0.94 })
+		UI.tween(scale, 0.06, { Scale = 0.92 })
 	end)
 	button.MouseButton1Up:Connect(function()
-		UI.tween(scale, 0.1, { Scale = 1 })
+		UI.tween(scale, 0.18, { Scale = 1 }, Enum.EasingStyle.Back)
 	end)
 	if props.OnClick then
 		button.Activated:Connect(props.OnClick)
@@ -123,43 +155,101 @@ function UI.button(props)
 	return button
 end
 
--- A bar with a fill frame. Returns frame, setter(ratio, text?).
+-- A slanted bar with ink outline and glossy fill. Returns frame, set(ratio, text?), fill.
 function UI.bar(props)
 	local frame = UI.new("Frame", {
-		BackgroundColor3 = Color3.fromRGB(10, 8, 18),
-		BackgroundTransparency = 0.2,
+		BackgroundColor3 = Theme.Ink,
+		BackgroundTransparency = 0.05,
 		Size = props.Size,
 		Position = props.Position or UDim2.new(),
 		AnchorPoint = props.AnchorPoint or Vector2.zero,
 		Parent = props.Parent,
-	}, { UI.corner(props.Radius or 6), UI.stroke(props.Color, 1.5, 0.5) })
+	}, {
+		UI.corner(props.Radius or 4),
+		UI.new("UIStroke", { Color = Theme.Ink, Thickness = 3, ApplyStrokeMode = Enum.ApplyStrokeMode.Border }),
+	})
+	local trail = UI.new("Frame", {
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		BackgroundTransparency = 0.35,
+		Size = UDim2.fromScale(1, 1),
+		Parent = frame,
+	}, { UI.corner(props.Radius or 4) })
 	local fill = UI.new("Frame", {
 		BackgroundColor3 = props.Color,
 		Size = UDim2.fromScale(1, 1),
 		Parent = frame,
 	}, {
-		UI.corner(props.Radius or 6),
+		UI.corner(props.Radius or 4),
 		UI.new("UIGradient", {
-			Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 0.25) }),
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+				ColorSequenceKeypoint.new(0.35, Color3.fromRGB(235, 235, 235)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 150, 150)),
+			}),
 			Rotation = 90,
 		}),
 	})
+	-- Segment ticks for that fighting-game look.
+	for i = 1, 9 do
+		UI.new("Frame", {
+			BackgroundColor3 = Theme.Ink,
+			BackgroundTransparency = 0.6,
+			BorderSizePixel = 0,
+			Position = UDim2.fromScale(i / 10, 0),
+			Size = UDim2.new(0, 2, 1, 0),
+			ZIndex = 2,
+			Parent = frame,
+		})
+	end
 	local text = UI.label({
 		Text = "",
+		Font = Theme.FontHeavy,
 		ZIndex = 3,
-		TextStrokeTransparency = 0.4,
 		MaxTextSize = props.MaxTextSize or 16,
-		Size = UDim2.new(1, -8, 1, -2),
-		Position = UDim2.fromOffset(4, 1),
+		Size = UDim2.new(1, -10, 1, -2),
+		Position = UDim2.fromOffset(5, 1),
 		Parent = frame,
 	})
 	local function set(ratio: number, label: string?)
-		UI.tween(fill, 0.15, { Size = UDim2.fromScale(math.clamp(ratio, 0, 1), 1) })
+		ratio = math.clamp(ratio, 0, 1)
+		UI.tween(fill, 0.12, { Size = UDim2.fromScale(ratio, 1) })
+		-- White "damage trail" catches up after a short delay.
+		task.delay(0.25, function()
+			UI.tween(trail, 0.35, { Size = UDim2.fromScale(ratio, 1) })
+		end)
 		if label then
 			text.Text = label
 		end
 	end
 	return frame, set, fill
+end
+
+-- Slanted header ribbon used on panels and banners.
+function UI.ribbon(props)
+	local ribbon = UI.new("Frame", {
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		Size = props.Size,
+		Position = props.Position or UDim2.new(),
+		AnchorPoint = props.AnchorPoint or Vector2.zero,
+		Rotation = props.Rotation or -3,
+		ZIndex = props.ZIndex or 1,
+		Parent = props.Parent,
+	}, {
+		UI.new("UIGradient", { Color = ColorSequence.new(props.ColorA or Theme.Accent, props.ColorB or Theme.Accent2), Rotation = 0 }),
+		UI.new("UIStroke", { Color = Theme.Ink, Thickness = 3 }),
+	})
+	UI.label({
+		Text = props.Text or "",
+		Font = Theme.FontHeavy,
+		MaxTextSize = props.MaxTextSize or 30,
+		Outline = 3,
+		Size = UDim2.new(1, -16, 1, -6),
+		Position = UDim2.fromOffset(8, 3),
+		ZIndex = (props.ZIndex or 1) + 1,
+		TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left,
+		Parent = ribbon,
+	})
+	return ribbon
 end
 
 return UI

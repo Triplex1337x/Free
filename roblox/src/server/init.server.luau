@@ -9,12 +9,14 @@ Players.CharacterAutoLoads = false
 local ORDER = {
 	"DataService",
 	"MapService",
+	"ZoneService",
 	"MonetizationService",
 	"ProgressionService",
 	"CombatService",
 	"GachaService",
 	"CodesService",
 	"DummyService",
+	"MobService",
 }
 
 local Services = {}

@@ -10,6 +10,7 @@ local Styles = require(Shared.Config.Styles)
 local GachaConfig = require(Shared.Config.Gacha)
 local MonetizationConfig = require(Shared.Config.Monetization)
 local Gacha = require(Shared.Gacha)
+local Prog = require(Shared.Config.Progression)
 
 local UI = require(script.Parent.Parent.UI)
 local State = require(script.Parent.Parent.State)
@@ -232,7 +233,7 @@ function RollController:BuildRollPanel()
 end
 
 function RollController:BuildArtsPanel()
-	local panel = Hud:CreatePanel("My Arts", Vector2.new(720, 520))
+	local panel = Hud:CreatePanel("My Arts", Vector2.new(820, 580))
 	local list = UI.new("ScrollingFrame", {
 		BackgroundTransparency = 1,
 		Size = UDim2.fromScale(1, 1),
@@ -253,32 +254,54 @@ function RollController:BuildArtsPanel()
 			local owned = d.OwnedStyles[id] == true
 			local rarity = Gacha.GetRarity(style.Rarity)
 			local row = UI.new("Frame", {
-				BackgroundColor3 = Theme.Background,
-				BackgroundTransparency = if owned then 0.2 else 0.6,
-				Size = UDim2.new(1, -8, 0, 84),
+				BackgroundColor3 = Color3.new(1, 1, 1),
+				Size = UDim2.new(1, -10, 0, if owned then 132 else 70),
 				LayoutOrder = i,
 				Parent = list,
-			}, { UI.corner(12), UI.stroke(rarity.Color, 2, if owned then 0.1 else 0.7), UI.padding(10) })
+			}, {
+				UI.corner(12),
+				UI.new("UIGradient", { Color = ColorSequence.new((if owned then style.Color else Theme.PanelLight):Lerp(Theme.Background, 0.6), Theme.Background) }),
+				UI.stroke(if owned then rarity.Color else Theme.Ink, 3),
+				UI.padding(10),
+			})
 			UI.label({
-				Text = ('%s  <font color="#%s">[%s]</font>'):format(if owned then style.Name else "???", rarity.Color:ToHex(), rarity.Id),
+				Text = ('%s  <font color="#%s">[%s]</font>'):format(if owned then string.upper(style.Name) else "???", rarity.Color:ToHex(), string.upper(rarity.Id)),
 				RichText = true,
 				Font = Theme.FontHeavy,
 				TextColor3 = if owned then style.Color else Theme.SubText,
 				TextXAlignment = Enum.TextXAlignment.Left,
-				Size = UDim2.new(1, -130, 0, 28),
-				MaxTextSize = 22,
+				Size = UDim2.new(1, -140, 0, 28),
+				MaxTextSize = 24,
 				Parent = row,
 			})
-			UI.label({
-				Text = if owned then abilitySummary(id) else "Roll to unlock this Art.",
-				TextColor3 = Theme.SubText,
-				TextWrapped = true,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				Size = UDim2.new(1, -130, 0, 34),
-				Position = UDim2.fromOffset(0, 30),
-				MaxTextSize = 15,
-				Parent = row,
-			})
+			if not owned then
+				UI.label({ Text = "Roll to unlock this Art.", TextColor3 = Theme.SubText, Outline = false, TextXAlignment = Enum.TextXAlignment.Left, Size = UDim2.new(1, -140, 0, 22), Position = UDim2.fromOffset(0, 30), MaxTextSize = 15, Parent = row })
+			else
+				local level, xp = Prog.GetMastery(d, id)
+				local maxed = level >= Prog.Mastery.MaxLevel
+				local _, setBar = UI.bar({ Color = style.Color, Size = UDim2.new(1, -140, 0, 16), Position = UDim2.fromOffset(0, 34), MaxTextSize = 12, Parent = row })
+				setBar(if maxed then 1 else xp / Prog.MasteryXpFor(level), if maxed then "MASTERED" else ("MASTERY %d  •  %d / %d"):format(level, xp, Prog.MasteryXpFor(level)))
+				-- Skill unlock chips.
+				local chips = UI.new("Frame", { BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 60), Size = UDim2.new(1, -140, 0, 52), Parent = row }, {
+					UI.new("UIGridLayout", { CellSize = UDim2.new(0.25, -6, 0, 50), CellPadding = UDim2.fromOffset(6, 0), SortOrder = Enum.SortOrder.LayoutOrder }),
+				})
+				for k, key in { "Q", "E", "R", "G" } do
+					local ability = Styles.GetAbility(id, key)
+					local need = Prog.Mastery.Unlocks[key]
+					local open = level >= need
+					local chip = UI.new("Frame", { BackgroundColor3 = if open then style.Color:Lerp(Theme.Background, 0.3) else Theme.Ink, LayoutOrder = k, Parent = chips }, { UI.corner(8), UI.stroke(if key == "G" then Theme.Gold else Theme.Ink, 2) })
+					UI.label({
+						Text = if open then ("%s  %s"):format(key, ability.Name) else ("🔒 %s  M%d"):format(key, need),
+						Font = Theme.FontHeavy,
+						TextWrapped = true,
+						TextColor3 = if open then Theme.Text else Theme.SubText,
+						MaxTextSize = 14,
+						Size = UDim2.new(1, -8, 1, -6),
+						Position = UDim2.fromOffset(4, 3),
+						Parent = chip,
+					})
+				end
+			end
 			if owned then
 				local equipped = d.EquippedStyle == id
 				UI.button({
