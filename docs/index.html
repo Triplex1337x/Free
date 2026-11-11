@@ -9,7 +9,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%237c5cff'/><stop offset='1' stop-color='%2300d4c8'/></linearGradient></defs><rect width='64' height='64' rx='18' fill='url(%23g)'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script>
     // Тема применяется до отрисовки, чтобы не было мигания
@@ -73,10 +73,12 @@
         <ul class="stats reveal" id="stats"></ul>
       </div>
       <div class="hero-visual reveal">
-        <div class="avatar-wrap" id="avatarWrap">
-          <div class="avatar" id="avatar"></div>
-          <div class="orbit orbit-1"><span></span></div>
-          <div class="orbit orbit-2"><span></span></div>
+        <div class="code-card" id="codeCard">
+          <div class="code-head">
+            <span class="tl tl-r"></span><span class="tl tl-y"></span><span class="tl tl-g"></span>
+            <span class="code-file" id="codeFile"></span>
+          </div>
+          <pre class="code-body" id="codeBody" aria-hidden="true"></pre>
         </div>
         <p class="hero-location" id="heroLocation">
           <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 1 1 14 0C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>

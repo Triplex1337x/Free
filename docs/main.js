@@ -75,15 +75,44 @@
   if (P.location) $("#heroLocation span").textContent = P.location;
   else $("#heroLocation").hidden = true;
 
-  var avatar = $("#avatar");
-  if (P.photo) {
-    var img = h("img", { src: P.photo, alt: P.name || "Фото" });
-    img.onerror = function () { avatar.textContent = initials(P.name); avatar.classList.remove("has-photo"); };
-    avatar.appendChild(img);
-    avatar.classList.add("has-photo");
-  } else {
-    avatar.textContent = initials(P.name);
+  // Окно редактора с «визиткой» на Python
+  var C = P.card || {};
+  $("#codeFile").textContent = C.file || "about_me.py";
+  function tk(cls, text) { return { c: cls, t: text }; }
+  var lines = [[tk("kw", "class"), tk("", " "), tk("cls", C.className || "Developer"), tk("p", ":")]];
+  (C.fields || []).forEach(function (f) {
+    var line = [tk("", "    "), tk("var", f[0]), tk("p", " = ")];
+    if (Array.isArray(f[1])) {
+      line.push(tk("p", "["));
+      f[1].forEach(function (v, i) {
+        if (i) line.push(tk("p", ", "));
+        line.push(tk("str", '"' + v + '"'));
+      });
+      line.push(tk("p", "]"));
+    } else {
+      line.push(tk("str", '"' + f[1] + '"'));
+    }
+    lines.push(line);
+  });
+  if (C.contact) {
+    lines.push([]);
+    lines.push([tk("", "    "), tk("kw", "def"), tk("", " "), tk("fn", "contact"), tk("p", "("), tk("self", "self"), tk("p", "):")]);
+    lines.push([tk("", "        "), tk("kw", "return"), tk("", " "), tk("str", '"' + C.contact + '"')]);
   }
+  var body = $("#codeBody");
+  var delay = 500;
+  lines.forEach(function (line, i) {
+    var len = line.reduce(function (n, t) { return n + t.t.length; }, 0);
+    var content = h("span", { class: "lc" }, line.map(function (t) { return h("span", { class: t.c ? "t-" + t.c : "", text: t.t }); }));
+    if (len) {
+      var dur = len * 26;
+      content.style.cssText = "--n:" + len + ";--dur:" + dur + "ms;--delay:" + delay + "ms";
+      delay += dur + 140;
+    }
+    if (i === lines.length - 1) content.appendChild(h("span", { class: "caret", style: "--delay:" + delay + "ms" }));
+    body.appendChild(h("span", { class: "line" }, [h("span", { class: "ln", text: String(i + 1) }), content]));
+  });
+  $("#codeCard").classList.add("typing");
 
   var stats = $("#stats");
   (P.stats || []).forEach(function (s) {
@@ -256,12 +285,12 @@
         card.style.setProperty("--my", e.clientY - r.top + "px");
       });
     });
-    var wrap = $("#avatarWrap");
+    var wrap = $("#codeCard");
     wrap.addEventListener("pointermove", function (e) {
       var r = wrap.getBoundingClientRect();
       var x = (e.clientX - r.left) / r.width - 0.5;
       var y = (e.clientY - r.top) / r.height - 0.5;
-      wrap.style.transform = "perspective(800px) rotateY(" + x * 14 + "deg) rotateX(" + -y * 14 + "deg)";
+      wrap.style.transform = "perspective(900px) rotateY(" + x * 8 + "deg) rotateX(" + -y * 8 + "deg)";
     });
     wrap.addEventListener("pointerleave", function () { wrap.style.transform = ""; });
   }
