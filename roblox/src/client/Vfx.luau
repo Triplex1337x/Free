@@ -11,6 +11,8 @@ local Lighting = game:GetService("Lighting")
 local Debris = game:GetService("Debris")
 
 local Vfx = {}
+Vfx.ShakeEnabled = true
+Vfx.DamageNumbers = true
 
 local folder = Instance.new("Folder")
 folder.Name = "ClientFx"
@@ -732,6 +734,9 @@ end
 local shakeUntil, shakeStrength = 0, 0
 
 function Vfx.Shake(strength: number, duration: number, origin: Vector3?)
+	if not Vfx.ShakeEnabled then
+		return
+	end
 	if origin then
 		local d = (camera().CFrame.Position - origin).Magnitude
 		strength *= math.clamp(1 - d / 140, 0, 1)

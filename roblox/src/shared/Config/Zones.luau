@@ -14,7 +14,7 @@ Zones.List = {
 		Color = Color3.fromRGB(255, 80, 150),
 		Boss = { Id = "RiftWarden", Name = "Страж Разлома", Level = 12, Element = "Void", Outfit = "Warden", Scale = 1.9, Respawn = 180, Leash = 45 },
 		SkyMobs = { { Id = "RiftSprite", Name = "Дух Разлома", Level = 4, Count = 5, Element = "Light", Outfit = "Sprite", Scale = 0.8, Leash = 20 } },
-		SkyCenter = Vector3.new(-88, 0, 22),
+		SkyCenter = Vector3.new(-120, 0, 40),
 	},
 
 	Ember = {
@@ -152,7 +152,7 @@ Zones.Sky = {
 	Tier2Height = 21, -- double jump from tier 1
 	TopHeight = 37, -- triple jump from tier 2
 	TopRadius = 26,
-	IslandOffset = Vector3.new(120, 0, 30), -- sky area position inside PvE islands
+	IslandOffset = Vector3.new(200, 0, 60), -- sky area position inside PvE islands
 }
 
 Zones.Jumps = {
@@ -176,13 +176,13 @@ function Zones.IsHubSafe(pos: Vector3): boolean
 	local flat = Vector3.new(pos.X, 0, pos.Z)
 	for i = 1, 6 do
 		local a = (i / 6) * math.pi * 2 + math.pi / 6
-		if (flat - Vector3.new(math.cos(a) * 110, 0, math.sin(a) * 110)).Magnitude < cfg.SpawnRadius then
+		if (flat - Vector3.new(math.cos(a) * 165, 0, math.sin(a) * 165)).Magnitude < cfg.SpawnRadius then
 			return true
 		end
 	end
 	for i = 0, 3 do
 		local a = i * math.pi / 2 + math.pi / 4
-		if (flat - Vector3.new(math.cos(a) * 118, 0, math.sin(a) * 118)).Magnitude < cfg.PortalRadius then
+		if (flat - Vector3.new(math.cos(a) * 176, 0, math.sin(a) * 176)).Magnitude < cfg.PortalRadius then
 			return true
 		end
 	end
@@ -196,8 +196,8 @@ end
 --   Pve   — everything else: farm mobs, no PvP
 Zones.Areas = {
 	Island = {
-		Safe = { Offset = Vector3.new(0, 0, 190), Radius = 36 },
-		Pvp = { Offset = Vector3.new(0, 0, -150), Radius = 52 },
+		Safe = { Offset = Vector3.new(0, 0, 330), Radius = 36 },
+		Pvp = { Offset = Vector3.new(0, 0, -280), Radius = 52 },
 	},
 	HubPvpRadius = 70, -- centre of the Rift Arena (duel ring + Rift Warden)
 }

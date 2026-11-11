@@ -38,6 +38,7 @@ local TEMPLATE = {
 	},
 	Inventory = {},
 	Buffs = {},
+	Settings = { Pvp = false },
 	RollsSincePity = 0,
 	TotalRolls = 0,
 	RedeemedCodes = {},
@@ -219,6 +220,7 @@ function DataService:BuildSnapshot(player: Player)
 		Mastery = d.Mastery,
 		Quests = d.Quests,
 		Inventory = d.Inventory,
+		Settings = d.Settings,
 		BuffsLeft = (function()
 			local now, left = os.time(), {}
 			for id, expires in d.Buffs do

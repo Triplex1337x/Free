@@ -376,7 +376,8 @@ function ProgressionService:RefreshOverhead(player: Player)
 	local style = Styles.Get(d.EquippedStyle)
 	local rarity = Gacha.GetRarity(style.Rarity)
 
-	gui.NameLabel.Text = (vip and "[VIP] " or "") .. player.DisplayName
+	local pvp = player:GetAttribute("Pvp") == true
+	gui.NameLabel.Text = (if pvp then "⚔ " else "") .. (vip and "[VIP] " or "") .. player.DisplayName
 	gui.NameLabel.TextColor3 = vip and Color3.fromRGB(255, 215, 60) or Color3.new(1, 1, 1)
 	gui.SubLabel.Text = ("%d ур. • %s"):format(d.Level, style.Name)
 	gui.SubLabel.TextColor3 = rarity.Color

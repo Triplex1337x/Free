@@ -10,7 +10,7 @@ local Remotes = require(Shared.Remotes)
 
 local ZoneService = {}
 
-local RADIUS = 230
+local RADIUS = 380
 local TRAVEL_COOLDOWN = 3
 
 local rng = Random.new(2024)
@@ -61,7 +61,7 @@ local function randomSpot(origin: Vector3, minR: number, maxR: number): Vector3
 		local angle = rng:NextNumber(0, math.pi * 2)
 		local r = rng:NextNumber(minR, maxR)
 		local p = Vector3.new(math.cos(angle) * r, 0, math.sin(angle) * r)
-		if p.Z < 140 and not (p.Z < -110 and math.abs(p.X) < 55) then
+		if p.Z < 290 and not (p.Z < -225 and math.abs(p.X) < 80) then
 			return origin + p
 		end
 	end
@@ -84,8 +84,8 @@ local function buildIsland(folder: Folder, origin: Vector3, theme)
 	part({ Name = "Floor", Shape = Enum.PartType.Cylinder, Size = Vector3.new(6, RADIUS * 2, RADIUS * 2), CFrame = CFrame.new(origin + Vector3.new(0, -3, 0)) * cylinder, Material = theme.Floor, Color = theme.FloorColor, Parent = folder })
 
 	-- Rocky underside so the island looks like it floats.
-	for i = 1, 18 do
-		local angle = (i / 18) * math.pi * 2
+	for i = 1, 28 do
+		local angle = (i / 28) * math.pi * 2
 		local r = RADIUS * rng:NextNumber(0.55, 0.9)
 		local h = rng:NextNumber(40, 110)
 		part({
@@ -101,7 +101,7 @@ local function buildIsland(folder: Folder, origin: Vector3, theme)
 	end
 
 	-- Boundary walls with a glowing rim.
-	local segments = 40
+	local segments = 64
 	for i = 1, segments do
 		local angle = (i / segments) * math.pi * 2
 		local pos = origin + Vector3.new(math.cos(angle) * RADIUS, 0, math.sin(angle) * RADIUS)
@@ -112,12 +112,12 @@ local function buildIsland(folder: Folder, origin: Vector3, theme)
 	end
 
 	-- Spawn plaza.
-	part({ Name = "Plaza", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.4, 46, 46), CFrame = CFrame.new(origin + Vector3.new(0, 0.2, 190)) * cylinder, Material = Enum.Material.Marble, Color = Color3.fromRGB(220, 215, 225), Parent = folder })
-	part({ Name = "PlazaRing", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.45, 48, 48), CFrame = CFrame.new(origin + Vector3.new(0, 0.18, 190)) * cylinder, Material = Enum.Material.Neon, Color = theme.Accent, CanCollide = false, Parent = folder })
+	part({ Name = "Plaza", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.4, 46, 46), CFrame = CFrame.new(origin + Vector3.new(0, 0.2, 330)) * cylinder, Material = Enum.Material.Marble, Color = Color3.fromRGB(220, 215, 225), Parent = folder })
+	part({ Name = "PlazaRing", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.45, 48, 48), CFrame = CFrame.new(origin + Vector3.new(0, 0.18, 330)) * cylinder, Material = Enum.Material.Neon, Color = theme.Accent, CanCollide = false, Parent = folder })
 
 	-- Boss arena circle.
-	part({ Name = "BossArena", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, 90, 90), CFrame = CFrame.new(origin + Vector3.new(0, 0.1, -150)) * cylinder, Material = Enum.Material.Neon, Color = theme.Accent, Transparency = 0.6, CanCollide = false, Parent = folder })
-	part({ Name = "BossArenaInner", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.35, 84, 84), CFrame = CFrame.new(origin + Vector3.new(0, 0.12, -150)) * cylinder, Material = theme.Floor, Color = theme.FloorColor, CanCollide = false, Parent = folder })
+	part({ Name = "BossArena", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, 90, 90), CFrame = CFrame.new(origin + Vector3.new(0, 0.1, -280)) * cylinder, Material = Enum.Material.Neon, Color = theme.Accent, Transparency = 0.6, CanCollide = false, Parent = folder })
+	part({ Name = "BossArenaInner", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.35, 84, 84), CFrame = CFrame.new(origin + Vector3.new(0, 0.12, -280)) * cylinder, Material = theme.Floor, Color = theme.FloorColor, CanCollide = false, Parent = folder })
 end
 
 ---------------------------------------------------------------------------
@@ -128,20 +128,20 @@ local Decor = {}
 
 function Decor.Ember(folder: Folder, origin: Vector3)
 	local lava = Color3.fromRGB(255, 110, 30)
-	for _ = 1, 9 do
-		local pos = randomSpot(origin, 30, 200)
+	for _ = 1, 15 do
+		local pos = randomSpot(origin, 30, 350)
 		local r = rng:NextNumber(10, 22)
 		local pool = part({ Name = "LavaPool", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.5, r * 2, r * 2), CFrame = CFrame.new(pos + Vector3.new(0, 0.05, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Neon, Color = lava, CanCollide = false, Parent = folder })
 		light(pool, lava, r * 2.5, 2)
 		emitter(pool, { Texture = "rbxasset://textures/particles/sparkles_main.dds", Color = ColorSequence.new(Color3.fromRGB(255, 200, 80), lava), LightEmission = 1, Rate = 6, Lifetime = NumberRange.new(1.5, 3), Speed = NumberRange.new(4, 9), Acceleration = Vector3.new(0, 5, 0), Size = NumberSequence.new(0.4, 0), SpreadAngle = Vector2.new(20, 20) })
 	end
-	for _ = 1, 26 do
-		local pos = randomSpot(origin, 25, 215)
+	for _ = 1, 42 do
+		local pos = randomSpot(origin, 25, 360)
 		local h = rng:NextNumber(12, 45)
 		part({ Name = "Spire", ClassName = "WedgePart", Size = Vector3.new(rng:NextNumber(6, 12), h, rng:NextNumber(8, 16)), CFrame = CFrame.new(pos + Vector3.new(0, h / 2, 0)) * CFrame.Angles(0, rng:NextNumber(0, 6.28), 0), Material = Enum.Material.Basalt, Color = Color3.fromRGB(40, 30, 30), Parent = folder })
 	end
 	-- Volcano on the horizon.
-	local volcano = origin + Vector3.new(0, 0, -380)
+	local volcano = origin + Vector3.new(0, 0, -620)
 	for i = 0, 5 do
 		local r = 160 - i * 26
 		part({ Name = "Volcano", Shape = Enum.PartType.Cylinder, Size = Vector3.new(30, r * 2, r * 2), CFrame = CFrame.new(volcano + Vector3.new(0, i * 30, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Basalt, Color = Color3.fromRGB(45, 32, 30), CanCollide = false, Parent = folder })
@@ -153,20 +153,20 @@ end
 
 function Decor.Tidal(folder: Folder, origin: Vector3)
 	local water = Color3.fromRGB(60, 170, 230)
-	for _ = 1, 10 do
-		local pos = randomSpot(origin, 30, 200)
+	for _ = 1, 16 do
+		local pos = randomSpot(origin, 30, 350)
 		local r = rng:NextNumber(12, 26)
 		part({ Name = "Water", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.6, r * 2, r * 2), CFrame = CFrame.new(pos + Vector3.new(0, 0.1, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Glass, Color = water, Transparency = 0.35, Reflectance = 0.2, CanCollide = false, Parent = folder })
 	end
 	-- Shrine colonnade with teal roofs.
 	for i = 1, 12 do
 		local angle = (i / 12) * math.pi * 2
-		local pos = origin + Vector3.new(math.cos(angle) * 120, 0, math.sin(angle) * 120)
+		local pos = origin + Vector3.new(math.cos(angle) * 200, 0, math.sin(angle) * 200)
 		part({ Name = "Pillar", Shape = Enum.PartType.Cylinder, Size = Vector3.new(30, 5, 5), CFrame = CFrame.new(pos + Vector3.new(0, 15, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Marble, Color = Color3.fromRGB(240, 240, 235), Parent = folder })
 		part({ Name = "Roof", ClassName = "WedgePart", Size = Vector3.new(10, 4, 10), CFrame = CFrame.new(pos + Vector3.new(0, 32, 0)) * CFrame.Angles(0, -angle, 0), Material = Enum.Material.SmoothPlastic, Color = Color3.fromRGB(40, 150, 150), Parent = folder })
 	end
-	for _ = 1, 30 do
-		local pos = randomSpot(origin, 20, 215)
+	for _ = 1, 48 do
+		local pos = randomSpot(origin, 20, 360)
 		local c = part({ Name = "Coral", Shape = Enum.PartType.Ball, Size = Vector3.one * rng:NextNumber(2, 5), Position = pos + Vector3.new(0, 1, 0), Material = Enum.Material.Neon, Color = if rng:NextNumber() > 0.5 then Color3.fromRGB(255, 120, 170) else Color3.fromRGB(255, 170, 90), CanCollide = false, Parent = folder })
 		if rng:NextNumber() > 0.7 then
 			light(c, c.Color, 12, 1)
@@ -174,7 +174,7 @@ function Decor.Tidal(folder: Folder, origin: Vector3)
 	end
 	-- Waterfall cliffs on the horizon.
 	for i = -2, 2 do
-		local base = origin + Vector3.new(i * 90, 0, -360)
+		local base = origin + Vector3.new(i * 90, 0, -580)
 		part({ Name = "Cliff", Size = Vector3.new(80, 220, 60), CFrame = CFrame.new(base + Vector3.new(0, 90, 0)), Material = Enum.Material.Rock, Color = Color3.fromRGB(90, 110, 110), CanCollide = false, Parent = folder })
 		part({ Name = "Waterfall", Size = Vector3.new(24, 200, 2), CFrame = CFrame.new(base + Vector3.new(0, 90, 31)), Material = Enum.Material.Glass, Color = Color3.fromRGB(180, 230, 255), Transparency = 0.3, CanCollide = false, Parent = folder })
 	end
@@ -182,14 +182,14 @@ end
 
 function Decor.Storm(folder: Folder, origin: Vector3)
 	local bolt = Color3.fromRGB(255, 230, 80)
-	for _ = 1, 30 do
-		local pos = randomSpot(origin, 25, 215)
+	for _ = 1, 48 do
+		local pos = randomSpot(origin, 25, 360)
 		local h = rng:NextNumber(8, 28)
 		part({ Name = "IceCrystal", Size = Vector3.new(rng:NextNumber(3, 7), h, rng:NextNumber(3, 7)), CFrame = CFrame.new(pos + Vector3.new(0, h / 2 - 1, 0)) * CFrame.Angles(rng:NextNumber(-0.4, 0.4), rng:NextNumber(0, 6), rng:NextNumber(-0.4, 0.4)), Material = Enum.Material.Glass, Color = Color3.fromRGB(170, 220, 255), Transparency = 0.25, Parent = folder })
 	end
 	for i = 1, 6 do
 		local angle = (i / 6) * math.pi * 2
-		local pos = origin + Vector3.new(math.cos(angle) * 150, 0, math.sin(angle) * 150)
+		local pos = origin + Vector3.new(math.cos(angle) * 250, 0, math.sin(angle) * 250)
 		part({ Name = "Tower", Shape = Enum.PartType.Cylinder, Size = Vector3.new(50, 10, 10), CFrame = CFrame.new(pos + Vector3.new(0, 25, 0)) * CFrame.Angles(0, 0, math.rad(90)), Material = Enum.Material.Slate, Color = Color3.fromRGB(70, 75, 90), Parent = folder })
 		local rod = part({ Name = "Rod", Size = Vector3.new(1, 14, 1), CFrame = CFrame.new(pos + Vector3.new(0, 57, 0)), Material = Enum.Material.Neon, Color = bolt, Parent = folder })
 		light(rod, bolt, 30, 3)
@@ -197,7 +197,7 @@ function Decor.Storm(folder: Folder, origin: Vector3)
 	end
 	for i = 1, 12 do
 		local angle = (i / 12) * math.pi * 2
-		local dist = rng:NextNumber(340, 420)
+		local dist = rng:NextNumber(540, 640)
 		local h = rng:NextNumber(150, 260)
 		local pos = origin + Vector3.new(math.cos(angle) * dist, h / 2 - 30, math.sin(angle) * dist)
 		part({ Name = "Mountain", Size = Vector3.new(120, h, 100), CFrame = CFrame.new(pos) * CFrame.Angles(0, rng:NextNumber(0, 6), 0), Material = Enum.Material.Rock, Color = Color3.fromRGB(85, 90, 105), CanCollide = false, CastShadow = false, Parent = folder })
@@ -209,23 +209,23 @@ end
 
 function Decor.Void(folder: Folder, origin: Vector3)
 	local void = Color3.fromRGB(170, 80, 255)
-	for _ = 1, 22 do
-		local pos = randomSpot(origin, 20, 215)
+	for _ = 1, 36 do
+		local pos = randomSpot(origin, 20, 360)
 		local length = rng:NextNumber(10, 30)
 		part({ Name = "Crack", Size = Vector3.new(0.6, 0.15, length), CFrame = CFrame.new(pos + Vector3.new(0, 0.05, 0)) * CFrame.Angles(0, rng:NextNumber(0, 6.28), 0), Material = Enum.Material.Neon, Color = void, CanCollide = false, Parent = folder })
 	end
-	for _ = 1, 16 do
-		local pos = randomSpot(origin, 30, 210)
+	for _ = 1, 26 do
+		local pos = randomSpot(origin, 30, 350)
 		local h = rng:NextNumber(18, 40)
 		local obelisk = part({ Name = "Obelisk", Size = Vector3.new(5, h, 5), CFrame = CFrame.new(pos + Vector3.new(0, h / 2, 0)) * CFrame.Angles(0, rng:NextNumber(0, 6), rng:NextNumber(-0.15, 0.15)), Material = Enum.Material.Slate, Color = Color3.fromRGB(15, 10, 22), Parent = folder })
 		part({ Name = "ObeliskEdge", Size = Vector3.new(5.3, 1, 5.3), CFrame = obelisk.CFrame * CFrame.new(0, h / 2 - 2, 0), Material = Enum.Material.Neon, Color = void, CanCollide = false, Parent = folder })
 	end
 	for _ = 1, 30 do
-		local pos = origin + Vector3.new(rng:NextNumber(-260, 260), rng:NextNumber(30, 120), rng:NextNumber(-260, 260))
+		local pos = origin + Vector3.new(rng:NextNumber(-420, 420), rng:NextNumber(30, 140), rng:NextNumber(-420, 420))
 		part({ Name = "Shard", ClassName = "CornerWedgePart", Size = Vector3.new(rng:NextNumber(4, 12), rng:NextNumber(10, 30), rng:NextNumber(4, 12)), CFrame = CFrame.new(pos) * CFrame.Angles(rng:NextNumber(0, 6), rng:NextNumber(0, 6), rng:NextNumber(0, 6)), Material = Enum.Material.Glass, Color = void, Transparency = 0.2, CanCollide = false, CastShadow = false, Parent = folder })
 	end
 	-- The Rift itself: a giant glowing ring in the sky.
-	local center = origin + Vector3.new(0, 160, -330)
+	local center = origin + Vector3.new(0, 180, -560)
 	for i = 1, 48 do
 		local angle = (i / 48) * math.pi * 2
 		part({ Name = "Rift", Size = Vector3.new(6, 6, 2 * math.pi * 110 / 48 + 2), CFrame = CFrame.new(center) * CFrame.Angles(0, 0, angle) * CFrame.new(110, 0, 0) * CFrame.Angles(math.rad(90), 0, 0), Material = Enum.Material.Neon, Color = void, CanCollide = false, Parent = folder })
@@ -489,18 +489,17 @@ function ZoneService:Init(services)
 			Decor[zone.Theme](folder, zone.Origin)
 
 			local spawns = {}
-			for _ = 1, 18 do
-				table.insert(spawns, CFrame.new(randomSpot(zone.Origin, 40, 175) + Vector3.new(0, 4, 0)))
+			for _ = 1, 30 do
+				table.insert(spawns, CFrame.new(randomSpot(zone.Origin, 50, 300) + Vector3.new(0, 4, 0)))
 			end
 			zoneData[id] = {
-				Spawn = CFrame.lookAt(zone.Origin + Vector3.new(0, 1, 190), zone.Origin + Vector3.new(0, 1, 0)),
+				Spawn = CFrame.lookAt(zone.Origin + Vector3.new(0, 1, 330), zone.Origin + Vector3.new(0, 1, 0)),
 				MobSpawns = spawns,
-				BossSpawn = CFrame.new(zone.Origin + Vector3.new(0, 6, -150)),
+				BossSpawn = CFrame.new(zone.Origin + Vector3.new(0, 6, -280)),
 				SkySpawns = self:BuildSky(folder, zone.Origin + Zones.Sky.IslandOffset, theme.Accent, theme.Floor, theme.FloorColor),
 			}
-			self:MarkIslandAreas(folder, zone.Origin)
 			-- Return portal behind the plaza.
-			self:CreatePortal(folder, CFrame.lookAt(zone.Origin + Vector3.new(0, 0, 215), zone.Origin), "Hub")
+			self:CreatePortal(folder, CFrame.lookAt(zone.Origin + Vector3.new(0, 0, 360), zone.Origin), "Hub")
 		end
 	end
 	world.Parent = workspace
@@ -525,7 +524,6 @@ function ZoneService:Init(services)
 		skyFolder.Name = "HubSky"
 		skyFolder.Parent = hubFolder
 		zoneData.Hub = { SkySpawns = self:BuildSky(skyFolder, hub.SkyCenter, Color3.fromRGB(90, 200, 255), Enum.Material.Marble, Color3.fromRGB(70, 66, 92)) }
-		self:MarkHubAreas(hubFolder)
 	end
 
 	-- Combat queries ignore all zone geometry (like the hub map).

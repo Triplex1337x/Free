@@ -34,6 +34,30 @@ Game.M1 = {
 	HitStun = 0.45,
 	FinisherStun = 0.9,
 	FinisherKnockback = 55,
+	LockBonus = 5, -- extra reach for the M1 soft lock (auto-face + step-in)
+}
+
+-- Abilities pressed up to this early (cooldown / previous skill ending) are
+-- buffered and fire the instant they're ready.
+Game.InputBuffer = 0.45
+
+-- Extra invulnerability after an ultimate finishes (on top of its duration).
+Game.UltimateInvulnerability = 0.6
+
+-- PvP is a setting (Settings panel), available from MinLevel. It can't be
+-- switched off for LockSeconds after the last PvP hit.
+Game.Pvp = {
+	MinLevel = 10,
+	LockSeconds = 30,
+}
+
+-- Counter: RMB + LMB (PC), C, gamepad L1, or the mobile button.
+Game.Counter = {
+	Window = 0.5,
+	Cooldown = 6,
+	Stun = 1.4,
+	Damage = 14,
+	Knockback = 45,
 }
 
 Game.Block = {

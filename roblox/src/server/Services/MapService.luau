@@ -10,7 +10,7 @@ local Textures = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("
 
 local MapService = {}
 
-local ARENA_RADIUS = 130
+local ARENA_RADIUS = 190
 local FLOOR_COLOR = Color3.fromRGB(46, 44, 64)
 local ACCENT = Color3.fromRGB(255, 80, 150)
 local ACCENT_2 = Color3.fromRGB(90, 200, 255)
@@ -91,7 +91,7 @@ local function buildDecor(folder: Folder)
 	-- Shrine-style gates at the four entrances.
 	for i = 0, 3 do
 		local angle = i * math.pi / 2 + math.pi / 4
-		local base = CFrame.new(math.cos(angle) * 118, 0, math.sin(angle) * 118) * CFrame.Angles(0, -angle + math.pi / 2, 0)
+		local base = CFrame.new(math.cos(angle) * 176, 0, math.sin(angle) * 176) * CFrame.Angles(0, -angle + math.pi / 2, 0)
 		table.insert(portalSlots, base)
 		for _, x in { -11, 11 } do
 			part({ Name = "GatePost", Shape = Enum.PartType.Cylinder, Size = Vector3.new(30, 2.6, 2.6), CFrame = base * CFrame.new(x, 15, 0) * cylinder, Material = Enum.Material.SmoothPlastic, Color = GATE_RED, Parent = decor })
@@ -104,9 +104,9 @@ local function buildDecor(folder: Folder)
 	end
 
 	-- Stone lanterns around the duel ring.
-	for i = 1, 10 do
-		local angle = (i / 10) * math.pi * 2
-		local pos = Vector3.new(math.cos(angle) * 48, 0, math.sin(angle) * 48)
+	for i = 1, 14 do
+		local angle = (i / 14) * math.pi * 2
+		local pos = Vector3.new(math.cos(angle) * 70, 0, math.sin(angle) * 70)
 		local look = CFrame.new(pos) * CFrame.Angles(0, -angle, 0)
 		part({ Name = "LanternBase", Size = Vector3.new(3, 1, 3), CFrame = look * CFrame.new(0, 0.5, 0), Material = Enum.Material.Cobblestone, Color = STONE, Parent = decor })
 		part({ Name = "LanternPole", Size = Vector3.new(1.2, 4, 1.2), CFrame = look * CFrame.new(0, 3, 0), Material = Enum.Material.Cobblestone, Color = STONE, Parent = decor })
@@ -128,7 +128,7 @@ local function buildDecor(folder: Folder)
 	-- Floating islands with crystals.
 	for i = 1, 12 do
 		local angle = (i / 12) * math.pi * 2 + rng:NextNumber(-0.2, 0.2)
-		local dist = rng:NextNumber(150, 210)
+		local dist = rng:NextNumber(240, 310)
 		local pos = Vector3.new(math.cos(angle) * dist, rng:NextNumber(40, 85), math.sin(angle) * dist)
 		local size = rng:NextNumber(14, 26)
 		local rot = CFrame.Angles(rng:NextNumber(-0.2, 0.2), rng:NextNumber(0, 6.28), rng:NextNumber(-0.2, 0.2))
@@ -236,7 +236,7 @@ local function buildArena(folder: Folder)
 	-- Pillars with glowing caps (cover to break line of sight).
 	for i = 1, 8 do
 		local angle = (i / 8) * math.pi * 2
-		local pos = Vector3.new(math.cos(angle) * 85, 0, math.sin(angle) * 85)
+		local pos = Vector3.new(math.cos(angle) * 125, 0, math.sin(angle) * 125)
 		part({
 			Name = "Pillar",
 			Size = Vector3.new(10, 34, 10),
@@ -283,7 +283,7 @@ local function buildArena(folder: Folder)
 	-- Spawns around the edge, facing the centre.
 	for i = 1, 6 do
 		local angle = (i / 6) * math.pi * 2 + math.pi / 6
-		local pos = Vector3.new(math.cos(angle) * 110, 0.5, math.sin(angle) * 110)
+		local pos = Vector3.new(math.cos(angle) * 165, 0.5, math.sin(angle) * 165)
 		local spawn = Instance.new("SpawnLocation")
 		spawn.Name = "Spawn"
 		spawn.Anchored = true
@@ -350,7 +350,7 @@ function MapService:GetPortalSlots(): { CFrame }
 	local slots = {}
 	for i = 0, 3 do
 		local angle = i * math.pi / 2 + math.pi / 4
-		table.insert(slots, CFrame.lookAt(Vector3.new(math.cos(angle) * 90, 0, math.sin(angle) * 90), Vector3.zero))
+		table.insert(slots, CFrame.lookAt(Vector3.new(math.cos(angle) * 140, 0, math.sin(angle) * 140), Vector3.zero))
 	end
 	return slots
 end

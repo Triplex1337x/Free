@@ -77,6 +77,14 @@ function InputController.Ability(key: string)
 	Remotes.Action:FireServer("Ability", { Key = key, Aim = aim })
 end
 
+-- Counter stance: RMB + LMB, C, gamepad L1 or the mobile button.
+function InputController.Counter()
+	if not InputController.Enabled then
+		return
+	end
+	Remotes.Action:FireServer("Counter")
+end
+
 function InputController.SetBlock(on: boolean)
 	if on and not InputController.Enabled then
 		return
@@ -107,7 +115,11 @@ function InputController:Start()
 		if processed then
 			return
 		end
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.KeyCode == Enum.KeyCode.ButtonR2 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+			InputController.Counter()
+		elseif input.KeyCode == Enum.KeyCode.C or input.KeyCode == Enum.KeyCode.ButtonL1 then
+			InputController.Counter()
+		elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.KeyCode == Enum.KeyCode.ButtonR2 then
 			InputController.SetHoldingAttack(true)
 		elseif KEYS[input.KeyCode] then
 			InputController.Ability(KEYS[input.KeyCode])

@@ -24,6 +24,7 @@ local FUNCTIONS = {
 	"UsePotion",
 	"BuyPotion",
 	"Admin",
+	"SetPvp",
 }
 
 local Remotes = {}

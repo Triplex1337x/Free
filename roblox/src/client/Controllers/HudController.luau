@@ -155,8 +155,8 @@ function Hud:CloseAll()
 	end
 end
 
-local MENU_ICONS = { Roll = "✦", Arts = "⚔", Stats = "▲", Map = "◈", Quests = "!", Items = "♥", Shop = "$", Codes = "#", Admin = "⚙" }
-local MENU_LABELS = { Roll = "РОЛЛ", Arts = "СТИЛИ", Stats = "СТАТЫ", Map = "КАРТА", Quests = "КВЕСТЫ", Items = "ЗЕЛЬЯ", Shop = "МАГАЗИН", Codes = "КОДЫ", Admin = "АДМИН" }
+local MENU_ICONS = { Roll = "✦", Arts = "⚔", Stats = "▲", Map = "◈", Quests = "!", Items = "♥", Shop = "$", Codes = "#", Admin = "⚙", Settings = "≡" }
+local MENU_LABELS = { Settings = "НАСТРОЙКИ", Roll = "РОЛЛ", Arts = "СТИЛИ", Stats = "СТАТЫ", Map = "КАРТА", Quests = "КВЕСТЫ", Items = "ЗЕЛЬЯ", Shop = "МАГАЗИН", Codes = "КОДЫ", Admin = "АДМИН" }
 
 function Hud:AddMenuButton(text: string, color: Color3, order: number, onClick: () -> ())
 	local button = UI.button({
@@ -351,27 +351,9 @@ function Hud:BuildPlayerCard()
 		if not zone then
 			return
 		end
-		local tag = ""
-		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-		local area = root and Zones.AreaAt(zoneId, root.Position)
-		if area == "Pvp" and State.Data and State.Data.Level < Zones.HubSafe.NewbieLevel then
-			tag = ("  •  ЗАЩИТА НОВИЧКА ДО %d УР."):format(Zones.HubSafe.NewbieLevel)
-		elseif root then
-			tag = if area == "Safe" then "  •  🛡 БЕЗОПАСНО" elseif area == "Pvp" then "  •  ⚔ PVP-ЗОНА" else "  •  PVE"
-		end
-		zoneTag.Text = "◈ " .. string.upper(zone.Name) .. tag
-		zoneTag.TextColor3 = zone.Color
-		-- Announce crossing into a different area.
-		if area and area ~= self.LastArea then
-			if self.LastArea ~= nil then
-				if area == "Pvp" then
-					self:Toast("⚔ ТЫ ВОШЁЛ В PVP-ЗОНУ — здесь атакуют игроки и босс!", "error")
-				elseif area == "Safe" then
-					self:Toast("🛡 БЕЗОПАСНАЯ ЗОНА — здесь тебя не тронут", "success")
-				end
-			end
-			self.LastArea = area
-		end
+		local pvpOn = player:GetAttribute("Pvp") == true
+		zoneTag.Text = "◈ " .. string.upper(zone.Name) .. (if pvpOn then "  •  ⚔ PVP ВКЛ" else "  •  🛡 PVP ВЫКЛ")
+		zoneTag.TextColor3 = if pvpOn then Theme.Bad else zone.Color
 	end
 	task.spawn(function()
 		while true do
@@ -583,6 +565,8 @@ function Hud:BuildCombat()
 	end)
 
 	if isTouch then
+		row.Visible = false -- the radial cluster replaces the skill row
+		bottom.Position = UDim2.new(0.5, -60, 1, 50)
 		self:BuildTouchButtons()
 	end
 end
@@ -605,17 +589,33 @@ function Hud:BuildCombo()
 	self.Combo = label
 end
 
+-- Phones / tablets: a thumb-friendly radial cluster on the right. Default
+-- Roblox jump button stays in the bottom-right corner.
 function Hud:BuildTouchButtons()
-	local attack = UI.button({
-		Text = "УДАР",
-		Color = Theme.Accent,
-		Radius = 50,
-		Size = UDim2.fromOffset(100, 100),
+	local cluster = UI.new("Frame", {
+		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -30, 1, -180),
-		MaxTextSize = 32,
+		Position = UDim2.new(1, -10, 1, -10),
+		Size = UDim2.fromOffset(380, 400),
 		Parent = self.Gui,
 	})
+	local function round(text: string, color: Color3, size: number, center: Vector2, textSize: number)
+		local b = UI.button({
+			Text = text,
+			Color = color,
+			Radius = size,
+			Size = UDim2.fromOffset(size, size),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(1, center.X, 1, center.Y),
+			MaxTextSize = textSize,
+			Parent = cluster,
+		})
+		local cd = UI.label({ Text = "", Font = Theme.FontHeavy, MaxTextSize = textSize + 4, Outline = 3, ZIndex = 5, Parent = b })
+		local shade = UI.new("Frame", { BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.45, Size = UDim2.fromScale(1, 1), Visible = false, ZIndex = 4, Parent = b }, { UI.corner(size) })
+		return b, cd, shade
+	end
+
+	local attack = round("УДАР", Theme.Accent, 112, Vector2.new(-110, -235), 28)
 	attack.MouseButton1Down:Connect(function()
 		Input.SetHoldingAttack(true)
 	end)
@@ -626,16 +626,7 @@ function Hud:BuildTouchButtons()
 		Input.SetHoldingAttack(false)
 	end)
 
-	local block = UI.button({
-		Text = "БЛОК",
-		Color = Theme.Accent2,
-		Radius = 40,
-		Size = UDim2.fromOffset(78, 78),
-		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -146, 1, -160),
-		MaxTextSize = 18,
-		Parent = self.Gui,
-	})
+	local block = round("БЛОК", Theme.Accent2, 74, Vector2.new(-235, -110), 16)
 	block.MouseButton1Down:Connect(function()
 		Input.SetBlock(true)
 	end)
@@ -644,6 +635,53 @@ function Hud:BuildTouchButtons()
 	end)
 	block.MouseLeave:Connect(function()
 		Input.SetBlock(false)
+	end)
+
+	local counter, counterCd, counterShade = round("КОНТР", Color3.fromRGB(120, 230, 255), 66, Vector2.new(-330, -165), 14)
+	counter.Activated:Connect(Input.Counter)
+
+	local positions = { Q = Vector2.new(-240, -205), E = Vector2.new(-222, -315), R = Vector2.new(-120, -360), G = Vector2.new(-335, -275) }
+	local touch = {}
+	for key, pos in positions do
+		local b, cd, shade = round(key, if key == "G" then Theme.Gold else Theme.Accent2, if key == "G" then 78 else 70, pos, 22)
+		b.Activated:Connect(function()
+			Input.Ability(key)
+		end)
+		touch[key] = { Button = b, Cd = cd, Shade = shade }
+	end
+
+	State.Observe(function(d)
+		local style = Styles.Get(d.EquippedStyle)
+		for key, t in touch do
+			local unlocked = Prog.IsUnlocked(d, d.EquippedStyle, key)
+			t.Button.Text = if unlocked then key else "🔒"
+			if style and key ~= "G" then
+				t.Button.BackgroundColor3 = Color3.new(1, 1, 1)
+				local gradient = t.Button:FindFirstChildOfClass("UIGradient")
+				if gradient then
+					local h, s2, v = style.Color:ToHSV()
+					gradient.Color = ColorSequence.new(style.Color, Color3.fromHSV(h, math.min(1, s2 + 0.2), v * 0.5))
+				end
+			end
+		end
+	end)
+
+	RunService.RenderStepped:Connect(function()
+		local now = os.clock()
+		for key, t in touch do
+			if key == "G" then
+				local ready = (player:GetAttribute("Awakening") or 0) >= GameConfig.Awakening.Max
+				t.Shade.Visible = not ready
+				t.Cd.Text = if ready then "" else ("%d%%"):format(math.floor((player:GetAttribute("Awakening") or 0) / GameConfig.Awakening.Max * 100))
+			else
+				local left = (cooldownEnd[key] or 0) - now
+				t.Shade.Visible = left > 0
+				t.Cd.Text = if left > 0 then ("%.1f"):format(left) else ""
+			end
+		end
+		local left = (cooldownEnd.C or 0) - now
+		counterShade.Visible = left > 0
+		counterCd.Text = if left > 0 then ("%.0f"):format(math.ceil(left)) else ""
 	end)
 end
 
@@ -719,7 +757,7 @@ function Hud:Init()
 	self.Menu = UI.new("Frame", {
 		BackgroundTransparency = 1,
 		Position = UDim2.fromOffset(16, 226),
-		Size = UDim2.fromOffset(240, 5 * 50),
+		Size = UDim2.fromOffset(240, 6 * 50),
 		Parent = self.Gui,
 	}, { UI.new("UIGridLayout", { CellSize = UDim2.fromOffset(114, 42), CellPadding = UDim2.fromOffset(8, 8), SortOrder = Enum.SortOrder.LayoutOrder }) })
 
@@ -739,6 +777,15 @@ function Hud:Init()
 		Size = UDim2.fromOffset(320, 170),
 		Parent = self.Gui,
 	}, { UI.new("UIListLayout", { Padding = UDim.new(0, 2), HorizontalAlignment = Enum.HorizontalAlignment.Right }) })
+
+	-- Scale the whole HUD to the screen (small phones -> large monitors).
+	local uiScale = UI.new("UIScale", { Parent = self.Gui })
+	local function rescale()
+		local size = workspace.CurrentCamera.ViewportSize
+		uiScale.Scale = math.clamp(math.min(size.X / 1280, size.Y / 720), 0.55, 1.15)
+	end
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescale)
+	rescale()
 
 	self:BuildPlayerCard()
 	self:BuildCombat()

@@ -134,7 +134,7 @@ function AdminController:Build()
 		run("Wipe")
 	end)
 
-	Hud:AddMenuButton("Admin", Theme.Bad, 9, panel.Toggle)
+	Hud:AddMenuButton("Admin", Theme.Bad, 10, panel.Toggle)
 end
 
 function AdminController:Start()

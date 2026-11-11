@@ -350,6 +350,9 @@ end
 local Handlers = {}
 
 local function damageNumber(d, color: Color3)
+	if not Vfx.DamageNumbers then
+		return
+	end
 	local anchor = Vfx.Part({ Transparency = 1, Size = Vector3.one * 0.1, Position = d.Pos + Vector3.new(rng:NextNumber(-1.5, 1.5), 2.5, rng:NextNumber(-1, 1)) })
 	local gui = Instance.new("BillboardGui")
 	gui.Size = UDim2.fromOffset(140, 56)
@@ -358,7 +361,7 @@ local function damageNumber(d, color: Color3)
 	gui.Adornee = anchor
 	gui.Parent = anchor
 	local big = (d.Damage or 0) >= 20
-	local text = if d.Parried then "ПАРИРОВАНИЕ!" elseif d.Blocked then ("БЛОК %d"):format(d.Damage or 0) else tostring(d.Damage or "")
+	local text = if d.Immune then "НЕУЯЗВИМ" elseif d.Parried then "ПАРИРОВАНИЕ!" elseif d.Blocked then ("БЛОК %d"):format(d.Damage or 0) else tostring(d.Damage or "")
 	local label = UI.label({
 		Text = text,
 		Font = Theme.FontHeavy,
@@ -554,54 +557,110 @@ function Handlers.GuardBreak(d)
 	end
 end
 
+-- Ultimate: no full-screen text. The caster becomes a beacon — golden
+-- glow, energy dome, spinning rings, light pillar — then a huge release.
 function Handlers.Ultimate(d)
 	local root = rootOf(d.Character)
 	local pos = root and root.Position
-	if pos and not near(pos, 160) then
+	if not root or not near(pos, 200) then
 		return
 	end
 	local windup = d.Windup or 0.6
+	local color = d.Color or Theme.Gold
+	local caster = isLocal(d.Character)
 
-	Vfx.Letterbox(windup + 0.9)
-	Vfx.FovPunch(-10, windup + 0.3)
-	Vfx.Shake(0.3, windup, pos)
-	if pos then
-		Vfx.Pillar(pos - Vector3.new(0, 3, 0), d.Color, 4, 120, windup + 0.4)
-		Vfx.Emit(pos, "Glitter", 30, d.Color)
+	Vfx.Sound(GameConfig.Sounds.Cast, pos, 1, 0.7)
+	Vfx.Shake(0.35, windup, pos)
+	if caster then
+		Vfx.FovPunch(-8, windup + 0.3)
 	end
-	task.delay(windup, function()
-		Vfx.ImpactFrame()
-		Vfx.Flash(d.Color, 0.35, 0.6)
-		Vfx.Shake(0.9, 0.5, pos)
+
+	-- Energy dome that breathes during the charge.
+	local dome = Vfx.Part({ Shape = Enum.PartType.Ball, Size = Vector3.one * 4, Position = pos, Color = color, Transparency = 0.55, Material = Enum.Material.ForceField })
+	Vfx.Tween(dome, windup, { Size = Vector3.one * 22, Transparency = 0.3 }, Enum.EasingStyle.Sine)
+	-- Three spinning rings around the caster.
+	local rings = {}
+	for i = 1, 3 do
+		local ring = Vfx.Part({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.4, 10 + i * 4, 10 + i * 4), Color = if i == 2 then Color3.new(1, 1, 1) else color, Transparency = 0.35, CFrame = root.CFrame })
+		rings[i] = ring
+	end
+	-- Light pillar + rising sparks.
+	Vfx.Pillar(pos - Vector3.new(0, 3, 0), color, 5, 160, windup + 0.6)
+	Vfx.Emit(pos, "Glitter", 40, color)
+	local start = os.clock()
+	local follow = game:GetService("RunService").RenderStepped:Connect(function()
+		local t = os.clock() - start
+		local p = root.Position
+		dome.Position = p
+		for i, ring in rings do
+			ring.CFrame = CFrame.new(p) * CFrame.Angles(t * (2 + i), t * (3 - i), math.rad(90) + t * i)
+		end
 	end)
 
-	-- Anime cut-in banner.
-	local banner = UI.new("Frame", {
-		BackgroundColor3 = Color3.new(0, 0, 0),
-		BackgroundTransparency = 0.15,
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromScale(-0.6, 0.3),
-		Size = UDim2.new(1.3, 0, 0, 96),
-		Rotation = -5,
-		Parent = Hud.Gui,
-	}, {
-		UI.stroke(d.Color, 4, 0),
-		UI.new("UIGradient", {
-			Color = ColorSequence.new({
-				ColorSequenceKeypoint.new(0, Color3.new(0, 0, 0)),
-				ColorSequenceKeypoint.new(0.5, d.Color:Lerp(Color3.new(0, 0, 0), 0.6)),
-				ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0)),
-			}),
-		}),
-	})
-	UI.label({ Text = string.upper(d.Name or ""), Font = Theme.FontHeavy, TextColor3 = WHITE, TextStrokeColor3 = d.Color, TextStrokeTransparency = 0, MaxTextSize = 56, Size = UDim2.new(1, 0, 0.7, 0), Parent = banner })
-	UI.label({ Text = d.Caster or "", Font = Theme.Font, TextColor3 = d.Color, MaxTextSize = 22, Size = UDim2.new(1, 0, 0.3, 0), Position = UDim2.fromScale(0, 0.7), Parent = banner })
-	Vfx.Tween(banner, 0.22, { Position = UDim2.fromScale(0.5, 0.3) }, Enum.EasingStyle.Back)
-	task.delay(1.3, function()
-		Vfx.Tween(banner, 0.22, { Position = UDim2.fromScale(1.7, 0.3) }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-		task.wait(0.25)
-		banner:Destroy()
+	task.delay(windup, function()
+		follow:Disconnect()
+		for _, ring in rings do
+			Vfx.Fade(ring, 0.3, { Size = ring.Size * 2.5 })
+		end
+		Vfx.Fade(dome, 0.35, { Size = Vector3.one * 70 })
+		local p = root.Parent and root.Position or pos
+		-- Release: stacked shockwaves, flash, cracks, impact frame.
+		for i = 0, 2 do
+			task.delay(i * 0.08, function()
+				Vfx.Ring(CFrame.new(p - Vector3.new(0, 2.6, 0)), 2, 30 + i * 18, if i == 1 then Color3.new(1, 1, 1) else color, 0.6, 1.2, 40)
+			end)
+		end
+		Vfx.Ball(p, 4, 46, color, 0.5, 0.2)
+		Vfx.Ball(p, 2, 24, Color3.new(1, 1, 1), 0.25, 0)
+		Vfx.Rays(p, color, 18, 40, 0.6)
+		Vfx.GroundDecal(p, "GroundCrack", 50, color, 2, 1.5)
+		Vfx.Debris(p, 18, Color3.fromRGB(110, 95, 90), { Size = 1.6, Speed = 70, Life = 2 })
+		Vfx.Sound(GameConfig.Sounds.Heavy, p, 1, 0.6)
+		if near(p, 120) then
+			Vfx.ImpactFrame()
+			Vfx.Flash(color, 0.35, 0.6)
+			Vfx.Shake(0.9, 0.5, p)
+		end
+		if caster then
+			Vfx.SpeedLines(0.5, color)
+		end
 	end)
+end
+
+function Handlers.CounterStance(d)
+	Animator.Play(d.Character, Clips.Block)
+	task.delay(0.45, function()
+		Animator.Stop(d.Character, "State", Clips.Block)
+	end)
+	local root = rootOf(d.Character)
+	if root then
+		Vfx.Ring(CFrame.new(root.Position) * CFrame.Angles(math.rad(90), 0, 0), 1, 6, Theme.Accent2, 0.4, 0.3, 24)
+		Vfx.Ball(root.Position, 8, 4, Theme.Accent2, 0.4, 0.7, Enum.Material.ForceField)
+	end
+end
+
+function Handlers.Counter(d)
+	Animator.Play(d.Character, Clips.Parry)
+	local root = rootOf(d.Character)
+	if root then
+		Vfx.Afterimages(d.Character, root.Position + root.CFrame.LookVector * -6, root.Position, Theme.Accent2, 4)
+	end
+	Vfx.Ball(d.Pos, 2, 14, Color3.new(1, 1, 1), 0.25, 0)
+	Vfx.Ring(CFrame.new(d.Pos), 1, 14, Theme.Accent2, 0.4, 0.8, 32)
+	Vfx.Emit(d.Pos, "Sparks", 30, Theme.Accent2)
+	Vfx.Sound(GameConfig.Sounds.Heavy, d.Pos, 1, 1.4)
+	if isLocal(d.Character) or isLocal(d.Target) then
+		Vfx.ImpactFrame()
+		Vfx.Shake(0.6, 0.25, d.Pos)
+	end
+	Hud:Toast(if isLocal(d.Character) then "КОНТРАТАКА!" else "ТЕБЯ КОНТРАТАКОВАЛИ!", if isLocal(d.Character) then "success" else "error")
+end
+
+function Handlers.Shatter(d)
+	Vfx.Emit(d.Pos, "Smoke", 10, Color3.fromRGB(160, 140, 120))
+	Vfx.Ring(CFrame.new(d.Pos - Vector3.new(0, 1.5, 0)), 1, 8, d.Color, 0.35, 0.4, 20)
+	Vfx.Sound(GameConfig.Sounds.Hit, d.Pos, 0.8, 0.7)
+	Vfx.Shake(0.2, 0.15, d.Pos)
 end
 
 function Handlers.LevelUp(d)
@@ -687,6 +746,64 @@ local function watchModel(model: Model)
 	end
 	model:GetAttributeChangedSignal("Blocking"):Connect(onBlocking)
 	model:GetAttributeChangedSignal("Stunned"):Connect(onStunned)
+
+	-- Dizzy stars orbiting the head while stunned.
+	local stars = nil
+	model:GetAttributeChangedSignal("Stunned"):Connect(function()
+		if model:GetAttribute("Stunned") and not stars then
+			local head = model:FindFirstChild("Head") :: BasePart?
+			if not head then
+				return
+			end
+			local parts = {}
+			for i = 1, 3 do
+				parts[i] = Vfx.Part({ Shape = Enum.PartType.Ball, Size = Vector3.one * 0.45, Color = Theme.Gold })
+			end
+			local t0 = os.clock()
+			stars = game:GetService("RunService").RenderStepped:Connect(function()
+				if not head.Parent then
+					return
+				end
+				local t = os.clock() - t0
+				for i, part in parts do
+					local a = t * 6 + i * 2.1
+					part.Position = head.Position + Vector3.new(math.cos(a) * 1.4, head.Size.Y * 0.9 + math.sin(t * 8 + i) * 0.15, math.sin(a) * 1.4)
+				end
+			end)
+			model:GetAttributeChangedSignal("Stunned"):Once(function()
+				if stars then
+					stars:Disconnect()
+					stars = nil
+				end
+				for _, part in parts do
+					part:Destroy()
+				end
+			end)
+		end
+	end)
+
+	-- Hyper armor = golden outline; invulnerable (ultimate) = golden glow.
+	local function armorVisual()
+		local glow = model:FindFirstChild("RiftArmorGlow")
+		local armored = model:GetAttribute("HyperArmor") or model:GetAttribute("Invulnerable")
+		if armored and not glow then
+			glow = Instance.new("Highlight")
+			glow.Name = "RiftArmorGlow"
+			glow.FillColor = Theme.Gold
+			glow.OutlineColor = Color3.fromRGB(255, 240, 180)
+			glow.DepthMode = Enum.HighlightDepthMode.Occluded
+			glow.Parent = model
+		elseif not armored and glow then
+			glow:Destroy()
+			return
+		end
+		if glow then
+			glow.FillTransparency = if model:GetAttribute("Invulnerable") then 0.55 else 1
+			glow.OutlineTransparency = 0
+		end
+	end
+	model:GetAttributeChangedSignal("HyperArmor"):Connect(armorVisual)
+	model:GetAttributeChangedSignal("Invulnerable"):Connect(armorVisual)
 end
 
 local function watchPlayer(p: Player)
@@ -754,10 +871,20 @@ function FxController:Start()
 		local root = rootOf(character)
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		if root and humanoid and typeof(velocity) == "Vector3" then
-			humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
 			root.AssemblyLinearVelocity = velocity
-			if velocity.Magnitude > 50 then
+			if velocity.Magnitude > 55 then
+				-- Heavy hit: tumble through the air, then get back up.
+				humanoid.PlatformStand = true
+				root.AssemblyAngularVelocity = Vector3.new(math.random(-8, 8), math.random(-3, 3), math.random(-8, 8))
 				Vfx.SpeedLines(0.3)
+				task.delay(0.75, function()
+					if humanoid.Parent and humanoid.Health > 0 then
+						humanoid.PlatformStand = false
+						humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+					end
+				end)
+			else
+				humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
 			end
 		end
 	end)
