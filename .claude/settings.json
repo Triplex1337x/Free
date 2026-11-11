@@ -33,7 +33,8 @@
     "math-proof@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
     "figma@claude-plugins-official": true,
-    "canva@claude-plugins-official": true
+    "canva@claude-plugins-official": true,
+    "firecrawl@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
