@@ -62,6 +62,13 @@
   $("#footerName").textContent = P.name || "";
   $("#year").textContent = new Date().getFullYear();
 
+  if (P.contactLink) {
+    var cb = $("#contactBtn");
+    cb.href = P.contactLink;
+    cb.target = "_blank";
+    cb.rel = "noopener";
+  }
+
   if (P.status) $("#status span:last-child").textContent = P.status;
   else $("#status").hidden = true;
 
